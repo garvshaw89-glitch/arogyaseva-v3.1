@@ -21,6 +21,10 @@ import { RiskAssessmentView } from "./components/CHW/RiskAssessmentView";
 import { FacilityLocator } from "./components/CHW/FacilityLocator";
 import { ReferralSlipModal } from "./components/CHW/ReferralSlipModal";
 import { DoctorDashboard } from "./components/Doctor/DoctorDashboard";
+import { PatientJourney3D } from "./components/Common/PatientJourney3D";
+import { ClinicalRiskEngine3D } from "./components/CHW/ClinicalRiskEngine3D";
+import { ReferralMap3D } from "./components/CHW/ReferralMap3D";
+import { HackathonDemoController } from "./components/Common/HackathonDemoController";
 import {
   loadLocalCases,
   saveLocalCases,
@@ -30,6 +34,9 @@ import {
 } from "./utils/offlineStorage";
 import { evaluateClinicalRiskLocally } from "./utils/clinicalRules";
 import { TRANSLATIONS } from "./utils/translations";
+import { CinematicHero } from "./components/Common/CinematicHero";
+import { playHapticSound } from "./utils/audioFeedback";
+import { motion, AnimatePresence } from "motion/react";
 import {
   UserPlus,
   Activity,
@@ -73,12 +80,163 @@ export default function App() {
   const [assessment, setAssessment] = useState<RiskAssessment | null>(null);
   const [completedCase, setCompletedCase] = useState<PatientCase | null>(null);
   const [showReferralModal, setShowReferralModal] = useState<boolean>(false);
+  const [showCinematicHero, setShowCinematicHero] = useState<boolean>(true);
 
   const [casesList, setCasesList] = useState<PatientCase[]>([]);
   const [offlineQueue, setOfflineQueue] = useState<PatientCase[]>([]);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [demoStep, setDemoStep] = useState<number>(1);
 
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
+
+  const handleJumpToDemoStep = (stepNumber: number) => {
+    setDemoStep(stepNumber);
+    if (stepNumber === 1) {
+      setRole("CHW");
+      setShowCinematicHero(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (stepNumber === 2) {
+      setRole("CHW");
+      setCurrentStep(1);
+      setSelectedPresetId("preset-1");
+      setPatientData((prev) => ({
+        ...prev,
+        patientName: "Rameshwar Prasad",
+        age: 52,
+        gender: "Male",
+        village: "Rampur Hamlet (Sector 4)",
+        symptoms: ["High Fever", "Severe Shortness of Breath"],
+        symptomDuration: "3 days",
+        rawVoiceInput: "52 साल के मरीज हैं, 3 दिन से तेज बुखार है और सांस लेने में बहुत दिक्कत हो रही है...",
+      }));
+    } else if (stepNumber === 3) {
+      setRole("CHW");
+      setCurrentStep(1);
+      setSelectedPresetId("preset-1");
+      setPatientData((prev) => ({
+        ...prev,
+        patientName: "Rameshwar Prasad",
+        age: 52,
+        gender: "Male",
+        symptoms: ["High Fever", "Severe Shortness of Breath", "Chest Tightness"],
+        symptomDuration: "3 days",
+        vitals: {
+          temperature: 102.6,
+          heartRate: 114,
+          spo2: 88,
+          bpSystolic: 138,
+          bpDiastolic: 88,
+          respiratoryRate: 28,
+        },
+      }));
+    } else if (stepNumber === 4) {
+      setRole("CHW");
+      setCurrentStep(3);
+      setPatientData((prev) => ({
+        ...prev,
+        followUpAnswers: {
+          "Is the patient struggling to speak in full sentences?": "Yes, gasping between words",
+          "Are chest retractions or grunting sounds present?": "Severe subcostal retractions visible",
+          "Does the patient have stridor while calm?": "Audible wheezing on expiration",
+        },
+      }));
+    } else if (stepNumber === 5) {
+      setRole("CHW");
+      setCurrentStep(2);
+      setPatientData((prev) => ({
+        ...prev,
+        vitals: {
+          temperature: 102.6,
+          heartRate: 114,
+          spo2: 88,
+          bpSystolic: 138,
+          bpDiastolic: 88,
+          respiratoryRate: 28,
+        },
+      }));
+    } else if (stepNumber === 6 || stepNumber === 7) {
+      setRole("CHW");
+      const evaluated = evaluateClinicalRiskLocally({
+        ...patientData,
+        vitals: {
+          temperature: 102.6,
+          heartRate: 114,
+          spo2: 88,
+          bpSystolic: 138,
+          bpDiastolic: 88,
+          respiratoryRate: 28,
+        },
+        symptoms: ["Severe Shortness of Breath", "High Fever"],
+      });
+      setAssessment(evaluated);
+      setCurrentStep(4);
+    } else if (stepNumber === 8) {
+      setRole("CHW");
+      if (!assessment) {
+        const evaluated = evaluateClinicalRiskLocally(patientData);
+        setAssessment(evaluated);
+      }
+      setCurrentStep(5);
+    } else if (stepNumber === 9) {
+      setRole("CHW");
+      const mockCase: PatientCase = {
+        id: "CASE-9821",
+        patientName: patientData.patientName || "Rameshwar Prasad",
+        age: patientData.age || 52,
+        gender: (patientData.gender as any) || "Male",
+        village: "Rampur Hamlet (Sector 4)",
+        chwName: "Anjali Devi (ASHA)",
+        symptoms: ["Severe Shortness of Breath", "High Fever", "Hypoxemia"],
+        symptomDuration: "3 days",
+        vitals: {
+          temperature: 102.6,
+          heartRate: 114,
+          spo2: 88,
+          bpSystolic: 138,
+          bpDiastolic: 88,
+          respiratoryRate: 28,
+        },
+        followUpAnswers: patientData.followUpAnswers || {},
+        riskLevel: "URGENT",
+        riskScore: 92,
+        dangerSigns: [
+          "SpO2 < 90% (88% detected)",
+          "Severe respiratory distress & tachypnea (>28 bpm)",
+          "Inability to complete full sentences",
+        ],
+        clinicalImpression:
+          "Severe Acute Respiratory Distress with Critical Hypoxemia (ETAT Priority Red). Immediate high-flow oxygen and emergency referral required.",
+        recommendedAction:
+          "Emergency referral to District Hospital with continuous supplemental oxygen and semi-upright transport posture.",
+        sbarSummary: {
+          situation: "52Y Male with acute respiratory distress.",
+          background: "3 days of worsening cough and fever.",
+          assessment: "SpO2 88% on room air, RR 28/min, temp 102.6°F.",
+          recommendation: "Immediate admission to District Hospital ICU/HD-Oxygen ward.",
+        },
+        fieldStabilizingActions: [
+          "Place patient in 45° elevated Fowler's position",
+          "Administer supplemental oxygen at 4-6 L/min via nasal cannula",
+          "Ensure unobstructed airway; do not give oral fluids while tachypneic",
+          "Dispatch 108 Advanced Life Support (ALS) Ambulance",
+        ],
+        referredFacility: {
+          id: "DH-01",
+          name: "District Civil Hospital & Trauma Centre",
+          type: "District Hospital",
+          distanceKm: 24,
+        },
+        status: "PENDING_REVIEW",
+        createdAt: new Date().toISOString(),
+      };
+      setCompletedCase(mockCase);
+      setShowReferralModal(true);
+    } else if (stepNumber === 10) {
+      setShowReferralModal(false);
+      setRole("DOCTOR");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   useEffect(() => {
     loadInitialData();
@@ -349,6 +507,45 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
         {role === "CHW" ? (
           <div>
+            {/* Cinematic 3D Telemetry HUD & Hero */}
+            {showCinematicHero && (
+              <CinematicHero
+                currentRisk={assessment?.riskLevel || "ROUTINE"}
+                onQuickStart={() => {
+                  playHapticSound("click");
+                  setCurrentStep(1);
+                  const el = document.getElementById("chw-workflow-stepper");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
+                onExploreDoctorPortal={() => {
+                  playHapticSound("click");
+                  setRole("DOCTOR");
+                }}
+                language={language}
+                isOffline={isOfflineMode}
+              />
+            )}
+
+            {/* Toggle bar for 3D Hero */}
+            <div className="flex items-center justify-between mb-3 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-slate-600 font-semibold tracking-wide uppercase text-[11px]">
+                  CHW Frontline Workflow & Triage Mesh
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  playHapticSound("click");
+                  setShowCinematicHero(!showCinematicHero);
+                }}
+                className="text-slate-500 hover:text-slate-800 font-medium hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>{showCinematicHero ? "Collapse 3D HUD" : "Expand 3D HUD"}</span>
+              </button>
+            </div>
+
             {/* 1. Quick Scenario Selector */}
             <ScenarioQuickSelector
               onSelectPreset={handleSelectPreset}
@@ -356,8 +553,36 @@ export default function App() {
               language={language}
             />
 
+            {/* 3D Dynamic Clinical Pathway Pipeline */}
+            <div className="mb-4">
+              <PatientJourney3D
+                currentStage={
+                  role === "DOCTOR"
+                    ? "doctor"
+                    : currentStep === 1
+                    ? "patient"
+                    : currentStep === 2
+                    ? "chw"
+                    : currentStep === 3
+                    ? "assessment"
+                    : currentStep === 4
+                    ? "risk"
+                    : "referral"
+                }
+                riskLevel={assessment?.riskLevel || "ROUTINE"}
+                onSelectStage={(stage) => {
+                  if (stage === "patient") { setRole("CHW"); setCurrentStep(1); }
+                  else if (stage === "chw") { setRole("CHW"); setCurrentStep(2); }
+                  else if (stage === "assessment") { setRole("CHW"); setCurrentStep(3); }
+                  else if (stage === "risk") { if (assessment) { setRole("CHW"); setCurrentStep(4); } }
+                  else if (stage === "referral") { if (assessment) { setRole("CHW"); setCurrentStep(5); } }
+                  else if (stage === "doctor") { setRole("DOCTOR"); }
+                }}
+              />
+            </div>
+
             {/* 2. Step Stepper with Professional Polish */}
-            <div id="chw-workflow-stepper" className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-sm mb-6">
+            <div id="chw-workflow-stepper" className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-sm mb-6">
               <div className="flex items-center justify-between">
                 {[
                   { step: 1, label: "1. Patient Info", icon: UserPlus },
@@ -375,29 +600,35 @@ export default function App() {
                       key={item.step}
                       onClick={() => {
                         if (item.step < currentStep || (item.step === 4 && assessment)) {
+                          playHapticSound("step");
                           setCurrentStep(item.step);
                         }
                       }}
-                      className={`flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-1 sm:px-3 rounded-xl text-center transition-all ${
+                      className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-1 sm:px-3 rounded-xl text-center transition-all duration-300 ${
                         isActive
-                          ? "text-blue-700 font-bold bg-blue-50 border border-blue-200"
+                          ? "text-blue-700 font-bold bg-blue-50/90 border border-blue-300 ring-2 ring-blue-500/20 shadow-xs scale-[1.02]"
                           : isPast
-                          ? "text-slate-600 hover:text-blue-700 cursor-pointer"
-                          : "text-slate-400 cursor-not-allowed"
+                          ? "text-slate-600 hover:text-blue-700 hover:bg-slate-50 cursor-pointer"
+                          : "text-slate-400 cursor-not-allowed opacity-75"
                       }`}
                     >
-                      <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
-                          isActive
-                            ? "bg-blue-600 text-white shadow-xs"
-                            : isPast
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-slate-100 text-slate-400"
-                        }`}
-                      >
-                        {isPast ? "✓" : item.step}
+                      <div className="relative flex items-center justify-center shrink-0">
+                        {isActive && (
+                          <span className="absolute -inset-0.5 rounded-full bg-blue-500/40 animate-ping" />
+                        )}
+                        <div
+                          className={`relative w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                            isActive
+                              ? "bg-blue-600 text-white shadow-xs ring-2 ring-blue-400/40"
+                              : isPast
+                              ? "bg-blue-100 text-blue-800"
+                              : "bg-slate-100 text-slate-400"
+                          }`}
+                        >
+                          {isPast ? "✓" : item.step}
+                        </div>
                       </div>
-                      <span className="text-xs truncate hidden md:inline font-medium">
+                      <span className="text-xs truncate hidden md:inline font-medium transition-colors duration-200">
                         {item.label}
                       </span>
                     </button>
@@ -406,73 +637,131 @@ export default function App() {
               </div>
             </div>
 
-            {/* Step 1: Patient Registration */}
-            {currentStep === 1 && (
-              <PatientRegistration
-                formData={patientData}
-                onChange={handleUpdatePatientData}
-                onProceedToVitals={() => setCurrentStep(2)}
-                language={language}
-                isOffline={isOfflineMode}
-              />
-            )}
+            {/* Dynamic Step Transitions with AnimatePresence */}
+            <AnimatePresence mode="wait">
+              {currentStep === 1 && (
+                <motion.div
+                  key="step-1"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                >
+                  <PatientRegistration
+                    formData={patientData}
+                    onChange={handleUpdatePatientData}
+                    onProceedToVitals={() => {
+                      playHapticSound("step");
+                      setCurrentStep(2);
+                    }}
+                    language={language}
+                    isOffline={isOfflineMode}
+                  />
+                </motion.div>
+              )}
 
-            {/* Step 2: Vitals Entry */}
-            {currentStep === 2 && (
-              <VitalsEntry
-                vitals={
-                  patientData.vitals || {
-                    temperature: 98.6,
-                    heartRate: 75,
-                    spo2: 98,
-                    bpSystolic: 120,
-                    bpDiastolic: 80,
-                  }
-                }
-                patientData={patientData}
-                onChange={(updatedVitals) => handleUpdatePatientData({ vitals: updatedVitals })}
-                onBack={() => setCurrentStep(1)}
-                onProceedToFollowUp={() => setCurrentStep(3)}
-                language={language}
-              />
-            )}
+              {currentStep === 2 && (
+                <motion.div
+                  key="step-2"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                >
+                  <VitalsEntry
+                    vitals={
+                      patientData.vitals || {
+                        temperature: 98.6,
+                        heartRate: 75,
+                        spo2: 98,
+                        bpSystolic: 120,
+                        bpDiastolic: 80,
+                      }
+                    }
+                    patientData={patientData}
+                    onChange={(updatedVitals) => handleUpdatePatientData({ vitals: updatedVitals })}
+                    onBack={() => {
+                      playHapticSound("step");
+                      setCurrentStep(1);
+                    }}
+                    onProceedToFollowUp={() => {
+                      playHapticSound("step");
+                      setCurrentStep(3);
+                    }}
+                    language={language}
+                  />
+                </motion.div>
+              )}
 
-            {/* Step 3: Dynamic Intelligent Follow-up Assessment */}
-            {currentStep === 3 && (
-              <IntelligentFollowup
-                patientData={patientData}
-                answers={patientData.followUpAnswers || {}}
-                onAnswerChange={handleFollowUpAnswer}
-                onBack={() => setCurrentStep(2)}
-                onProceedToAssessment={handleCalculateAssessment}
-                language={language}
-                isOffline={isOfflineMode}
-              />
-            )}
+              {currentStep === 3 && (
+                <motion.div
+                  key="step-3"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                >
+                  <IntelligentFollowup
+                    patientData={patientData}
+                    answers={patientData.followUpAnswers || {}}
+                    onAnswerChange={handleFollowUpAnswer}
+                    onBack={() => {
+                      playHapticSound("step");
+                      setCurrentStep(2);
+                    }}
+                    onProceedToAssessment={handleCalculateAssessment}
+                    language={language}
+                    isOffline={isOfflineMode}
+                  />
+                </motion.div>
+              )}
 
-            {/* Step 4: Clinical Urgency & Risk Triage View */}
-            {currentStep === 4 && assessment && (
-              <RiskAssessmentView
-                assessment={assessment}
-                patientData={patientData}
-                onProceedToFacilities={() => setCurrentStep(5)}
-                onSaveRoutineCase={handleSaveRoutineCase}
-                onBack={() => setCurrentStep(3)}
-                language={language}
-                isOffline={isOfflineMode}
-              />
-            )}
+              {currentStep === 4 && assessment && (
+                <motion.div
+                  key="step-4"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                >
+                  <ClinicalRiskEngine3D
+                    assessment={assessment}
+                    patientData={patientData}
+                    onProceedToFacilities={() => {
+                      playHapticSound("step");
+                      setCurrentStep(5);
+                    }}
+                    onSaveRoutineCase={handleSaveRoutineCase}
+                    onBack={() => {
+                      playHapticSound("step");
+                      setCurrentStep(3);
+                    }}
+                    language={language}
+                  />
+                </motion.div>
+              )}
 
-            {/* Step 5: Nearest Appropriate Facilities & Referral Slip Generator */}
-            {currentStep === 5 && assessment && (
-              <FacilityLocator
-                assessment={assessment}
-                patientData={patientData}
-                onSelectFacilityAndGenerateSlip={handleSelectFacilityAndGenerateSlip}
-                onBack={() => setCurrentStep(4)}
-                language={language}
-              />
-            )}
+              {currentStep === 5 && assessment && (
+                <motion.div
+                  key="step-5"
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.24, ease: "easeOut" }}
+                >
+                  <ReferralMap3D
+                    assessment={assessment}
+                    patientData={patientData}
+                    onSelectFacilityAndGenerateSlip={handleSelectFacilityAndGenerateSlip}
+                    onBack={() => {
+                      playHapticSound("step");
+                      setCurrentStep(4);
+                    }}
+                    language={language}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         ) : (
           /* Doctor Hospital Dashboard */
@@ -484,6 +773,13 @@ export default function App() {
           />
         )}
       </main>
+
+      {/* Floating SIH Hackathon Demo Walkthrough Controller */}
+      <HackathonDemoController
+        currentDemoStep={demoStep}
+        onJumpToStep={handleJumpToDemoStep}
+        onResetDemo={() => handleJumpToDemoStep(1)}
+      />
 
       {/* Official Referral Slip Modal */}
       {showReferralModal && completedCase && (

@@ -20,8 +20,13 @@ import {
   Send,
   AlertTriangle,
   RefreshCw,
-  Printer
+  Printer,
+  Radio,
+  Wifi,
+  Sparkles,
+  X
 } from "lucide-react";
+import { playHapticSound } from "../../utils/audioFeedback";
 
 interface DoctorDashboardProps {
   cases: PatientCase[];
@@ -42,6 +47,8 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [doctorNoteInput, setDoctorNoteInput] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showTeleconsultModal, setShowTeleconsultModal] = useState(false);
+  const [teleconsultStatus, setTeleconsultStatus] = useState<"connecting" | "active" | "ended">("connecting");
 
   const filteredCases = cases.filter((c) => {
     const matchesRisk = riskFilter === "ALL" || c.riskLevel === riskFilter;
@@ -78,6 +85,45 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
   return (
     <div id="doctor-dashboard-view" className="space-y-6">
+      {/* 1. Futuristic Regional Command Center Status Bar */}
+      <div className="bg-slate-950 text-white rounded-3xl p-5 border border-slate-800 shadow-2xl flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center">
+            <Radio className="w-5 h-5 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+                DISTRICT CLINICAL COMMAND CENTER
+              </span>
+              <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                TELEMETRY LIVE
+              </span>
+            </div>
+            <h3 className="text-base sm:text-lg font-bold text-white mt-1">
+              District Civil Hospital & Trauma Centre (Sector 1)
+            </h3>
+          </div>
+        </div>
+
+        {/* Live Resource Indicators */}
+        <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+            <span className="text-slate-400 text-[10px] block">ICU BEDS AVAILABLE</span>
+            <span className="text-cyan-300 font-bold text-sm">4 / 12 Free</span>
+          </div>
+          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+            <span className="text-slate-400 text-[10px] block">OXYGEN PRESSURE</span>
+            <span className="text-emerald-400 font-bold text-sm">4.2 bar (Normal)</span>
+          </div>
+          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+            <span className="text-slate-400 text-[10px] block">108 AMBULANCES</span>
+            <span className="text-amber-400 font-bold text-sm">2 En-Route • 2 Standby</span>
+          </div>
+        </div>
+      </div>
+
       {/* Top District Health Overview Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
@@ -393,9 +439,12 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
                   <button
                     id="btn-doc-dispatch-ambulance"
-                    onClick={() => handleDoctorAction("108 Emergency Ambulance Dispatched with Oxygen")}
+                    onClick={() => {
+                      playHapticSound("alert");
+                      handleDoctorAction("108 Emergency Ambulance Dispatched with Oxygen");
+                    }}
                     disabled={isSubmitting}
-                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all"
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                   >
                     <PhoneCall className="w-3.5 h-3.5" />
                     <span>Dispatch 108 Ambulance</span>
@@ -403,19 +452,27 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
                   <button
                     id="btn-doc-teleconsult"
-                    onClick={() => handleDoctorAction("Teleconsultation Video Link Sent to ASHA")}
+                    onClick={() => {
+                      playHapticSound("success");
+                      setShowTeleconsultModal(true);
+                      setTeleconsultStatus("connecting");
+                      setTimeout(() => setTeleconsultStatus("active"), 1200);
+                    }}
                     disabled={isSubmitting}
-                    className="bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all"
+                    className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
                   >
                     <Video className="w-3.5 h-3.5" />
-                    <span>Launch Teleconsult</span>
+                    <span>Launch Teleconsult to Village</span>
                   </button>
 
                   <button
                     id="btn-doc-routine-rx"
-                    onClick={() => handleDoctorAction("Routine Home Care Guidance Approved")}
+                    onClick={() => {
+                      playHapticSound("success");
+                      handleDoctorAction("Routine Home Care Guidance Approved");
+                    }}
                     disabled={isSubmitting}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-4 py-2 rounded-xl border border-slate-200 flex items-center gap-1.5 transition-all"
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-4 py-2 rounded-xl border border-slate-200 flex items-center gap-1.5 transition-all cursor-pointer"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Approve Local Care</span>
@@ -430,6 +487,82 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Live Teleconsultation Video Modal */}
+      {showTeleconsultModal && selectedCase && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-cyan-500/40 rounded-3xl max-w-2xl w-full p-6 text-white shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
+                <h3 className="font-bold text-sm tracking-wider uppercase font-mono">
+                  LIVE TELECONSULTATION LINK: {selectedCase.village}
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowTeleconsultModal(false)}
+                className="p-1 hover:bg-slate-800 rounded-lg text-slate-400 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Video Simulated Stage */}
+            <div className="relative h-64 bg-slate-950 rounded-2xl border border-slate-800 flex flex-col items-center justify-center overflow-hidden">
+              {teleconsultStatus === "connecting" ? (
+                <div className="text-center space-y-2">
+                  <Sparkles className="w-8 h-8 text-cyan-400 animate-spin mx-auto" />
+                  <p className="text-xs font-mono text-cyan-300">
+                    Establishing encrypted WebRTC uplink to ASHA Tablet ({selectedCase.chwName})...
+                  </p>
+                </div>
+              ) : (
+                <div className="relative w-full h-full flex items-center justify-center bg-gradient-to-t from-slate-950 via-slate-900 to-slate-950">
+                  <div className="text-center space-y-2 z-10">
+                    <div className="w-16 h-16 rounded-full bg-cyan-900/60 border-2 border-cyan-400 text-cyan-300 flex items-center justify-center mx-auto text-xl font-bold">
+                      {selectedCase.chwName.slice(0, 2)}
+                    </div>
+                    <h4 className="font-bold text-sm">{selectedCase.chwName} (ASHA Worker)</h4>
+                    <p className="text-xs text-slate-400 font-mono">
+                      Village Subcentre • Audio & Vitals Stream Online
+                    </p>
+                    <div className="flex items-center justify-center gap-1 text-emerald-400 text-xs font-mono">
+                      <Wifi className="w-3.5 h-3.5" />
+                      <span>HD Audio 24kbps Low-Bandwidth Mode Active</span>
+                    </div>
+                  </div>
+
+                  {/* Picture-in-picture Doctor Preview */}
+                  <div className="absolute bottom-3 right-3 w-28 h-20 bg-slate-800 rounded-xl border border-slate-700 p-2 flex flex-col justify-end text-[10px] text-slate-300">
+                    <span className="font-bold">Dr. Sharma</span>
+                    <span className="text-emerald-400">Mic Active</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Direct Doctor Instruction Transmission */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  playHapticSound("success");
+                  handleDoctorAction("Clinical Order: Elevate head 45 deg, apply high-flow O2, prepare for transfer");
+                  setShowTeleconsultModal(false);
+                }}
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 font-bold text-xs py-3 rounded-xl cursor-pointer"
+              >
+                Transmit Direct Protocol: "Elevate head 45°, Apply O₂, Prepare Transfer"
+              </button>
+              <button
+                onClick={() => setShowTeleconsultModal(false)}
+                className="px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl cursor-pointer"
+              >
+                End Call
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

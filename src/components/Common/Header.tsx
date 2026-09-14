@@ -11,8 +11,10 @@ import {
   Languages,
   PlusCircle,
   ShieldCheck,
-  UserCheck
+  UserCheck,
+  Radio
 } from "lucide-react";
+import { playHapticSound } from "../../utils/audioFeedback";
 
 interface HeaderProps {
   currentRole: "CHW" | "DOCTOR";
@@ -42,22 +44,25 @@ export const Header: React.FC<HeaderProps> = ({
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
   return (
-    <header id="main-app-header" className="bg-white border-b border-slate-200 shadow-xs sticky top-0 z-40">
+    <header id="main-app-header" className="bg-white/90 backdrop-blur-md border-b border-slate-200/90 shadow-xs sticky top-0 z-40 transition-all duration-200">
       {/* Top Offline Notification Bar */}
       {isOfflineMode && (
         <div id="offline-alert-strip" className="bg-amber-500 text-amber-950 text-xs font-semibold px-4 py-1.5 flex items-center justify-between border-b border-amber-600/30">
           <div className="flex items-center gap-2">
-            <WifiOff className="w-4 h-4 shrink-0" />
+            <WifiOff className="w-4 h-4 shrink-0 animate-pulse" />
             <span>
-              <strong>OFFLINE MODE ACTIVE:</strong> Running local WHO/IMCI decision algorithms.
-              {offlineQueue.length > 0 && ` (${offlineQueue.length} record(s) in local sync queue)`}
+              <strong>OFFLINE MODE ACTIVE:</strong> Autonomous WHO/IMCI decision algorithms in memory.
+              {offlineQueue.length > 0 && ` (${offlineQueue.length} record(s) queued for sync)`}
             </span>
           </div>
           <button
-            onClick={onToggleOffline}
-            className="underline font-bold text-amber-950 hover:text-black text-xs ml-3"
+            onClick={() => {
+              playHapticSound("click");
+              onToggleOffline();
+            }}
+            className="underline font-bold text-amber-950 hover:text-black text-xs ml-3 cursor-pointer"
           >
-            Re-enable Online AI
+            Re-enable Cloud AI
           </button>
         </div>
       )}
@@ -65,14 +70,15 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
         {/* Brand and Logo */}
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-200">
-            <Activity className="w-5 h-5" />
+          <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/25 relative overflow-hidden group">
+            <Activity className="w-5 h-5 animate-pulse" />
+            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
           <div>
-            <h1 className="font-bold text-lg sm:text-xl tracking-tight text-slate-800 flex items-center gap-1.5">
-              SevaSetu
-              <span className="text-blue-600 font-normal text-sm sm:text-base hidden sm:inline">
-                | {currentRole === "CHW" ? "CHW Field Assistant" : "District Doctor Portal"}
+            <h1 className="font-extrabold text-lg sm:text-xl tracking-tight text-slate-900 font-display flex items-center gap-1.5">
+              <span>ArogyaSeva</span>
+              <span className="text-blue-600 font-normal text-xs sm:text-sm px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 hidden sm:inline">
+                {currentRole === "CHW" ? "CHW Field Mesh" : "Hospital Command"}
               </span>
             </h1>
             <p className="text-[11px] text-slate-500 font-medium hidden md:block">
@@ -82,19 +88,22 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Right Section: Sync Badge, Role Toggle, Language, Worker Profile */}
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3.5">
           {/* Online/Offline Status Indicator Pill */}
           <button
             id="header-btn-network-toggle"
-            onClick={onToggleOffline}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+            onClick={() => {
+              playHapticSound("click");
+              onToggleOffline();
+            }}
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
               isOfflineMode
-                ? "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
-                : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                ? "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 shadow-xs"
+                : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-xs"
             }`}
             title="Toggle Network connectivity simulation"
           >
-            <div className={`w-2 h-2 rounded-full ${isOfflineMode ? "bg-amber-500" : "bg-emerald-500"}`} />
+            <div className={`w-2 h-2 rounded-full ${isOfflineMode ? "bg-amber-500" : "bg-emerald-500 animate-ping"}`} />
             <span className="text-[11px] uppercase tracking-wide">
               {isOfflineMode ? "OFFLINE READY" : "CLOUD SYNCED"}
             </span>
@@ -104,9 +113,12 @@ export const Header: React.FC<HeaderProps> = ({
           {offlineQueue.length > 0 && (
             <button
               id="header-btn-sync"
-              onClick={onSyncOfflineQueue}
+              onClick={() => {
+                playHapticSound("step");
+                onSyncOfflineQueue();
+              }}
               disabled={isSyncing}
-              className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 animate-bounce shadow-xs transition-colors"
+              className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold px-2.5 py-1 rounded-lg flex items-center gap-1.5 animate-bounce shadow-xs transition-colors cursor-pointer"
               title="Sync pending local records with central cloud"
             >
               <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
@@ -118,22 +130,28 @@ export const Header: React.FC<HeaderProps> = ({
           {currentRole === "CHW" && (
             <button
               id="header-btn-new-patient"
-              onClick={onNewAssessment}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm shadow-blue-200"
+              onClick={() => {
+                playHapticSound("click");
+                onNewAssessment();
+              }}
+              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm shadow-blue-500/20 hover:scale-[1.02] cursor-pointer"
             >
               <PlusCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">New Assessment</span>
+              <span className="hidden sm:inline">New Intake</span>
             </button>
           )}
 
           {/* Language Selector */}
-          <div className="flex items-center bg-slate-100 rounded-lg border border-slate-200 px-2 py-1">
+          <div className="flex items-center bg-slate-100/90 rounded-lg border border-slate-200 px-2 py-1 shadow-2xs">
             <Languages className="w-3.5 h-3.5 text-slate-500 mr-1" />
             <select
               id="header-language-select"
               value={language}
-              onChange={(e) => onLanguageChange(e.target.value as SupportedLanguage)}
-              className="bg-transparent text-xs text-slate-700 font-semibold focus:outline-none cursor-pointer"
+              onChange={(e) => {
+                playHapticSound("click");
+                onLanguageChange(e.target.value as SupportedLanguage);
+              }}
+              className="bg-transparent text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
             >
               <option value="en">EN</option>
               <option value="hi">हिन्दी (HI)</option>
@@ -145,13 +163,16 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Role Toggle Switch */}
-          <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+          <div className="flex bg-slate-100/90 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
             <button
               id="header-role-chw"
-              onClick={() => onRoleChange("CHW")}
-              className={`px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all ${
+              onClick={() => {
+                playHapticSound("click");
+                onRoleChange("CHW");
+              }}
+              className={`px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
                 currentRole === "CHW"
-                  ? "bg-white text-blue-600 shadow-xs"
+                  ? "bg-white text-blue-600 shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -160,10 +181,13 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               id="header-role-doctor"
-              onClick={() => onRoleChange("DOCTOR")}
-              className={`px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all ${
+              onClick={() => {
+                playHapticSound("click");
+                onRoleChange("DOCTOR");
+              }}
+              className={`px-2.5 sm:px-3 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
                 currentRole === "DOCTOR"
-                  ? "bg-white text-blue-600 shadow-xs"
+                  ? "bg-white text-blue-600 shadow-xs font-bold"
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
@@ -182,7 +206,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {currentRole === "CHW" ? "SECTOR: RAMPUR" : "DISTRICT HOSPITAL"}
               </p>
             </div>
-            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center border-2 border-white shadow-xs">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold text-xs flex items-center justify-center border-2 border-white shadow-xs">
               {currentRole === "CHW" ? "AD" : "DR"}
             </div>
           </div>

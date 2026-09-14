@@ -16,8 +16,12 @@ import {
   CheckCircle,
   FileText,
   HelpCircle,
-  ArrowRight
+  ArrowRight,
+  Radio,
+  Layers
 } from "lucide-react";
+import { playHapticSound } from "../../utils/audioFeedback";
+import { VoiceIntake3D } from "./VoiceIntake3D";
 
 interface PatientRegistrationProps {
   formData: Partial<PatientCase>;
@@ -239,87 +243,43 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
     setNewSymptomInput("");
   };
 
+  const handleVoiceExtracted = (extracted: {
+    age?: number;
+    gender?: "Male" | "Female" | "Other";
+    symptoms: string[];
+    symptomDuration: string;
+    temperature?: number;
+    rawText: string;
+  }) => {
+    const isRespiratory =
+      extracted.rawText.toLowerCase().includes("breath") ||
+      extracted.rawText.toLowerCase().includes("saans") ||
+      extracted.rawText.toLowerCase().includes("shortness");
+
+    onChange({
+      age: extracted.age ?? formData.age,
+      gender: extracted.gender ?? formData.gender,
+      symptoms: extracted.symptoms.length > 0 ? extracted.symptoms : formData.symptoms,
+      symptomDuration: extracted.symptomDuration || formData.symptomDuration,
+      rawVoiceInput: extracted.rawText,
+      vitals: {
+        ...(formData.vitals as VitalsData),
+        temperature: extracted.temperature ?? formData.vitals?.temperature ?? 102.0,
+        spo2: isRespiratory ? 88 : formData.vitals?.spo2 ?? 98,
+        heartRate: isRespiratory ? 112 : formData.vitals?.heartRate ?? 76,
+        respiratoryRate: isRespiratory ? 28 : formData.vitals?.respiratoryRate ?? 18,
+      },
+    });
+  };
+
   return (
     <div id="patient-registration-step" className="space-y-6">
-      {/* 1. Voice Ingestion Box */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center font-bold">
-              <Mic className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-sm font-bold text-slate-800">
-                {t.voiceInputTitle}
-              </h3>
-              <p className="text-xs text-slate-500">
-                Speak or paste patient complaints in Hindi, Marathi, Bengali, Tamil, Telugu, or English
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              id="btn-toggle-mic"
-              onClick={toggleListening}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                isListening
-                  ? "bg-red-600 hover:bg-red-700 text-white animate-pulse shadow-sm"
-                  : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-200"
-              }`}
-            >
-              {isListening ? (
-                <>
-                  <MicOff className="w-3.5 h-3.5" />
-                  <span>{t.stopListening}</span>
-                </>
-              ) : (
-                <>
-                  <Mic className="w-3.5 h-3.5" />
-                  <span>Record Voice</span>
-                </>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Text Area */}
-        <div className="relative">
-          <textarea
-            id="input-voice-text"
-            rows={3}
-            value={voiceText}
-            onChange={(e) => {
-              setVoiceText(e.target.value);
-              onChange({ rawVoiceInput: e.target.value });
-            }}
-            placeholder={
-              language === "hi"
-                ? "उदाहरण: '52 साल के मरीज हैं, 3 दिन से तेज बुखार, सांस लेने में तकलीफ और 102°F तापमान है...'"
-                : "e.g., 'Patient is 52 years old, fever for 3 days, temperature 102°F, having difficulty breathing...'"
-            }
-            className="w-full text-sm p-3.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:outline-none transition-all placeholder:text-slate-400 text-slate-800"
-          />
-
-          {voiceText.trim().length > 0 && (
-            <div className="mt-2.5 flex items-center justify-between flex-wrap gap-2">
-              <span className="text-[11px] text-slate-500 font-medium">
-                {isListening ? "Listening live..." : "Natural text ready for AI extraction"}
-              </span>
-
-              <button
-                id="btn-extract-symptoms"
-                onClick={() => handleExtractFromText()}
-                disabled={isExtracting}
-                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm shadow-blue-100 transition-all"
-              >
-                <Sparkles className={`w-3.5 h-3.5 ${isExtracting ? "animate-spin" : ""}`} />
-                <span>{isExtracting ? "Structuring Case Facts..." : "AI Auto-Extract Clinical Fields"}</span>
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* 1. Signature 3D Voice Intake & Live AI Extraction HUD */}
+      <VoiceIntake3D
+        onDataExtracted={handleVoiceExtracted}
+        language={language}
+        currentRawText={formData.rawVoiceInput}
+      />
 
       {/* 2. Structured Patient Form Details */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
