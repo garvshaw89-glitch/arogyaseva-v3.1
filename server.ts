@@ -3,8 +3,28 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import cors from "cors";
+import NodeCache from "node-cache";
+import triageRouter, { ruleBasedTriage } from "./server/triage";
 
 dotenv.config();
+
+// Shared cache with 5-minute standard TTL
+const geoCache = new NodeCache({ stdTTL: 300, checkperiod: 120 });
+// Tile cache with 24-hour TTL (86400 seconds)
+const tileCache = new NodeCache({ stdTTL: 86400, checkperiod: 600, maxKeys: 2500 });
+
+// Contact agent per Nominatim usage policy
+const USER_AGENT = "ArogyaSeva-RuralHealth/1.0 (ruralhealth-referral@arogyaseva.org)";
+
+async function fetchWithAgent(url: string) {
+  return await fetch(url, {
+    headers: {
+      "User-Agent": USER_AGENT,
+      "Accept-Language": "en",
+    },
+  });
+}
 
 // In-memory case store for the session (synchronized with client storage)
 interface CaseRecord {
@@ -51,9 +71,16 @@ interface CaseRecord {
     type: string;
     distanceKm: number;
   };
-  status: "PENDING_REVIEW" | "DOCTOR_REVIEWED" | "DISPATCHED" | "RESOLVED";
+  status: "PENDING_REVIEW" | "DOCTOR_REVIEWED" | "DISPATCHED" | "IN_TRANSIT" | "RESOLVED";
   doctorNotes?: string;
   doctorAction?: string;
+  triageSignal?: {
+    danger: boolean;
+    level: "emergency" | "urgent" | "non-urgent";
+    reasons: string[];
+    advice: string;
+    llm_assist?: any;
+  };
   createdAt: string;
   syncedAt: string;
   isOfflineCreated?: boolean;
@@ -322,7 +349,11 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.use(cors());
   app.use(express.json({ limit: "10mb" }));
+
+  // API Route: Triage Engine for AI Signals
+  app.use("/api", triageRouter);
 
   // API Route: Health Check
   app.get("/api/health", (_req: Request, res: Response) => {
@@ -334,11 +365,32 @@ async function startServer() {
     });
   });
 
-  // API Route: Get all cases
+  // API Route: Get all cases with AI Triage Signals
   app.get("/api/cases", (_req: Request, res: Response) => {
+    const enrichedCases = casesDatabase.map((c) => {
+      if (!c.triageSignal) {
+        c.triageSignal = ruleBasedTriage({
+          age: c.age,
+          sex: c.gender,
+          symptoms: (c.symptoms || []).join(" "),
+          vitals: {
+            temp: c.vitals?.temperature,
+            hr: c.vitals?.heartRate,
+            bp_systolic: c.vitals?.bpSystolic,
+            bp_diastolic: c.vitals?.bpDiastolic,
+            rr: c.vitals?.respiratoryRate,
+            spo2: c.vitals?.spo2,
+          },
+          comorbidities: c.chronicConditions,
+          onset: c.symptomDuration,
+        });
+      }
+      return c;
+    });
+
     res.json({
       success: true,
-      cases: casesDatabase,
+      cases: enrichedCases,
     });
   });
 
@@ -349,6 +401,24 @@ async function startServer() {
       newCase.id = `CASE-${Math.floor(1000 + Math.random() * 9000)}`;
     }
     newCase.syncedAt = new Date().toISOString();
+
+    if (!newCase.triageSignal) {
+      newCase.triageSignal = ruleBasedTriage({
+        age: newCase.age,
+        sex: newCase.gender,
+        symptoms: (newCase.symptoms || []).join(" "),
+        vitals: {
+          temp: newCase.vitals?.temperature,
+          hr: newCase.vitals?.heartRate,
+          bp_systolic: newCase.vitals?.bpSystolic,
+          bp_diastolic: newCase.vitals?.bpDiastolic,
+          rr: newCase.vitals?.respiratoryRate,
+          spo2: newCase.vitals?.spo2,
+        },
+        comorbidities: newCase.chronicConditions,
+        onset: newCase.symptomDuration,
+      });
+    }
 
     const existingIdx = casesDatabase.findIndex((c) => c.id === newCase.id);
     if (existingIdx >= 0) {
@@ -452,22 +522,46 @@ Return valid JSON only.`;
       });
 
       const parsed = JSON.parse(response.text?.trim() || "{}");
+      parsed.triageSignal = ruleBasedTriage({
+        age: parsed.age,
+        sex: parsed.gender,
+        symptoms: (parsed.symptoms || []).join(" ") + " " + (parsed.normalizedSummary || "") + " " + (parsed.urgentRedFlagsMentioned || []).join(" "),
+        vitals: {
+          temp: parsed.vitalsMentioned?.temperature,
+          spo2: parsed.vitalsMentioned?.spo2,
+          bp_systolic: parsed.vitalsMentioned?.bpSystolic,
+          bp_diastolic: parsed.vitalsMentioned?.bpDiastolic,
+          hr: parsed.vitalsMentioned?.heartRate,
+          rr: parsed.vitalsMentioned?.respiratoryRate,
+        },
+        comorbidities: parsed.chronicConditions,
+        onset: parsed.duration,
+      });
       res.json({ success: true, data: parsed, source: "gemini_ai" });
     } catch (err: any) {
       console.error("Extraction error:", err);
+      const fallbackData: any = {
+        age: 30,
+        gender: "Male",
+        symptoms: ["Fever", "Fatigue"],
+        duration: "2 days",
+        vitalsMentioned: {},
+        isPregnant: false,
+        chronicConditions: [],
+        normalizedSummary: "Clinical input received."
+      };
+      fallbackData.triageSignal = ruleBasedTriage({
+        age: fallbackData.age,
+        sex: fallbackData.gender,
+        symptoms: fallbackData.symptoms.join(" "),
+        vitals: {},
+        comorbidities: [],
+        onset: fallbackData.duration,
+      });
       res.status(500).json({
         success: false,
         error: "Failed to extract symptoms",
-        fallback: {
-          age: 30,
-          gender: "Male",
-          symptoms: ["Fever", "Fatigue"],
-          duration: "2 days",
-          vitalsMentioned: {},
-          isPregnant: false,
-          chronicConditions: [],
-          normalizedSummary: "Clinical input received."
-        }
+        fallback: fallbackData
       });
     }
   });
@@ -581,10 +675,40 @@ Return pure JSON.`;
       });
 
       const assessment = JSON.parse(response.text?.trim() || "{}");
+      assessment.triageSignal = ruleBasedTriage({
+        age: patientData.age,
+        sex: patientData.gender,
+        symptoms: Array.isArray(patientData.symptoms) ? patientData.symptoms.join(" ") : patientData.symptoms,
+        vitals: {
+          temp: patientData.vitals?.temperature,
+          spo2: patientData.vitals?.spo2,
+          bp_systolic: patientData.vitals?.bpSystolic,
+          bp_diastolic: patientData.vitals?.bpDiastolic,
+          hr: patientData.vitals?.heartRate,
+          rr: patientData.vitals?.respiratoryRate,
+        },
+        comorbidities: patientData.chronicConditions,
+        onset: patientData.symptomDuration,
+      });
       res.json({ success: true, assessment, source: "gemini_ai" });
     } catch (err: any) {
       console.error("Risk assessment error:", err);
       const fallbackAssessment = evaluateRuleBasedRisk(req.body);
+      fallbackAssessment.triageSignal = ruleBasedTriage({
+        age: req.body.age,
+        sex: req.body.gender,
+        symptoms: Array.isArray(req.body.symptoms) ? req.body.symptoms.join(" ") : req.body.symptoms,
+        vitals: {
+          temp: req.body.vitals?.temperature,
+          spo2: req.body.vitals?.spo2,
+          bp_systolic: req.body.vitals?.bpSystolic,
+          bp_diastolic: req.body.vitals?.bpDiastolic,
+          hr: req.body.vitals?.heartRate,
+          rr: req.body.vitals?.respiratoryRate,
+        },
+        comorbidities: req.body.chronicConditions,
+        onset: req.body.symptomDuration,
+      });
       res.json({ success: true, assessment: fallbackAssessment, source: "clinical_rules_fallback" });
     }
   });
@@ -613,6 +737,286 @@ Return only the translated string.`;
     } catch (err) {
       res.json({ success: false, translatedText: req.body.text });
     }
+  });
+
+  // --- OPENSTREETMAP, GEOCODING, ROUTING & OFFLINE TILE CACHE API ---
+
+  // 1. Geocoding (Forward Address Search) with 5-min caching
+  app.get("/api/geocode", async (req: Request, res: Response) => {
+    try {
+      const q = req.query.q as string;
+      if (!q || !q.trim()) {
+        res.status(400).json({ error: "q parameter required" });
+        return;
+      }
+
+      const key = `geocode:${q.trim().toLowerCase()}`;
+      const cached = geoCache.get(key);
+      if (cached) {
+        res.setHeader("X-Cache", "HIT");
+        res.json(cached);
+        return;
+      }
+
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q.trim())}&addressdetails=1&limit=8`;
+      const r = await fetchWithAgent(url);
+      if (!r.ok) {
+        // Fallback to local district search
+        const fallback = searchLocalPlaces(q);
+        res.json(fallback);
+        return;
+      }
+
+      const data = await r.json();
+      geoCache.set(key, data);
+      res.setHeader("X-Cache", "MISS");
+      res.json(data);
+    } catch (err: any) {
+      const fallback = searchLocalPlaces((req.query.q as string) || "");
+      res.json(fallback);
+    }
+  });
+
+  // 2. Reverse Geocoding (Lat/Lon -> Place Name) with caching
+  app.get("/api/reverse", async (req: Request, res: Response) => {
+    try {
+      const lat = req.query.lat as string;
+      const lon = req.query.lon as string;
+      if (!lat || !lon) {
+        res.status(400).json({ error: "lat and lon required" });
+        return;
+      }
+
+      const key = `reverse:${parseFloat(lat).toFixed(4)},${parseFloat(lon).toFixed(4)}`;
+      const cached = geoCache.get(key);
+      if (cached) {
+        res.setHeader("X-Cache", "HIT");
+        res.json(cached);
+        return;
+      }
+
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lon)}&addressdetails=1`;
+      const r = await fetchWithAgent(url);
+      if (!r.ok) {
+        res.json({
+          display_name: `Rural Health Coordinates (${parseFloat(lat).toFixed(3)}°N, ${parseFloat(lon).toFixed(3)}°E)`,
+          lat,
+          lon,
+        });
+        return;
+      }
+
+      const data = await r.json();
+      geoCache.set(key, data);
+      res.setHeader("X-Cache", "MISS");
+      res.json(data);
+    } catch (err: any) {
+      res.json({
+        display_name: `Rural Sector Point (${parseFloat(req.query.lat as string || "0").toFixed(3)}°N, ${parseFloat(req.query.lon as string || "0").toFixed(3)}°E)`,
+        lat: req.query.lat,
+        lon: req.query.lon,
+      });
+    }
+  });
+
+  // 3. Routing via OSRM public server with cached routes & offline fallback
+  app.get("/api/route", async (req: Request, res: Response) => {
+    try {
+      const start = req.query.start as string; // "lat,lon"
+      const end = req.query.end as string;     // "lat,lon"
+      if (!start || !end) {
+        res.status(400).json({ error: "start and end required (lat,lon)" });
+        return;
+      }
+
+      const key = `route:${start}:${end}`;
+      const cached = geoCache.get(key);
+      if (cached) {
+        res.setHeader("X-Cache", "HIT");
+        res.json(cached);
+        return;
+      }
+
+      const [sLatStr, sLonStr] = start.split(",");
+      const [eLatStr, eLonStr] = end.split(",");
+      const sLat = parseFloat(sLatStr?.trim());
+      const sLon = parseFloat(sLonStr?.trim());
+      const eLat = parseFloat(eLatStr?.trim());
+      const eLon = parseFloat(eLonStr?.trim());
+
+      if (isNaN(sLat) || isNaN(sLon) || isNaN(eLat) || isNaN(eLon)) {
+        res.status(400).json({ error: "bad coordinate format (expected lat,lon)" });
+        return;
+      }
+
+      const url = `https://router.project-osrm.org/route/v1/driving/${sLon},${sLat};${eLon},${eLat}?overview=full&geometries=geojson&steps=false`;
+      
+      try {
+        const r = await fetch(url, { signal: AbortSignal.timeout(3500) });
+        if (r.ok) {
+          const data = await r.json();
+          if (data && data.routes && data.routes.length > 0) {
+            geoCache.set(key, data, 1800); // 30 min cache
+            res.setHeader("X-Cache", "MISS");
+            res.json(data);
+            return;
+          }
+        }
+      } catch (osrmErr) {
+        // Fall through to procedural route fallback
+      }
+
+      // Procedural routing fallback (reliable when offline or OSRM unavailable)
+      const fallback = buildFallbackRoute(sLat, sLon, eLat, eLon);
+      geoCache.set(key, fallback, 1800);
+      res.json(fallback);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 4. Map Tile Caching & Serving Endpoint (/api/tile/:z/:x/:y)
+  app.get("/api/tile/:z/:x/:y", async (req: Request, res: Response) => {
+    const { z, x, y } = req.params;
+    const tileKey = `tile:${z}:${x}:${y}`;
+
+    const cached = tileCache.get<Buffer>(tileKey);
+    if (cached) {
+      res.setHeader("Content-Type", "image/png");
+      res.setHeader("Cache-Control", "public, max-age=86400, immutable");
+      res.setHeader("X-Tile-Cache", "HIT");
+      res.send(cached);
+      return;
+    }
+
+    const tileUrl = `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
+    try {
+      const r = await fetchWithAgent(tileUrl);
+      if (r.ok) {
+        const arrayBuf = await r.arrayBuffer();
+        const buffer = Buffer.from(arrayBuf);
+        tileCache.set(tileKey, buffer);
+        res.setHeader("Content-Type", "image/png");
+        res.setHeader("Cache-Control", "public, max-age=86400, immutable");
+        res.setHeader("X-Tile-Cache", "MISS");
+        res.send(buffer);
+        return;
+      }
+      // If OSM returns 4xx/5xx, redirect
+      res.redirect(tileUrl);
+    } catch {
+      // Offline / network failure: redirect
+      res.redirect(tileUrl);
+    }
+  });
+
+  // 5. Nearby Hospitals Discovery Endpoint
+  app.get("/api/nearby-hospitals", async (req: Request, res: Response) => {
+    try {
+      const lat = parseFloat((req.query.lat as string) || "22.7533");
+      const lon = parseFloat((req.query.lon as string) || "77.7291");
+      const radiusKm = parseFloat((req.query.radius as string) || "50");
+
+      const key = `nearby:${lat.toFixed(3)},${lon.toFixed(3)}:${radiusKm}`;
+      const cached = geoCache.get(key);
+      if (cached) {
+        res.json(cached);
+        return;
+      }
+
+      // Calculate distances for local known facilities
+      const rankedFacilities = DISTRICT_HEALTH_FACILITIES.map((f) => {
+        const distance = computeHaversineKm(lat, lon, f.latitude, f.longitude);
+        const approxSpeed = f.type.includes("District") ? 45 : 35; // rural km/h
+        const travelMins = Math.max(3, Math.round((distance / approxSpeed) * 60));
+        return {
+          ...f,
+          distanceKm: parseFloat(distance.toFixed(1)),
+          travelTimeMins: travelMins,
+        };
+      })
+        .filter((f) => f.distanceKm <= radiusKm * 1.5)
+        .sort((a, b) => a.distanceKm - b.distanceKm);
+
+      const responsePayload = {
+        success: true,
+        origin: { latitude: lat, longitude: lon },
+        radiusKm,
+        totalFound: rankedFacilities.length,
+        facilities: rankedFacilities,
+      };
+
+      geoCache.set(key, responsePayload, 600);
+      res.json(responsePayload);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // 6. Live Location Telemetry Tracking API (Ambulance & CHW Real-Time Fleet)
+  const activeTelemetryMap = new Map<string, any>();
+
+  app.post("/api/telemetry/location", (req: Request, res: Response) => {
+    try {
+      const {
+        caseId = "GENERAL-FLEET",
+        latitude,
+        longitude,
+        speedKmH = 0,
+        heading = 0,
+        accuracyMeters = 10,
+        status = "IN_TRANSIT",
+        patientName,
+        targetFacilityName,
+      } = req.body;
+
+      if (latitude === undefined || longitude === undefined) {
+        res.status(400).json({ error: "latitude and longitude are required" });
+        return;
+      }
+
+      const telemetryPoint = {
+        caseId,
+        latitude: parseFloat(latitude),
+        longitude: parseFloat(longitude),
+        speedKmH: Math.round(speedKmH),
+        heading: Math.round(heading),
+        accuracyMeters: Math.round(accuracyMeters),
+        status,
+        patientName: patientName || "Emergency Referral",
+        targetFacilityName: targetFacilityName || "District Hospital",
+        updatedAt: new Date().toISOString(),
+      };
+
+      activeTelemetryMap.set(caseId, telemetryPoint);
+
+      // If associated with a case, update the case status
+      const associatedCase = casesDatabase.find((c) => c.id === caseId);
+      if (associatedCase) {
+        associatedCase.status = "IN_TRANSIT";
+      }
+
+      res.json({ success: true, telemetry: telemetryPoint });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/telemetry/location/:caseId?", (req: Request, res: Response) => {
+    const { caseId } = req.params;
+    if (caseId) {
+      const point = activeTelemetryMap.get(caseId);
+      if (!point) {
+        res.status(404).json({ success: false, error: "No active telemetry for this case" });
+        return;
+      }
+      res.json({ success: true, telemetry: point });
+      return;
+    }
+
+    // Return all active fleet telemetry points
+    const allTelemetry = Array.from(activeTelemetryMap.values());
+    res.json({ success: true, count: allTelemetry.length, vehicles: allTelemetry });
   });
 
   // Vite middleware for development
@@ -808,6 +1212,202 @@ function evaluateRuleBasedRisk(data: any): any {
       assessment: `Risk Tier: ${riskLevel}. Danger Signs: ${dangerSigns.join("; ") || "None flagged."}`,
       recommendation: `Recommended triage action: ${riskLevel === "URGENT" ? "Emergency referral to secondary hospital" : "Routine clinical consultation"}.`
     }
+  };
+}
+
+// Healthcare Facilities with precise GPS coordinates for mapping & routing
+const DISTRICT_HEALTH_FACILITIES = [
+  {
+    id: "HWC-01",
+    name: "Ayushman Arogya Mandir (Pipariya Sub-Centre)",
+    type: "Sub-Centre / HWC",
+    latitude: 22.7533,
+    longitude: 77.7291,
+    address: "Main Gram Panchayat Road, Pipariya Kalan",
+    contactNumber: "+91 94251 00112",
+    emergencyHotline: "108",
+    hasOxygen: true,
+    hasBloodBank: false,
+    hasCSection: false,
+    hasNICU: false,
+    hasSnakeAntivenom: false,
+    hasAmbulance24x7: false,
+    availableBeds: 2,
+    icuBedsAvailable: 0,
+  },
+  {
+    id: "PHC-01",
+    name: "Primary Health Centre - Bhimnagar 24x7",
+    type: "Primary Health Centre (PHC)",
+    latitude: 22.7812,
+    longitude: 77.7654,
+    address: "NH-46 Junction, Bhimnagar Block",
+    contactNumber: "+91 7574 220199",
+    emergencyHotline: "108 / 104",
+    hasOxygen: true,
+    hasBloodBank: false,
+    hasCSection: false,
+    hasNICU: false,
+    hasSnakeAntivenom: true,
+    hasAmbulance24x7: true,
+    availableBeds: 6,
+    icuBedsAvailable: 0,
+  },
+  {
+    id: "CHC-01",
+    name: "Community Health Centre & FRU - Rampur",
+    type: "Community Health Centre (CHC / FRU)",
+    latitude: 22.8421,
+    longitude: 77.8512,
+    address: "Civil Lines, Rampur Tehsil HQ",
+    contactNumber: "+91 7574 244501",
+    emergencyHotline: "108 / +91 7574 244500",
+    hasOxygen: true,
+    hasBloodBank: true,
+    hasCSection: true,
+    hasNICU: true,
+    hasSnakeAntivenom: true,
+    hasAmbulance24x7: true,
+    availableBeds: 30,
+    icuBedsAvailable: 4,
+  },
+  {
+    id: "SDH-01",
+    name: "Sub-District Hospital - Hoshangabad West",
+    type: "Sub-District Hospital",
+    latitude: 22.7521,
+    longitude: 77.9211,
+    address: "Station Road, Near Tehsil Complex",
+    contactNumber: "+91 7574 288310",
+    emergencyHotline: "108 / +91 7574 288300",
+    hasOxygen: true,
+    hasBloodBank: true,
+    hasCSection: true,
+    hasNICU: true,
+    hasSnakeAntivenom: true,
+    hasAmbulance24x7: true,
+    availableBeds: 65,
+    icuBedsAvailable: 8,
+  },
+  {
+    id: "DH-01",
+    name: "District Civil Hospital & Trauma Centre",
+    type: "District Hospital & Trauma",
+    latitude: 22.7489,
+    longitude: 77.7289,
+    address: "District Collectorate Road, Narmadapuram",
+    contactNumber: "+91 7574 252200",
+    emergencyHotline: "108 (24x7 Control Room: 07574-252201)",
+    hasOxygen: true,
+    hasBloodBank: true,
+    hasCSection: true,
+    hasNICU: true,
+    hasSnakeAntivenom: true,
+    hasAmbulance24x7: true,
+    availableBeds: 250,
+    icuBedsAvailable: 24,
+  },
+];
+
+function computeHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Earth radius in km
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function searchLocalPlaces(q: string) {
+  const query = q.toLowerCase();
+  const matched = DISTRICT_HEALTH_FACILITIES.filter(
+    (f) =>
+      f.name.toLowerCase().includes(query) ||
+      f.type.toLowerCase().includes(query) ||
+      f.address.toLowerCase().includes(query)
+  );
+
+  if (matched.length > 0) {
+    return matched.map((m) => ({
+      place_id: m.id,
+      lat: m.latitude.toString(),
+      lon: m.longitude.toString(),
+      display_name: `${m.name}, ${m.address}`,
+      type: "hospital",
+      importance: 0.9,
+    }));
+  }
+
+  // Fallback generic points for rural district centers
+  return [
+    {
+      place_id: "ramp-01",
+      lat: "22.8421",
+      lon: "77.8512",
+      display_name: "Rampur Tehsil Health Block, District Hospital Network",
+      type: "administrative",
+      importance: 0.8,
+    },
+    {
+      place_id: "bhim-01",
+      lat: "22.7812",
+      lon: "77.7654",
+      display_name: "Bhimnagar Sector & Primary Health Centre",
+      type: "administrative",
+      importance: 0.75,
+    },
+    {
+      place_id: "pip-01",
+      lat: "22.7533",
+      lon: "77.7291",
+      display_name: "Pipariya Kalan Gram Panchayat Sub-Centre",
+      type: "administrative",
+      importance: 0.7,
+    },
+  ];
+}
+
+function buildFallbackRoute(sLat: number, sLon: number, eLat: number, eLon: number) {
+  // Generates curved polyline coordinates connecting village to target hospital
+  const coordinates: [number, number][] = [];
+  const segments = 24;
+
+  for (let i = 0; i <= segments; i++) {
+    const fraction = i / segments;
+    // Add realistic country road waviness
+    const roadCurve = Math.sin(fraction * Math.PI) * 0.006;
+    const lat = sLat + (eLat - sLat) * fraction + roadCurve;
+    const lon = sLon + (eLon - sLon) * fraction + roadCurve * 0.75;
+    coordinates.push([parseFloat(lon.toFixed(5)), parseFloat(lat.toFixed(5))]);
+  }
+
+  const directDist = computeHaversineKm(sLat, sLon, eLat, eLon);
+  const roadDistKm = directDist * 1.28; // Rural road winding coefficient
+  const durationSec = Math.max(300, Math.round((roadDistKm / 42) * 3600)); // 42 km/h rural transit speed
+
+  return {
+    code: "Ok",
+    routes: [
+      {
+        geometry: {
+          type: "LineString",
+          coordinates,
+        },
+        distance: Math.round(roadDistKm * 1000),
+        duration: durationSec,
+        weight: durationSec,
+        weight_name: "routability",
+      },
+    ],
+    waypoints: [
+      { location: [sLon, sLat], name: "Village Origin Point" },
+      { location: [eLon, eLat], name: "Referred Healthcare Facility" },
+    ],
   };
 }
 

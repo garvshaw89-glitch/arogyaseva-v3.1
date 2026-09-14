@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import { Card3DTilt } from "../Common/Card3DTilt";
 import { playHapticSound } from "../../utils/audioFeedback";
+import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
+import { clientRuleBasedTriage } from "../../utils/triageSignal";
 
 interface ClinicalRiskEngine3DProps {
   assessment: RiskAssessment;
@@ -48,6 +50,22 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
   const isUrgent = assessment.riskLevel === "URGENT";
   const isConsultation = assessment.riskLevel === "CONSULTATION";
   const isRoutine = assessment.riskLevel === "ROUTINE";
+
+  const triageSignal = assessment.triageSignal || clientRuleBasedTriage({
+    age: patientData.age,
+    sex: patientData.gender ? (patientData.gender.toLowerCase() as any) : "unknown",
+    symptoms: Array.isArray(patientData.symptoms) ? patientData.symptoms.join(", ") : "",
+    vitals: {
+      temp: patientData.vitals?.temperature,
+      hr: patientData.vitals?.heartRate,
+      bp_systolic: patientData.vitals?.bpSystolic,
+      bp_diastolic: patientData.vitals?.bpDiastolic,
+      rr: patientData.vitals?.respiratoryRate,
+      spo2: patientData.vitals?.spo2,
+    },
+    comorbidities: patientData.chronicConditions,
+    onset: patientData.symptomDuration,
+  });
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -378,6 +396,29 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Universal AI Triage Signal Badge */}
+        {triageSignal && (
+          <div className="mt-6 pt-5 border-t border-slate-800/80">
+            <AiTriageSignalBadge
+              triageSignal={triageSignal}
+              payload={{
+                age: patientData.age,
+                sex: patientData.gender?.toLowerCase(),
+                symptoms: Array.isArray(patientData.symptoms) ? patientData.symptoms.join(", ") : "",
+                vitals: {
+                  hr: patientData.vitals?.heartRate,
+                  bp_systolic: patientData.vitals?.bpSystolic,
+                  bp_diastolic: patientData.vitals?.bpDiastolic,
+                  rr: patientData.vitals?.respiratoryRate,
+                  spo2: patientData.vitals?.spo2,
+                },
+                comorbidities: patientData.chronicConditions,
+                onset: patientData.symptomDuration,
+              }}
+            />
+          </div>
+        )}
 
         {/* Danger Red Flags Banner */}
         {assessment.dangerSigns && assessment.dangerSigns.length > 0 && (

@@ -1,6 +1,6 @@
 {
   "name": "ArogyaSeva - Rural Clinical Decision & Referral Network",
   "description": "AI-powered clinical decision support, multi-lingual voice triage, offline-first emergency scoring, and referral network connecting Community Health Workers (ASHAs) to District Doctors.",
-  "requestFramePermissions": ["microphone"],
+  "requestFramePermissions": ["microphone", "geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

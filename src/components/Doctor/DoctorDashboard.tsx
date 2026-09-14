@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { PatientCase, SupportedLanguage } from "../../types";
 import { TRANSLATIONS } from "../../utils/translations";
 import {
@@ -24,9 +24,16 @@ import {
   Radio,
   Wifi,
   Sparkles,
-  X
+  X,
+  MapPin,
+  Navigation,
+  Gauge,
+  Zap,
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
+import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
+import { AiSignalInspectorModal } from "../Common/AiSignalInspectorModal";
+import { clientRuleBasedTriage } from "../../utils/triageSignal";
 
 interface DoctorDashboardProps {
   cases: PatientCase[];
@@ -49,6 +56,29 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showTeleconsultModal, setShowTeleconsultModal] = useState(false);
   const [teleconsultStatus, setTeleconsultStatus] = useState<"connecting" | "active" | "ended">("connecting");
+  const [activeVehicles, setActiveVehicles] = useState<any[]>([]);
+  const [showInspectorModal, setShowInspectorModal] = useState(false);
+
+  // Poll live ambulance & fleet telemetry
+  useEffect(() => {
+    const fetchTelemetry = async () => {
+      try {
+        const res = await fetch("/api/telemetry/location");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.vehicles)) {
+            setActiveVehicles(data.vehicles);
+          }
+        }
+      } catch (err) {
+        // silent fallback
+      }
+    };
+
+    fetchTelemetry();
+    const interval = setInterval(fetchTelemetry, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const filteredCases = cases.filter((c) => {
     const matchesRisk = riskFilter === "ALL" || c.riskLevel === riskFilter;
@@ -119,10 +149,76 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           </div>
           <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
             <span className="text-slate-400 text-[10px] block">108 AMBULANCES</span>
-            <span className="text-amber-400 font-bold text-sm">2 En-Route • 2 Standby</span>
+            <span className="text-amber-400 font-bold text-sm">
+              {activeVehicles.length > 0 ? `${activeVehicles.length} Live En-Route` : "2 Standby"}
+            </span>
           </div>
+          <button
+            onClick={() => setShowInspectorModal(true)}
+            className="bg-cyan-500/10 border border-cyan-500/40 hover:bg-cyan-500/20 text-cyan-300 px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all cursor-pointer font-bold shadow-md shadow-cyan-950/40 hover:scale-[1.02]"
+          >
+            <Zap className="w-4 h-4 text-cyan-400 animate-pulse" />
+            <span className="font-mono text-xs">AI SIGNAL INSPECTOR</span>
+          </button>
         </div>
       </div>
+
+      {/* Live Ambulance Fleet Telemetry Stream (Active Dispatches) */}
+      {activeVehicles.length > 0 && (
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-cyan-500/40 rounded-3xl p-4 shadow-xl text-white space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-ping" />
+              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-300 flex items-center gap-2">
+                <Radio className="w-4 h-4 text-cyan-400" />
+                LIVE AMBULANCE TRANSIT TELEMETRY ({activeVehicles.length} ACTIVE)
+              </h4>
+            </div>
+            <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700">
+              UPDATED SECONDS AGO
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {activeVehicles.map((v, i) => (
+              <div
+                key={i}
+                className="bg-slate-900/90 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between gap-3 hover:border-cyan-500/50 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-red-600/20 text-red-400 border border-red-500/40 flex items-center justify-center text-lg shadow-inner">
+                    🚑
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-white">{v.patientName}</span>
+                      <span className="text-[10px] font-mono bg-red-950 text-red-300 border border-red-800 px-1.5 py-0.2 rounded font-bold">
+                        {v.caseId}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5 font-mono">
+                      <MapPin className="w-3 h-3 text-cyan-400" />
+                      <span>{v.latitude.toFixed(4)}°N, {v.longitude.toFixed(4)}°E</span>
+                      <span>•</span>
+                      <span>Target: <strong className="text-slate-200">{v.targetFacilityName}</strong></span>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right font-mono shrink-0">
+                  <div className="flex items-center gap-1 text-cyan-300 font-bold text-xs justify-end">
+                    <Gauge className="w-3 h-3 text-cyan-400" />
+                    <span>{v.speedKmH} km/h</span>
+                  </div>
+                  <span className="text-[10px] text-emerald-400 font-semibold bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800 block mt-1">
+                    TRAUMA BAY READY
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Top District Health Overview Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -286,6 +382,28 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                       </span>
                     </div>
 
+                    <div className="mt-2 flex items-center justify-between">
+                      <AiTriageSignalBadge
+                        compact
+                        triageSignal={
+                          c.triageSignal ||
+                          clientRuleBasedTriage({
+                            age: c.age,
+                            sex: c.gender?.toLowerCase() as any,
+                            symptoms: (c.symptoms || []).join(" ") + " " + (c.clinicalImpression || ""),
+                            vitals: {
+                              spo2: c.vitals.spo2,
+                              bp_systolic: c.vitals.bpSystolic,
+                              bp_diastolic: c.vitals.bpDiastolic,
+                              hr: c.vitals.heartRate,
+                              rr: c.vitals.respiratoryRate,
+                            },
+                            comorbidities: c.chronicConditions,
+                          })
+                        }
+                      />
+                    </div>
+
                     {c.status === "DOCTOR_REVIEWED" && (
                       <div className="mt-2 text-[10px] text-blue-700 font-bold bg-blue-50 px-2 py-0.5 rounded flex items-center gap-1 border border-blue-100">
                         <CheckCircle2 className="w-3 h-3 text-blue-600" />
@@ -371,6 +489,46 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                     </span>
                   </div>
                 </div>
+              </div>
+
+              {/* Universal AI Triage Signal Audit Card */}
+              <div>
+                <AiTriageSignalBadge
+                  triageSignal={
+                    selectedCase.triageSignal ||
+                    clientRuleBasedTriage({
+                      age: selectedCase.age,
+                      sex: selectedCase.gender?.toLowerCase() as any,
+                      symptoms:
+                        (selectedCase.symptoms || []).join(", ") +
+                        " " +
+                        (selectedCase.clinicalImpression || "") +
+                        " " +
+                        (selectedCase.rawVoiceInput || ""),
+                      vitals: {
+                        spo2: selectedCase.vitals.spo2,
+                        bp_systolic: selectedCase.vitals.bpSystolic,
+                        bp_diastolic: selectedCase.vitals.bpDiastolic,
+                        hr: selectedCase.vitals.heartRate,
+                        rr: selectedCase.vitals.respiratoryRate,
+                      },
+                      comorbidities: selectedCase.chronicConditions,
+                    })
+                  }
+                  payload={{
+                    age: selectedCase.age,
+                    sex: selectedCase.gender?.toLowerCase() as any,
+                    symptoms: (selectedCase.symptoms || []).join(", "),
+                    vitals: {
+                      spo2: selectedCase.vitals.spo2,
+                      bp_systolic: selectedCase.vitals.bpSystolic,
+                      bp_diastolic: selectedCase.vitals.bpDiastolic,
+                      hr: selectedCase.vitals.heartRate,
+                      rr: selectedCase.vitals.respiratoryRate,
+                    },
+                    comorbidities: selectedCase.chronicConditions,
+                  }}
+                />
               </div>
 
               {/* Voice Transcript */}
@@ -563,6 +721,36 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Universal AI Signal Triage Tester & Inspector Modal */}
+      <AiSignalInspectorModal
+        isOpen={showInspectorModal}
+        onClose={() => setShowInspectorModal(false)}
+        initialPayload={
+          selectedCase
+            ? {
+                age: selectedCase.age,
+                sex: selectedCase.gender.toLowerCase() as any,
+                symptoms:
+                  (selectedCase.symptoms || []).join(", ") ||
+                  selectedCase.clinicalImpression ||
+                  "chest pain and sweating",
+                vitals: {
+                  spo2: selectedCase.vitals.spo2,
+                  bp_systolic: selectedCase.vitals.bpSystolic,
+                  bp_diastolic: selectedCase.vitals.bpDiastolic,
+                  hr: selectedCase.vitals.heartRate,
+                  rr: selectedCase.vitals.respiratoryRate,
+                  temp: selectedCase.vitals.temperature
+                    ? Number(((selectedCase.vitals.temperature - 32) * 5 / 9).toFixed(1))
+                    : 37.0,
+                },
+                comorbidities: selectedCase.chronicConditions,
+                onset: selectedCase.symptomDuration || "sudden",
+              }
+            : undefined
+        }
+      />
     </div>
   );
 };

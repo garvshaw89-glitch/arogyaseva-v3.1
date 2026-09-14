@@ -1,5 +1,5 @@
-import React from "react";
-import { VitalsData, SupportedLanguage, PatientCase } from "../../types";
+import React, { useState, useEffect } from "react";
+import { VitalsData, SupportedLanguage, PatientCase, TriageSignalResult } from "../../types";
 import { TRANSLATIONS } from "../../utils/translations";
 import {
   Thermometer,
@@ -12,10 +12,13 @@ import {
   ArrowRight,
   ArrowLeft,
   Volume2,
-  Sparkles
+  Sparkles,
+  Zap
 } from "lucide-react";
 import { Card3DTilt } from "../Common/Card3DTilt";
 import { playHapticSound } from "../../utils/audioFeedback";
+import { callTriageApi } from "../../utils/triageSignal";
+import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
 
 interface VitalsEntryProps {
   vitals: VitalsData;
@@ -61,6 +64,42 @@ export const VitalsEntry: React.FC<VitalsEntryProps> = ({
   const isTachycardic = isPediatric ? vitals.heartRate > 140 : vitals.heartRate > 115;
   const isTachypneic = isPediatric ? (vitals.respiratoryRate ?? 0) >= 45 : (vitals.respiratoryRate ?? 0) >= 26;
 
+  const [triageSignal, setTriageSignal] = useState<TriageSignalResult | null>(null);
+  const [isEvaluatingTriage, setIsEvaluatingTriage] = useState(false);
+
+  const evaluateVitalsTriage = async () => {
+    setIsEvaluatingTriage(true);
+    try {
+      const res = await callTriageApi({
+        age: patientData.age,
+        sex: patientData.gender?.toLowerCase(),
+        symptoms: Array.isArray(patientData.symptoms) ? patientData.symptoms.join(", ") : "",
+        vitals: {
+          temp: vitals.temperature ? Number(((vitals.temperature - 32) * 5 / 9).toFixed(1)) : undefined,
+          hr: vitals.heartRate,
+          bp_systolic: vitals.bpSystolic,
+          bp_diastolic: vitals.bpDiastolic,
+          rr: vitals.respiratoryRate,
+          spo2: vitals.spo2,
+        },
+        comorbidities: patientData.chronicConditions,
+        onset: patientData.symptomDuration,
+      });
+      setTriageSignal(res);
+    } catch {
+      // silent
+    } finally {
+      setIsEvaluatingTriage(false);
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      evaluateVitalsTriage();
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [vitals.spo2, vitals.bpSystolic, vitals.bpDiastolic, vitals.heartRate, vitals.respiratoryRate, vitals.temperature]);
+
   return (
     <div id="vitals-entry-step" className="space-y-6">
       {/* Vitals Overview Banner */}
@@ -86,6 +125,30 @@ export const VitalsEntry: React.FC<VitalsEntryProps> = ({
             Step 2 of 4
           </span>
         </div>
+
+        {/* Live AI Triage Signal Badge */}
+        {triageSignal && (
+          <div className="mb-5">
+            <AiTriageSignalBadge
+              triageSignal={triageSignal}
+              payload={{
+                age: patientData.age,
+                sex: patientData.gender?.toLowerCase(),
+                symptoms: Array.isArray(patientData.symptoms) ? patientData.symptoms.join(", ") : "",
+                vitals: {
+                  hr: vitals.heartRate,
+                  bp_systolic: vitals.bpSystolic,
+                  bp_diastolic: vitals.bpDiastolic,
+                  rr: vitals.respiratoryRate,
+                  spo2: vitals.spo2,
+                },
+                comorbidities: patientData.chronicConditions,
+              }}
+              isLoading={isEvaluatingTriage}
+              onRefresh={evaluateVitalsTriage}
+            />
+          </div>
+        )}
 
         {/* Live Warning Callout if any vital is critical */}
         {(isHypoxic || isBPCrisis || isHighFever) && (

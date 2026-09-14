@@ -36,6 +36,7 @@ import { evaluateClinicalRiskLocally } from "./utils/clinicalRules";
 import { TRANSLATIONS } from "./utils/translations";
 import { CinematicHero } from "./components/Common/CinematicHero";
 import { playHapticSound } from "./utils/audioFeedback";
+import { AiSignalInspectorModal } from "./components/Common/AiSignalInspectorModal";
 import { motion, AnimatePresence } from "motion/react";
 import {
   UserPlus,
@@ -86,6 +87,7 @@ export default function App() {
   const [offlineQueue, setOfflineQueue] = useState<PatientCase[]>([]);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [demoStep, setDemoStep] = useState<number>(1);
+  const [showAiInspector, setShowAiInspector] = useState<boolean>(false);
 
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
@@ -501,6 +503,7 @@ export default function App() {
         onSyncOfflineQueue={handleSyncOffline}
         isSyncing={isSyncing}
         onNewAssessment={handleNewAssessment}
+        onOpenAiInspector={() => setShowAiInspector(true)}
       />
 
       {/* Main Content Area */}
@@ -796,6 +799,30 @@ export default function App() {
           language={language}
         />
       )}
+
+      {/* Universal AI Signal Tester / Inspector Modal */}
+      <AiSignalInspectorModal
+        isOpen={showAiInspector}
+        onClose={() => setShowAiInspector(false)}
+        initialPayload={{
+          age: patientData.age || 45,
+          sex: (patientData.gender?.toLowerCase() as any) || "female",
+          symptoms: Array.isArray(patientData.symptoms) ? patientData.symptoms.join(", ") : "chest pain and sweating",
+          vitals: {
+            temp: patientData.vitals?.temperature
+              ? Number(((patientData.vitals.temperature - 32) * 5 / 9).toFixed(1))
+              : 37.0,
+            hr: patientData.vitals?.heartRate || 110,
+            bp_systolic: patientData.vitals?.bpSystolic || 110,
+            bp_diastolic: patientData.vitals?.bpDiastolic || 70,
+            rr: patientData.vitals?.respiratoryRate || 18,
+            spo2: patientData.vitals?.spo2 || 96,
+          },
+          comorbidities: patientData.chronicConditions || ["diabetes"],
+          onset: patientData.symptomDuration || "sudden",
+          duration_minutes: 30,
+        }}
+      />
 
       {/* Footer (Professional Polish) */}
       <footer className="bg-slate-900 text-slate-400 text-[11px] py-3.5 px-6 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">

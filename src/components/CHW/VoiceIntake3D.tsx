@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { SupportedLanguage } from "../../types";
+import { SupportedLanguage, TriageSignalResult } from "../../types";
 import { Mic, MicOff, Volume2, Sparkles, Check, ArrowRight, RefreshCw, Radio } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
+import { callTriageApi } from "../../utils/triageSignal";
+import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
 
 interface VoiceIntake3DProps {
   onDataExtracted: (extracted: {
@@ -71,9 +73,26 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
   const [isTransforming, setIsTransforming] = useState(false);
   const [extractedState, setExtractedState] = useState<any>(null);
   const [audioLevel, setAudioLevel] = useState(0);
+  const [liveTriageSignal, setLiveTriageSignal] = useState<TriageSignalResult | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  // Trigger triage evaluation whenever symptoms are extracted
+  const evaluateVoiceTriage = async (ext: any) => {
+    try {
+      const res = await callTriageApi({
+        age: ext.age,
+        sex: ext.gender ? ext.gender.toLowerCase() : "unknown",
+        symptoms: (ext.symptoms || []).join(", ") + " " + (ext.rawText || ""),
+        vitals: { temp: ext.temperature },
+        onset: ext.symptomDuration,
+      });
+      setLiveTriageSignal(res);
+    } catch {
+      // silent fallback
+    }
+  };
 
   // Animated audio wave visualizer
   useEffect(() => {
@@ -230,6 +249,7 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
 
     setExtractedState(extracted);
     setIsTransforming(false);
+    evaluateVoiceTriage(extracted);
     onDataExtracted(extracted);
   };
 
@@ -242,6 +262,7 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
     setTimeout(() => {
       setExtractedState(preset.extracted);
       setIsTransforming(false);
+      evaluateVoiceTriage(preset.extracted);
       playHapticSound("success");
       onDataExtracted(preset.extracted);
     }, 400);
@@ -415,6 +436,23 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
                 <span className="text-xs text-slate-500 italic">No symptoms parsed yet. Speak or click a preset below.</span>
               )}
             </div>
+
+            {/* Live AI Triage Signal Badge */}
+            {liveTriageSignal && (
+              <div className="mt-4 pt-3 border-t border-slate-800/80">
+                <AiTriageSignalBadge
+                  triageSignal={liveTriageSignal}
+                  payload={{
+                    age: extractedState?.age,
+                    sex: extractedState?.gender?.toLowerCase(),
+                    symptoms: (extractedState?.symptoms || []).join(", "),
+                    vitals: { temp: extractedState?.temperature },
+                    onset: extractedState?.symptomDuration,
+                  }}
+                  onRefresh={() => evaluateVoiceTriage(extractedState)}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

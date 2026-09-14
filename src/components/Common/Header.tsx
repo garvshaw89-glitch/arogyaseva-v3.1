@@ -12,7 +12,8 @@ import {
   PlusCircle,
   ShieldCheck,
   UserCheck,
-  Radio
+  Radio,
+  Zap
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 
@@ -27,6 +28,7 @@ interface HeaderProps {
   onSyncOfflineQueue: () => void;
   isSyncing: boolean;
   onNewAssessment: () => void;
+  onOpenAiInspector?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   onSyncOfflineQueue,
   isSyncing,
   onNewAssessment,
+  onOpenAiInspector,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
@@ -138,6 +141,21 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">New Intake</span>
+            </button>
+          )}
+
+          {onOpenAiInspector && (
+            <button
+              id="header-btn-ai-signal"
+              onClick={() => {
+                playHapticSound("click");
+                onOpenAiInspector();
+              }}
+              className="hidden md:flex items-center gap-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-300 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs hover:scale-[1.02]"
+              title="Test & Inspect AI Signal API (/api/triage)"
+            >
+              <Zap className="w-3.5 h-3.5 text-cyan-600 animate-pulse" />
+              <span className="font-mono text-[11px]">AI Signal API</span>
             </button>
           )}
 

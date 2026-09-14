@@ -101,12 +101,56 @@ export interface PatientCase {
     type: string;
     distanceKm: number;
   };
-  status: "PENDING_REVIEW" | "DOCTOR_REVIEWED" | "DISPATCHED" | "RESOLVED";
+  status: "PENDING_REVIEW" | "DOCTOR_REVIEWED" | "DISPATCHED" | "IN_TRANSIT" | "RESOLVED";
   doctorNotes?: string;
   doctorAction?: string;
   createdAt: string;
   syncedAt?: string;
   isOfflineCreated?: boolean;
+}
+
+export interface LiveLocationData {
+  latitude: number;
+  longitude: number;
+  accuracyMeters?: number;
+  altitudeMeters?: number | null;
+  speedKmH?: number | null;
+  headingDegrees?: number | null;
+  timestamp: string;
+  isSimulated?: boolean;
+}
+
+export interface TriageVitals {
+  temp?: number;
+  hr?: number;
+  bp_systolic?: number;
+  bp_diastolic?: number;
+  rr?: number;
+  spo2?: number;
+}
+
+export interface TriagePayload {
+  age?: number;
+  sex?: string;
+  symptoms?: string;
+  vitals?: TriageVitals;
+  comorbidities?: string[];
+  onset?: string;
+  duration_minutes?: number;
+}
+
+export interface TriageSignalResult {
+  danger: boolean;
+  level: "emergency" | "urgent" | "non-urgent";
+  reasons: string[];
+  advice: string;
+  llm_assist?: {
+    recommendation?: string;
+    reasons?: string;
+    safety_instruction?: string;
+    raw?: string;
+    error?: string;
+  } | null;
 }
 
 export interface ClinicalPreset {
