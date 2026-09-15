@@ -457,13 +457,13 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
         </div>
       </div>
 
-      {/* Preset Voice Scenarios for Instant Live SIH Hackathon Demo */}
+      {/* Quick Voice Clinical Simulation Presets */}
       <div className="mt-6 pt-5 border-t border-slate-800/80">
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono flex items-center gap-1.5">
-            <span>⚡ Instant Voice Scenario Presets (1-Click SIH Presentation)</span>
+            <span>⚡ Instant Voice Clinical Simulation Presets</span>
           </span>
-          <span className="text-[10px] text-cyan-400 font-mono">NO KEYBOARD REQUIRED</span>
+          <span className="text-[10px] text-cyan-400 font-mono">ONE-TOUCH SIMULATION</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

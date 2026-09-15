@@ -112,22 +112,29 @@ export function clientRuleBasedTriage(payload: TriagePayload): TriageSignalResul
 }
 
 /**
- * Call the POST /api/triage API with offline resilient fallback
+ * Call the POST /api/triage.js (or /api/triage) API endpoint with offline resilient fallback
  */
-export async function callTriageApi(payload: TriagePayload): Promise<TriageSignalResult> {
-  try {
-    const res = await fetch("/api/triage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+export async function callTriageApi(
+  payload: TriagePayload,
+  preferredEndpoint = "/api/triage.js"
+): Promise<TriageSignalResult> {
+  const endpoints = [preferredEndpoint, "/api/triage", "/triage.js"];
 
-    if (res.ok) {
-      const data = await res.json();
-      return data as TriageSignalResult;
+  for (const ep of endpoints) {
+    try {
+      const res = await fetch(ep, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return data as TriageSignalResult;
+      }
+    } catch {
+      // Continue to next endpoint or client fallback
     }
-  } catch {
-    // Network or offline fallback
   }
 
   return clientRuleBasedTriage(payload);

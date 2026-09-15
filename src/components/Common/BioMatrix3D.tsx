@@ -256,10 +256,10 @@ export const BioMatrix3D: React.FC<BioMatrix3DProps> = ({
         />
         <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 bg-slate-900/80 px-2 py-0.5 rounded backdrop-blur-xs border border-slate-700/60 shadow-xs">
           {riskLevel === "URGENT"
-            ? "3D BIO-NODE: EMERGENCY TRAJECTORY"
+            ? "BIO-NODE: EMERGENCY TRAJECTORY"
             : riskLevel === "CONSULTATION"
-            ? "3D BIO-NODE: MO CONSULTATION QUEUE"
-            : "3D BIO-NODE: RURAL HEALTHCARE MESH"}
+            ? "BIO-NODE: MO CONSULTATION QUEUE"
+            : "BIO-NODE: RURAL HEALTHCARE MESH"}
         </span>
       </div>
     </div>

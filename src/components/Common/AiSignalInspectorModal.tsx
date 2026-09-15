@@ -85,6 +85,9 @@ export const AiSignalInspectorModal: React.FC<AiSignalInspectorModalProps> = ({
   );
   const [triageResult, setTriageResult] = useState<TriageSignalResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeEndpoint, setActiveEndpoint] = useState<string>("/api/triage.js");
+  const [latencyMs, setLatencyMs] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
   const [comorbidityInput, setComorbidityInput] = useState(
     (formData.comorbidities || []).join(", ")
   );
@@ -97,11 +100,14 @@ export const AiSignalInspectorModal: React.FC<AiSignalInspectorModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleEvaluate = async (payloadToTest = formData) => {
+  const handleEvaluate = async (payloadToTest = formData, endpointToUse = activeEndpoint) => {
     setIsLoading(true);
     playHapticSound("step");
+    const startTime = performance.now();
     try {
-      const res = await callTriageApi(payloadToTest);
+      const res = await callTriageApi(payloadToTest, endpointToUse);
+      const elapsed = Math.round(performance.now() - startTime);
+      setLatencyMs(elapsed);
       setTriageResult(res);
       playHapticSound("success");
     } catch {
@@ -117,34 +123,81 @@ export const AiSignalInspectorModal: React.FC<AiSignalInspectorModalProps> = ({
     handleEvaluate(preset.payload);
   };
 
+  const copyPayload = () => {
+    navigator.clipboard.writeText(JSON.stringify(formData, null, 2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md overflow-y-auto">
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/70">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
               <Zap className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-base font-bold text-white">AI Signal Triage Engine</h3>
-                <span className="text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800 px-2 py-0.5 rounded font-bold">
-                  POST /api/triage
-                </span>
+                <h3 className="text-base font-bold text-white">AI Signal Triage Engine Inspector</h3>
+                {/* Active Endpoint Pill */}
+                <div className="flex items-center gap-1 bg-slate-900 border border-cyan-800/80 rounded-lg px-2 py-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="text-[11px] font-mono text-cyan-300 font-bold">
+                    POST {activeEndpoint}
+                  </span>
+                </div>
+                {latencyMs !== null && (
+                  <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/50 border border-emerald-800/60 px-1.5 py-0.5 rounded">
+                    {latencyMs}ms
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400">
-                Universal clinical decision signal evaluating symptoms, vital cutoffs, red flags & LLM assist
+                Direct integration with triage.js API endpoint evaluating symptoms, vital thresholds, red flags & clinical advice
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Endpoint Selector Tabs */}
+            <div className="hidden sm:flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-[10px] font-mono">
+              <button
+                onClick={() => {
+                  setActiveEndpoint("/api/triage.js");
+                  handleEvaluate(formData, "/api/triage.js");
+                }}
+                className={`px-2 py-1 rounded-lg transition-all ${
+                  activeEndpoint === "/api/triage.js"
+                    ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                /api/triage.js
+              </button>
+              <button
+                onClick={() => {
+                  setActiveEndpoint("/api/triage");
+                  handleEvaluate(formData, "/api/triage");
+                }}
+                className={`px-2 py-1 rounded-lg transition-all ${
+                  activeEndpoint === "/api/triage"
+                    ? "bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/30"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                /api/triage
+              </button>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="w-9 h-9 rounded-xl bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center transition-all cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -365,39 +418,78 @@ export const AiSignalInspectorModal: React.FC<AiSignalInspectorModalProps> = ({
                 />
               </div>
 
-              <button
-                onClick={() => handleEvaluate()}
-                disabled={isLoading}
-                className="w-full py-2.5 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20 transition-all"
-              >
-                {isLoading ? (
-                  <>
-                    <Activity className="w-4 h-4 animate-spin" />
-                    <span>Evaluating AI Triage Signal...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="w-4 h-4" />
-                    <span>Send POST /api/triage Signal</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleEvaluate(formData, activeEndpoint)}
+                  disabled={isLoading}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-cyan-500/20 transition-all disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <Activity className="w-4 h-4 animate-spin" />
+                      <span>Evaluating {activeEndpoint}...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      <span>Evaluate via {activeEndpoint}</span>
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={copyPayload}
+                  title="Copy Request Payload"
+                  className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-all cursor-pointer text-xs"
+                >
+                  {copied ? "Copied!" : "Copy JSON"}
+                </button>
+              </div>
             </div>
 
             {/* Live Response Result (Right 6 cols) */}
             <div className="lg:col-span-6 space-y-3">
-              <span className="text-xs font-mono font-bold text-emerald-300 flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                LIVE API SIGNAL RESPONSE
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-mono font-bold text-emerald-300 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  LIVE CLINICAL SIGNAL & ADVICE STREAM
+                </span>
+                {triageResult && (
+                  <span className="text-[10px] font-mono text-slate-400">
+                    Endpoint: <strong className="text-cyan-400">{activeEndpoint}</strong>
+                  </span>
+                )}
+              </div>
 
               {triageResult ? (
-                <AiTriageSignalBadge
-                  triageSignal={triageResult}
-                  payload={formData}
-                  onRefresh={() => handleEvaluate()}
-                  isLoading={isLoading}
-                />
+                <div className="space-y-3">
+                  <AiTriageSignalBadge
+                    triageSignal={triageResult}
+                    payload={formData}
+                    onRefresh={() => handleEvaluate(formData, activeEndpoint)}
+                    isLoading={isLoading}
+                  />
+
+                  {/* Direct Clinical Advice Highlight Box */}
+                  <div className={`p-4 rounded-2xl border ${
+                    triageResult.danger
+                      ? "bg-red-950/40 border-red-500/40 text-red-100"
+                      : triageResult.level === "urgent"
+                      ? "bg-amber-950/30 border-amber-500/40 text-amber-100"
+                      : "bg-emerald-950/30 border-emerald-500/40 text-emerald-100"
+                  }`}>
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-300">
+                        Direct Frontline Clinical Advice:
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-slate-900/80 text-white border border-slate-700">
+                        Priority: {triageResult.level.toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-xs font-semibold leading-relaxed">
+                      {triageResult.advice}
+                    </p>
+                  </div>
+                </div>
               ) : (
                 <div className="p-8 text-center text-slate-500 border border-slate-800 rounded-2xl">
                   Press Send or choose a Preset to test the API signal.

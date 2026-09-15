@@ -261,7 +261,7 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
   };
 
   return (
-    <div id="clinical-risk-engine-3d" className="space-y-6">
+    <div id="clinical-risk-engine" className="space-y-6">
       {/* 1. Main 3D Triage Holographic Core */}
       <div
         className={`rounded-3xl p-6 sm:p-8 border shadow-2xl transition-all relative overflow-hidden backdrop-blur-xl ${
@@ -375,7 +375,7 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
               <div ref={canvasRef} className="w-full h-full cursor-pointer" />
               <div className="absolute top-3 right-4 text-right">
                 <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">
-                  3D BIO-CORE STATUS
+                  BIO-CORE STATUS
                 </span>
                 <span
                   className={`text-xs font-black font-mono ${
@@ -571,7 +571,7 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
 
         {isUrgent || isConsultation ? (
           <button
-            id="btn-proceed-to-3d-map"
+            id="btn-proceed-to-referral-map"
             onClick={() => {
               playHapticSound("step");
               onProceedToFacilities();
@@ -579,7 +579,7 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
             className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-sm px-8 py-3.5 rounded-2xl shadow-xl shadow-red-600/30 flex items-center gap-3 transition-all hover:gap-4 cursor-pointer hover:scale-[1.02]"
           >
             <Hospital className="w-5 h-5" />
-            <span>Match Facility & Open 3D Referral Map</span>
+            <span>Match Facility & Open Referral Map</span>
             <ArrowRight className="w-5 h-5" />
           </button>
         ) : (

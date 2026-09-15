@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import * as THREE from "three";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { MOCK_FACILITIES } from "../../data/mockFacilities";
 import { HealthcareFacility, RiskAssessment, PatientCase, SupportedLanguage } from "../../types";
 import { TRANSLATIONS } from "../../utils/translations";
-import { OsmOfflineMap } from "./OsmOfflineMap";
+import { DEFAULT_REGION_COORDS } from "../../utils/useLiveLocation";
+import { fetchNearbyHospitalsOverpass, OverpassQueryResult } from "../../utils/overpassService";
+import { ReactLeafletHospitalMap } from "./ReactLeafletHospitalMap";
 import {
   Hospital,
   MapPin,
@@ -22,10 +23,10 @@ import {
   Activity,
   Layers,
   Map as MapIcon,
-  Box,
   Compass,
   Sparkles,
   Radio,
+  RefreshCw,
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 
@@ -45,9 +46,20 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
   language,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
-  const [activeMapTab, setActiveMapTab] = useState<"osm" | "3d">("osm");
+
+  // Real-time geolocation coordinates state
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number }>({
+    latitude: DEFAULT_REGION_COORDS.latitude,
+    longitude: DEFAULT_REGION_COORDS.longitude,
+  });
+  const [accuracyMeters, setAccuracyMeters] = useState<number | null>(null);
+  const [isLocating, setIsLocating] = useState<boolean>(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+
+  // Overpass API facilities state
   const [facilityList, setFacilityList] = useState<HealthcareFacility[]>(MOCK_FACILITIES);
-  const [isLocatingNearby, setIsLocatingNearby] = useState(false);
+  const [isLoadingHospitals, setIsLoadingHospitals] = useState<boolean>(false);
+  const [overpassStatus, setOverpassStatus] = useState<string>("Initializing Overpass API...");
 
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>(
     assessment.requiredFacilityLevel.includes("District")
@@ -57,442 +69,226 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
       : "PHC-01"
   );
 
-  const selectedFacility =
-    facilityList.find((f) => f.id === selectedFacilityId) || facilityList[1] || MOCK_FACILITIES[1];
+  // Fetch nearby hospitals using the Overpass API based on real-time coordinates
+  const fetchHospitals = useCallback(
+    async (lat: number, lon: number) => {
+      setIsLoadingHospitals(true);
+      setOverpassStatus("Querying OpenStreetMap Overpass API...");
+      try {
+        const res: OverpassQueryResult = await fetchNearbyHospitalsOverpass(lat, lon, 40);
+        if (res.facilities && res.facilities.length > 0) {
+          setFacilityList(res.facilities);
+          setOverpassStatus(
+            `${res.source === "overpass_direct" ? "Live Overpass API" : "OSM Healthcare Registry"} (${res.count} facilities near GPS)`
+          );
 
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-
-  // Fetch Nearby Hospitals from API based on Patient Coordinates
-  const fetchNearbyHospitals = async (lat = 22.7533, lon = 77.7291) => {
-    setIsLocatingNearby(true);
-    try {
-      const res = await fetch(`/api/nearby-hospitals?lat=${lat}&lon=${lon}&radius=60`);
-      const data = await res.json();
-      if (data && data.success && Array.isArray(data.facilities) && data.facilities.length > 0) {
-        setFacilityList(data.facilities);
-        playHapticSound("success");
+          // If current selection is not in list, auto-select the best match
+          const hasCurrent = res.facilities.some((f) => f.id === selectedFacilityId);
+          if (!hasCurrent) {
+            const best =
+              res.facilities.find((f) =>
+                f.type.toLowerCase().includes(assessment.requiredFacilityLevel.toLowerCase().slice(0, 5))
+              ) || res.facilities[0];
+            setSelectedFacilityId(best.id);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load Overpass hospitals in ReferralMap3D:", err);
+        setOverpassStatus("Regional Healthcare Fallback Grid");
+      } finally {
+        setIsLoadingHospitals(false);
       }
-    } catch (err) {
-      console.warn("Using local facility fallback:", err);
-    } finally {
-      setIsLocatingNearby(false);
+    },
+    [assessment.requiredFacilityLevel, selectedFacilityId]
+  );
+
+  // Detect real-time device geolocation coordinates
+  const handleDetectRealTimeGps = useCallback(() => {
+    if (!navigator.geolocation) {
+      setGpsError("Browser does not support geolocation");
+      return;
     }
-  };
 
-  // 3D Three.js Terrain Map & Dynamic Route Trajectory
-  useEffect(() => {
-    if (activeMapTab !== "3d") return;
-    const container = mapContainerRef.current;
-    if (!container) return;
+    setIsLocating(true);
+    setGpsError(null);
+    playHapticSound("click");
 
-    const width = container.clientWidth || 800;
-    const height = 340;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude, accuracy } = position.coords;
+        setCoords({ latitude, longitude });
+        setAccuracyMeters(Math.round(accuracy));
+        setIsLocating(false);
+        playHapticSound("success");
 
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
-    camera.position.set(0, 14, 18);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
-    container.innerHTML = "";
-    container.appendChild(renderer.domElement);
-
-    // 1. Terrain Grid plane
-    const gridHelper = new THREE.GridHelper(26, 26, 0x0284c7, 0x1e293b);
-    gridHelper.position.y = -0.05;
-    scene.add(gridHelper);
-
-    // Ambient light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
-    scene.add(ambientLight);
-
-    const dirLight = new THREE.DirectionalLight(0x38bdf8, 2);
-    dirLight.position.set(10, 20, 10);
-    scene.add(dirLight);
-
-    // Village node (Patient origin) at (-6, 0, 3)
-    const villagePos = new THREE.Vector3(-7, 0, 4);
-    const villageGeo = new THREE.CylinderGeometry(0.7, 0.9, 0.4, 8);
-    const villageMat = new THREE.MeshStandardMaterial({ color: 0x10b981 });
-    const villageMesh = new THREE.Mesh(villageGeo, villageMat);
-    villageMesh.position.copy(villagePos);
-    villageMesh.position.y = 0.2;
-    scene.add(villageMesh);
-
-    // Facility locations on 3D map
-    const facilityCoords: Record<string, THREE.Vector3> = {
-      "HWC-01": new THREE.Vector3(-4, 0, 1),
-      "PHC-01": new THREE.Vector3(-1, 0, -2),
-      "CHC-01": new THREE.Vector3(3, 0, 1),
-      "SDH-01": new THREE.Vector3(5, 0, -1),
-      "DH-01": new THREE.Vector3(7, 0, -3),
-    };
-
-    const markerGroup = new THREE.Group();
-    scene.add(markerGroup);
-
-    const markerMeshes: Record<string, THREE.Mesh> = {};
-
-    facilityList.forEach((fac) => {
-      const pos = facilityCoords[fac.id] || new THREE.Vector3(0, 0, 0);
-      const isCurSelected = fac.id === selectedFacilityId;
-      const isDistrict = fac.id === "DH-01";
-
-      const height = isDistrict ? 2.4 : fac.id === "CHC-01" ? 1.8 : 1.2;
-      const geo = new THREE.BoxGeometry(1.1, height, 1.1);
-      const mat = new THREE.MeshStandardMaterial({
-        color: isCurSelected ? 0xef4444 : 0x0284c7,
-        metalness: 0.6,
-        roughness: 0.2,
-      });
-
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.copy(pos);
-      mesh.position.y = height / 2;
-      markerGroup.add(mesh);
-      markerMeshes[fac.id] = mesh;
-
-      // Roof Beacon / Cross
-      const beaconGeo = new THREE.SphereGeometry(0.24, 12, 12);
-      const beaconMat = new THREE.MeshBasicMaterial({
-        color: isCurSelected ? 0xffffff : 0x38bdf8,
-      });
-      const beacon = new THREE.Mesh(beaconGeo, beaconMat);
-      beacon.position.copy(pos);
-      beacon.position.y = height + 0.3;
-      markerGroup.add(beacon);
-    });
-
-    // Dynamic Route Line from Village to Selected Facility
-    const targetPos = facilityCoords[selectedFacilityId] || new THREE.Vector3(0, 0, 0);
-    const midPoint = new THREE.Vector3(
-      (villagePos.x + targetPos.x) / 2,
-      2.8, // arc height
-      (villagePos.z + targetPos.z) / 2
+        // Immediately query Overpass API based on real-time geolocation
+        fetchHospitals(latitude, longitude);
+      },
+      (error) => {
+        setIsLocating(false);
+        let msg = "Could not acquire real-time GPS coordinates";
+        if (error.code === 1) msg = "Location permission denied. Showing district cluster.";
+        else if (error.code === 2) msg = "GPS signal unavailable. Showing district cluster.";
+        else if (error.code === 3) msg = "GPS timed out. Showing district cluster.";
+        setGpsError(msg);
+        fetchHospitals(DEFAULT_REGION_COORDS.latitude, DEFAULT_REGION_COORDS.longitude);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
+  }, [fetchHospitals]);
 
-    const routeCurve = new THREE.QuadraticBezierCurve3(villagePos, midPoint, targetPos);
-    const routePoints = routeCurve.getPoints(50);
-    const routeGeo = new THREE.BufferGeometry().setFromPoints(routePoints);
-    const routeMat = new THREE.LineBasicMaterial({
-      color: 0xef4444,
-      linewidth: 3,
-    });
-    const routeLine = new THREE.Line(routeGeo, routeMat);
-    scene.add(routeLine);
+  // Initial load
+  useEffect(() => {
+    handleDetectRealTimeGps();
+  }, [handleDetectRealTimeGps]);
 
-    // Glowing energy pulse along route
-    const pulseGeo = new THREE.SphereGeometry(0.3, 12, 12);
-    const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    const pulseMesh = new THREE.Mesh(pulseGeo, pulseMat);
-    scene.add(pulseMesh);
-
-    let frameId: number;
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      frameId = requestAnimationFrame(animate);
-      const t = (clock.getElapsedTime() * 0.4) % 1;
-      const currentPoint = routeCurve.getPointAt(t);
-      pulseMesh.position.copy(currentPoint);
-
-      // Elevate and rotate selected marker
-      const selMesh = markerMeshes[selectedFacilityId];
-      if (selMesh) {
-        selMesh.rotation.y = clock.getElapsedTime() * 0.6;
-      }
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    const handleResize = () => {
-      if (!container) return;
-      const w = container.clientWidth;
-      if (w > 0) {
-        camera.aspect = w / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, height);
-      }
-    };
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-      window.removeEventListener("resize", handleResize);
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-    };
-  }, [selectedFacilityId, activeMapTab, facilityList]);
-
-  const handleCallAmbulance = () => {
-    playHapticSound("alert");
-    window.location.href = "tel:108";
-  };
+  const selectedFacility = useMemo(() => {
+    return facilityList.find((f) => f.id === selectedFacilityId) || facilityList[0] || MOCK_FACILITIES[0];
+  }, [facilityList, selectedFacilityId]);
 
   return (
-    <div id="referral-map-3d-step" className="space-y-6">
-      {/* 1. Header & Emergency Hotline Banner */}
-      <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white rounded-3xl p-5 sm:p-6 shadow-xl flex flex-wrap items-center justify-between gap-4">
+    <div id="referral-map-view" className="space-y-6">
+      {/* 1. Header Banner */}
+      <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 border border-slate-800 shadow-2xl flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="bg-red-950/80 text-white text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider border border-red-400/40">
-              OFFLINE-CAPABLE REFERRAL NETWORK
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="bg-red-500/20 text-red-300 text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider border border-red-500/30 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
+              REACT-LEAFLET TRAJECTORY MAP
             </span>
-            <span className="text-xs text-red-100 font-mono">
-              TARGET TIER: <strong>{assessment.requiredFacilityLevel}</strong>
+            <span className="text-xs text-blue-200 font-semibold bg-blue-900/40 px-3 py-1 rounded-full border border-blue-700/50 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-cyan-300" />
+              {overpassStatus}
             </span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-black font-display mt-1.5">
-            Geographic Hospital Matching & Route Optimization
+
+          <h2 className="text-2xl font-black mt-2 tracking-tight text-white flex items-center gap-2">
+            <span>Live OpenStreetMap Referral Trajectory</span>
           </h2>
-          <p className="text-xs text-red-100 mt-1 max-w-2xl leading-relaxed">
-            Ranked by specialized clinical capability (Oxygen beds, Blood Storage, Obstetric OT, Pediatric ICU) and live travel time from Rampur Hamlet.
+          <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
+            Real OpenStreetMap tiles and Overpass API hospital discovery matching for{" "}
+            <strong>{patientData.patientName || "Emergency Patient"}</strong> from{" "}
+            <strong>{patientData.village || "Rampur Village"}</strong>.
           </p>
         </div>
 
-        {/* Action buttons */}
         <div className="flex items-center gap-3">
           <button
-            id="btn-find-nearest-hospitals"
             onClick={() => {
-              playHapticSound("click");
-              fetchNearbyHospitals();
+              window.location.href = "tel:108";
             }}
-            disabled={isLocatingNearby}
-            className="bg-red-800/80 hover:bg-red-800 text-white font-bold text-xs px-4 py-3 rounded-2xl border border-red-400/50 flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+            className="px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-500 active:scale-95 text-white font-bold text-sm shadow-lg shadow-red-900/40 flex items-center gap-2 transition-all cursor-pointer"
           >
-            <Compass className={`w-4 h-4 ${isLocatingNearby ? "animate-spin" : ""}`} />
-            <span>{isLocatingNearby ? "Scanning District..." : "Find Nearest Hospitals"}</span>
-          </button>
-
-          {/* 108 Emergency Ambulance Button */}
-          <button
-            id="btn-call-108-emergency"
-            onClick={handleCallAmbulance}
-            className="bg-white text-red-700 hover:bg-red-50 font-extrabold text-sm px-6 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 transition-all hover:scale-105 cursor-pointer"
-          >
-            <PhoneCall className="w-4 h-4 text-red-600 animate-bounce" />
-            <span>Call 108 Ambulance Now</span>
+            <PhoneCall className="w-4 h-4 animate-bounce" />
+            <span>Call 108 Ambulance</span>
           </button>
         </div>
       </div>
 
-      {/* 2. Visual View Mode Tabs (OSM Offline Map vs 3D Isometric Terrain) */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="inline-flex p-1 bg-slate-900 border border-slate-800 rounded-2xl">
-          <button
-            id="btn-tab-osm-map"
-            onClick={() => {
-              playHapticSound("click");
-              setActiveMapTab("osm");
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeMapTab === "osm"
-                ? "bg-cyan-600 text-white shadow-lg"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <Radio className="w-4 h-4 text-cyan-200 animate-pulse" />
-            <span>Live Location Tracker & OSM Map</span>
-          </button>
+      {/* 2. Real-Time Telemetry Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950 text-white p-3 rounded-2xl border border-slate-800 text-xs">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <span className="flex items-center gap-1.5 bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 px-3 py-1 rounded-xl font-mono font-bold">
+            <Navigation className="w-3 h-3 text-emerald-400" />
+            Live GPS: {coords.latitude.toFixed(4)}°N, {coords.longitude.toFixed(4)}°E
+          </span>
 
-          <button
-            id="btn-tab-3d-terrain"
-            onClick={() => {
-              playHapticSound("click");
-              setActiveMapTab("3d");
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              activeMapTab === "3d"
-                ? "bg-red-600 text-white shadow-lg"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <Box className="w-4 h-4" />
-            <span>3D Isometric District Terrain</span>
-          </button>
+          {accuracyMeters && (
+            <span className="text-[11px] text-slate-400 font-mono">
+              (Accuracy: ±{accuracyMeters}m)
+            </span>
+          )}
+
+          <span className="text-slate-400">|</span>
+
+          <span className="text-xs text-slate-300">
+            Selected Target: <strong className="text-white">{selectedFacility.name}</strong> ({selectedFacility.distanceKm} km • ~{selectedFacility.travelTimeMins} mins)
+          </span>
         </div>
 
-        <div className="text-xs text-slate-500 font-mono flex items-center gap-2">
-          <span>Active Target:</span>
-          <strong className="text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
-            {selectedFacility.name}
-          </strong>
-        </div>
+        <button
+          onClick={handleDetectRealTimeGps}
+          disabled={isLocating}
+          className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${isLocating ? "animate-spin" : ""}`} />
+          <span>{isLocating ? "Acquiring GPS..." : "Refresh Real GPS Coordinates"}</span>
+        </button>
       </div>
 
-      {/* 3. Map Display Container */}
-      {activeMapTab === "osm" ? (
-        <OsmOfflineMap
-          facilities={facilityList}
-          selectedFacility={selectedFacility}
-          onSelectFacility={(fac) => setSelectedFacilityId(fac.id)}
-          patientVillage={patientData.village || "Rampur Hamlet"}
-          villageCoords={[22.7533, 77.7291]}
-        />
-      ) : (
-        <div className="bg-slate-950/95 border border-slate-800 rounded-3xl p-4 sm:p-6 shadow-2xl relative overflow-hidden backdrop-blur-md">
-          <div className="flex items-center justify-between text-[11px] font-mono border-b border-slate-800/80 pb-3 mb-3 text-slate-400">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping" />
-              <span className="font-bold text-white uppercase tracking-wider">
-                3D ISOMETRIC DISTRICT TERRAIN VISUALIZER
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-emerald-400 font-bold">📍 VILLAGE: {patientData.village || "RAMPUR"}</span>
-              <span className="text-slate-600">→</span>
-              <span className="text-red-400 font-bold">🏥 DESTINATION: {selectedFacility.name}</span>
-            </div>
-          </div>
-
-          {/* 3D Map Container */}
-          <div ref={mapContainerRef} className="w-full h-[320px] rounded-2xl bg-slate-950/70 border border-slate-900 cursor-grab relative" />
-
-          {/* Legend */}
-          <div className="flex flex-wrap items-center justify-between gap-3 mt-3 text-[11px] font-mono text-slate-400 pt-2 border-t border-slate-900">
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-xs bg-emerald-500 inline-block" /> Patient Village
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-xs bg-blue-500 inline-block" /> Nearby Facilities
-              </span>
-              <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-xs bg-red-500 inline-block" /> Target Referral Hospital
-              </span>
-            </div>
-            <span className="text-cyan-400 font-bold">ROTATING 3D MARKER = ACTIVE DISPATCH TARGET</span>
-          </div>
+      {gpsError && (
+        <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+          <span>{gpsError}</span>
         </div>
       )}
 
-      {/* 4. Facility Selection Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {facilityList.map((fac) => {
-          const isSelected = selectedFacilityId === fac.id;
-          const isRecommended =
-            fac.type.toLowerCase().includes(assessment.requiredFacilityLevel.toLowerCase().slice(0, 5));
+      {/* 3. React-Leaflet Interactive OpenStreetMap Map */}
+      <ReactLeafletHospitalMap
+        userCoords={coords}
+        accuracyMeters={accuracyMeters}
+        facilities={facilityList}
+        selectedFacilityId={selectedFacilityId}
+        onSelectFacility={(fac) => {
+          setSelectedFacilityId(fac.id);
+          setFacilityList((prev) => {
+            if (!prev.some((item) => item.id === fac.id)) {
+              return [fac, ...prev];
+            }
+            return prev;
+          });
+        }}
+        onConfirmFacility={onSelectFacilityAndGenerateSlip}
+        requiredFacilityLevel={assessment.requiredFacilityLevel}
+        patientVillage={patientData.village || "Rampur Village"}
+        patientName={patientData.patientName || "Emergency Patient"}
+        className="w-full"
+        heightClass="h-[520px]"
+        onRefreshGps={handleDetectRealTimeGps}
+        isLocating={isLocating}
+        overpassSource={overpassStatus}
+      />
 
-          return (
-            <div
-              key={fac.id}
-              id={`facility-card-${fac.id}`}
-              onClick={() => {
-                playHapticSound("click");
-                setSelectedFacilityId(fac.id);
-              }}
-              className={`rounded-2xl p-5 border transition-all cursor-pointer relative flex flex-col justify-between ${
-                isSelected
-                  ? "bg-slate-900 border-red-500 text-white shadow-xl ring-2 ring-red-500/30"
-                  : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-md text-slate-900"
-              }`}
-            >
-              <div>
-                {/* Badges */}
-                <div className="flex items-center justify-between mb-2">
-                  <span
-                    className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${
-                      isSelected
-                        ? "bg-red-950 text-red-300 border border-red-800"
-                        : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {fac.type}
-                  </span>
-                  {isRecommended && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700 border border-red-300 flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3" /> MATCH
-                    </span>
-                  )}
-                </div>
+      {/* 4. Action / Dispatch Footer Card */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block">
+            Selected Target Destination:
+          </span>
+          <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 mt-0.5 flex-wrap">
+            <Hospital className="w-5 h-5 text-blue-600" />
+            <span>{selectedFacility.name}</span>
+            <span className="text-xs bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded font-mono font-semibold">
+              {selectedFacility.distanceKm} km • ~{selectedFacility.travelTimeMins} mins driving
+            </span>
+          </h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Emergency Desk: <strong className="text-slate-800">{selectedFacility.contactNumber}</strong> • {selectedFacility.address}
+          </p>
+        </div>
 
-                <h4 className="font-bold text-sm leading-tight">{fac.name}</h4>
-                <p className={`text-xs mt-1 ${isSelected ? "text-slate-400" : "text-slate-500"}`}>
-                  {fac.address}
-                </p>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={onBack}
+            className="px-4 py-3 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Back to Assessment</span>
+          </button>
 
-                {/* Distance and Travel Time */}
-                <div className="flex items-center gap-3 my-3 text-xs font-mono">
-                  <span className="flex items-center gap-1 font-bold text-cyan-500">
-                    <MapPin className="w-3.5 h-3.5" />
-                    {fac.distanceKm} km
-                  </span>
-                  <span className="flex items-center gap-1 font-bold text-amber-500">
-                    <Clock className="w-3.5 h-3.5" />
-                    ~{fac.travelTimeMins} min
-                  </span>
-                </div>
-
-                {/* Capability Pills */}
-                <div className="flex flex-wrap gap-1.5 my-2">
-                  {fac.hasOxygen && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-cyan-950 text-cyan-300 border border-cyan-800 flex items-center gap-1">
-                      <Wind className="w-3 h-3" /> O₂
-                    </span>
-                  )}
-                  {fac.hasBloodBank && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-rose-950 text-rose-300 border border-rose-800 flex items-center gap-1">
-                      <Droplet className="w-3 h-3" /> Blood
-                    </span>
-                  )}
-                  {fac.hasNICU && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-950 text-purple-300 border border-purple-800 flex items-center gap-1">
-                      <Baby className="w-3 h-3" /> NICU
-                    </span>
-                  )}
-                  {fac.hasAmbulance24x7 && (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1">
-                      108 24x7
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Beds Status */}
-              <div className={`pt-3 border-t text-xs flex items-center justify-between ${isSelected ? "border-slate-800 text-slate-300" : "border-slate-100 text-slate-600"}`}>
-                <span>Available Beds:</span>
-                <strong className={isSelected ? "text-cyan-300 font-mono" : "text-slate-900 font-mono"}>
-                  {fac.availableBeds} (ICU: {fac.icuBedsAvailable})
-                </strong>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 5. Action Footer & Dispatch Confirmation */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pt-4 border-t border-slate-200">
-        <button
-          id="btn-back-to-risk-engine"
-          onClick={() => {
-            playHapticSound("click");
-            onBack();
-          }}
-          className="px-5 py-3 text-xs font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 flex items-center gap-2 shadow-sm cursor-pointer transition-all"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Risk Engine</span>
-        </button>
-
-        <button
-          id="btn-generate-sbar-referral"
-          onClick={() => {
-            playHapticSound("success");
-            onSelectFacilityAndGenerateSlip(selectedFacility);
-          }}
-          className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-sm px-8 py-3.5 rounded-2xl shadow-xl shadow-red-600/30 flex items-center gap-3 transition-all hover:scale-[1.02] cursor-pointer"
-        >
-          <FileText className="w-5 h-5" />
-          <span>Generate SBAR Referral Slip for {selectedFacility.name}</span>
-          <ArrowRight className="w-5 h-5" />
-        </button>
+          <button
+            id="btn-confirm-facility-and-slip"
+            onClick={() => {
+              playHapticSound("success");
+              onSelectFacilityAndGenerateSlip(selectedFacility);
+            }}
+            className="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md shadow-blue-200 flex items-center gap-2 transition-all cursor-pointer"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Confirm Target Hospital & Generate Slip</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

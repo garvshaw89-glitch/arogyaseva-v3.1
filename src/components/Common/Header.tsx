@@ -29,6 +29,7 @@ interface HeaderProps {
   isSyncing: boolean;
   onNewAssessment: () => void;
   onOpenAiInspector?: () => void;
+  onOpenLiveTracker?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,6 +44,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSyncing,
   onNewAssessment,
   onOpenAiInspector,
+  onOpenLiveTracker,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
@@ -156,6 +158,21 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Zap className="w-3.5 h-3.5 text-cyan-600 animate-pulse" />
               <span className="font-mono text-[11px]">AI Signal API</span>
+            </button>
+          )}
+
+          {onOpenLiveTracker && (
+            <button
+              id="header-btn-live-tracker"
+              onClick={() => {
+                playHapticSound("click");
+                onOpenLiveTracker();
+              }}
+              className="hidden sm:flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs hover:scale-[1.02]"
+              title="Open Live Location Tracker & OSM Hospital Radar"
+            >
+              <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span className="font-mono text-[11px]">Live GPS Radar</span>
             </button>
           )}
 

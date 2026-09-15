@@ -141,7 +141,7 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
             <BioMatrix3D riskLevel={currentRisk} className="w-full h-full" interactive={true} />
             <div className="absolute top-3 right-3 text-right pointer-events-none">
               <span className="text-[10px] font-mono text-cyan-400/80 block uppercase tracking-widest">
-                INTERACTIVE 3D
+                INTERACTIVE BIO-CORE
               </span>
               <span className="text-[9px] text-slate-500">Drag / Hover to Rotate</span>
             </div>

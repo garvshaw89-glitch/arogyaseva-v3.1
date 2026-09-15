@@ -24,7 +24,7 @@ import { DoctorDashboard } from "./components/Doctor/DoctorDashboard";
 import { PatientJourney3D } from "./components/Common/PatientJourney3D";
 import { ClinicalRiskEngine3D } from "./components/CHW/ClinicalRiskEngine3D";
 import { ReferralMap3D } from "./components/CHW/ReferralMap3D";
-import { HackathonDemoController } from "./components/Common/HackathonDemoController";
+import { LiveLocationTracker } from "./components/CHW/LiveLocationTracker";
 import {
   loadLocalCases,
   saveLocalCases,
@@ -47,7 +47,9 @@ import {
   CheckCircle,
   WifiOff,
   RefreshCw,
-  Sparkles
+  Sparkles,
+  Compass,
+  Radio,
 } from "lucide-react";
 
 export default function App() {
@@ -86,159 +88,11 @@ export default function App() {
   const [casesList, setCasesList] = useState<PatientCase[]>([]);
   const [offlineQueue, setOfflineQueue] = useState<PatientCase[]>([]);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [demoStep, setDemoStep] = useState<number>(1);
   const [showAiInspector, setShowAiInspector] = useState<boolean>(false);
+  const [showLiveTracker, setShowLiveTracker] = useState<boolean>(false);
+  const [step5ViewMode, setStep5ViewMode] = useState<"locator" | "map">("locator");
 
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
-
-  const handleJumpToDemoStep = (stepNumber: number) => {
-    setDemoStep(stepNumber);
-    if (stepNumber === 1) {
-      setRole("CHW");
-      setShowCinematicHero(true);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else if (stepNumber === 2) {
-      setRole("CHW");
-      setCurrentStep(1);
-      setSelectedPresetId("preset-1");
-      setPatientData((prev) => ({
-        ...prev,
-        patientName: "Rameshwar Prasad",
-        age: 52,
-        gender: "Male",
-        village: "Rampur Hamlet (Sector 4)",
-        symptoms: ["High Fever", "Severe Shortness of Breath"],
-        symptomDuration: "3 days",
-        rawVoiceInput: "52 साल के मरीज हैं, 3 दिन से तेज बुखार है और सांस लेने में बहुत दिक्कत हो रही है...",
-      }));
-    } else if (stepNumber === 3) {
-      setRole("CHW");
-      setCurrentStep(1);
-      setSelectedPresetId("preset-1");
-      setPatientData((prev) => ({
-        ...prev,
-        patientName: "Rameshwar Prasad",
-        age: 52,
-        gender: "Male",
-        symptoms: ["High Fever", "Severe Shortness of Breath", "Chest Tightness"],
-        symptomDuration: "3 days",
-        vitals: {
-          temperature: 102.6,
-          heartRate: 114,
-          spo2: 88,
-          bpSystolic: 138,
-          bpDiastolic: 88,
-          respiratoryRate: 28,
-        },
-      }));
-    } else if (stepNumber === 4) {
-      setRole("CHW");
-      setCurrentStep(3);
-      setPatientData((prev) => ({
-        ...prev,
-        followUpAnswers: {
-          "Is the patient struggling to speak in full sentences?": "Yes, gasping between words",
-          "Are chest retractions or grunting sounds present?": "Severe subcostal retractions visible",
-          "Does the patient have stridor while calm?": "Audible wheezing on expiration",
-        },
-      }));
-    } else if (stepNumber === 5) {
-      setRole("CHW");
-      setCurrentStep(2);
-      setPatientData((prev) => ({
-        ...prev,
-        vitals: {
-          temperature: 102.6,
-          heartRate: 114,
-          spo2: 88,
-          bpSystolic: 138,
-          bpDiastolic: 88,
-          respiratoryRate: 28,
-        },
-      }));
-    } else if (stepNumber === 6 || stepNumber === 7) {
-      setRole("CHW");
-      const evaluated = evaluateClinicalRiskLocally({
-        ...patientData,
-        vitals: {
-          temperature: 102.6,
-          heartRate: 114,
-          spo2: 88,
-          bpSystolic: 138,
-          bpDiastolic: 88,
-          respiratoryRate: 28,
-        },
-        symptoms: ["Severe Shortness of Breath", "High Fever"],
-      });
-      setAssessment(evaluated);
-      setCurrentStep(4);
-    } else if (stepNumber === 8) {
-      setRole("CHW");
-      if (!assessment) {
-        const evaluated = evaluateClinicalRiskLocally(patientData);
-        setAssessment(evaluated);
-      }
-      setCurrentStep(5);
-    } else if (stepNumber === 9) {
-      setRole("CHW");
-      const mockCase: PatientCase = {
-        id: "CASE-9821",
-        patientName: patientData.patientName || "Rameshwar Prasad",
-        age: patientData.age || 52,
-        gender: (patientData.gender as any) || "Male",
-        village: "Rampur Hamlet (Sector 4)",
-        chwName: "Anjali Devi (ASHA)",
-        symptoms: ["Severe Shortness of Breath", "High Fever", "Hypoxemia"],
-        symptomDuration: "3 days",
-        vitals: {
-          temperature: 102.6,
-          heartRate: 114,
-          spo2: 88,
-          bpSystolic: 138,
-          bpDiastolic: 88,
-          respiratoryRate: 28,
-        },
-        followUpAnswers: patientData.followUpAnswers || {},
-        riskLevel: "URGENT",
-        riskScore: 92,
-        dangerSigns: [
-          "SpO2 < 90% (88% detected)",
-          "Severe respiratory distress & tachypnea (>28 bpm)",
-          "Inability to complete full sentences",
-        ],
-        clinicalImpression:
-          "Severe Acute Respiratory Distress with Critical Hypoxemia (ETAT Priority Red). Immediate high-flow oxygen and emergency referral required.",
-        recommendedAction:
-          "Emergency referral to District Hospital with continuous supplemental oxygen and semi-upright transport posture.",
-        sbarSummary: {
-          situation: "52Y Male with acute respiratory distress.",
-          background: "3 days of worsening cough and fever.",
-          assessment: "SpO2 88% on room air, RR 28/min, temp 102.6°F.",
-          recommendation: "Immediate admission to District Hospital ICU/HD-Oxygen ward.",
-        },
-        fieldStabilizingActions: [
-          "Place patient in 45° elevated Fowler's position",
-          "Administer supplemental oxygen at 4-6 L/min via nasal cannula",
-          "Ensure unobstructed airway; do not give oral fluids while tachypneic",
-          "Dispatch 108 Advanced Life Support (ALS) Ambulance",
-        ],
-        referredFacility: {
-          id: "DH-01",
-          name: "District Civil Hospital & Trauma Centre",
-          type: "District Hospital",
-          distanceKm: 24,
-        },
-        status: "PENDING_REVIEW",
-        createdAt: new Date().toISOString(),
-      };
-      setCompletedCase(mockCase);
-      setShowReferralModal(true);
-    } else if (stepNumber === 10) {
-      setShowReferralModal(false);
-      setRole("DOCTOR");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
 
   useEffect(() => {
     loadInitialData();
@@ -504,6 +358,10 @@ export default function App() {
         isSyncing={isSyncing}
         onNewAssessment={handleNewAssessment}
         onOpenAiInspector={() => setShowAiInspector(true)}
+        onOpenLiveTracker={() => {
+          playHapticSound("click");
+          setShowLiveTracker(true);
+        }}
       />
 
       {/* Main Content Area */}
@@ -545,7 +403,7 @@ export default function App() {
                 }}
                 className="text-slate-500 hover:text-slate-800 font-medium hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <span>{showCinematicHero ? "Collapse 3D HUD" : "Expand 3D HUD"}</span>
+                <span>{showCinematicHero ? "Collapse Telemetry HUD" : "Expand Telemetry HUD"}</span>
               </button>
             </div>
 
@@ -751,17 +609,70 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -14 }}
                   transition={{ duration: 0.24, ease: "easeOut" }}
+                  className="space-y-4"
                 >
-                  <ReferralMap3D
-                    assessment={assessment}
-                    patientData={patientData}
-                    onSelectFacilityAndGenerateSlip={handleSelectFacilityAndGenerateSlip}
-                    onBack={() => {
-                      playHapticSound("step");
-                      setCurrentStep(4);
-                    }}
-                    language={language}
-                  />
+                  {/* Step 5 View Toggle */}
+                  <div className="flex items-center justify-between bg-white p-2 rounded-2xl border border-slate-200 shadow-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-700 ml-2">
+                        Referral Navigation Mode:
+                      </span>
+                    </div>
+                    <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                      <button
+                        onClick={() => {
+                          playHapticSound("click");
+                          setStep5ViewMode("locator");
+                        }}
+                        className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                          step5ViewMode === "locator"
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <Hospital className="w-3.5 h-3.5" />
+                        <span>OSM Facility Locator & Radar</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          playHapticSound("click");
+                          setStep5ViewMode("map");
+                        }}
+                        className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 ${
+                          step5ViewMode === "map"
+                            ? "bg-blue-600 text-white shadow-xs"
+                            : "text-slate-600 hover:text-slate-900"
+                        }`}
+                      >
+                        <Compass className="w-3.5 h-3.5" />
+                        <span>Referral Trajectory Map</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {step5ViewMode === "locator" ? (
+                    <FacilityLocator
+                      assessment={assessment}
+                      patientData={patientData}
+                      onSelectFacilityAndGenerateSlip={handleSelectFacilityAndGenerateSlip}
+                      onBack={() => {
+                        playHapticSound("step");
+                        setCurrentStep(4);
+                      }}
+                      language={language}
+                    />
+                  ) : (
+                    <ReferralMap3D
+                      assessment={assessment}
+                      patientData={patientData}
+                      onSelectFacilityAndGenerateSlip={handleSelectFacilityAndGenerateSlip}
+                      onBack={() => {
+                        playHapticSound("step");
+                        setCurrentStep(4);
+                      }}
+                      language={language}
+                    />
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -776,13 +687,6 @@ export default function App() {
           />
         )}
       </main>
-
-      {/* Floating SIH Hackathon Demo Walkthrough Controller */}
-      <HackathonDemoController
-        currentDemoStep={demoStep}
-        onJumpToStep={handleJumpToDemoStep}
-        onResetDemo={() => handleJumpToDemoStep(1)}
-      />
 
       {/* Official Referral Slip Modal */}
       {showReferralModal && completedCase && (
@@ -823,6 +727,36 @@ export default function App() {
           duration_minutes: 30,
         }}
       />
+
+      {/* Live Location Tracker Overlay */}
+      {showLiveTracker && (
+        <LiveLocationTracker
+          patientData={patientData}
+          assessment={assessment}
+          selectedFacility={completedCase?.referredFacility ? {
+            id: completedCase.referredFacility.id,
+            name: completedCase.referredFacility.name,
+            type: completedCase.referredFacility.type as any,
+            distanceKm: completedCase.referredFacility.distanceKm,
+            travelTimeMins: Math.round((completedCase.referredFacility.distanceKm / 45) * 60),
+            address: "District Emergency Trauma Center",
+            contactNumber: "108 / Emergency Desk",
+            emergencyHotline: "108",
+            hasOxygen: true,
+            hasBloodBank: true,
+            hasCSection: true,
+            hasNICU: true,
+            hasSnakeAntivenom: true,
+            hasAmbulance24x7: true,
+            availableBeds: 40,
+            icuBedsAvailable: 6,
+            latitude: 22.8115,
+            longitude: 77.7845,
+          } : null}
+          isOpen={showLiveTracker}
+          onClose={() => setShowLiveTracker(false)}
+        />
+      )}
 
       {/* Footer (Professional Polish) */}
       <footer className="bg-slate-900 text-slate-400 text-[11px] py-3.5 px-6 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">

@@ -13,8 +13,8 @@ const STAGES = [
   { id: 1, label: "Patient Origin", village: "Rampur Hamlet", icon: "👤" },
   { id: 2, label: "ASHA / CHW Intake", village: "Voice & Vitals", icon: "🩺" },
   { id: 3, label: "Dynamic Triage", village: "ETAT Protocols", icon: "⚡" },
-  { id: 4, label: "3D Risk Engine", village: "Decision Support", icon: "🔮" },
-  { id: 5, label: "3D Referral Mesh", village: "Hospital Network", icon: "🏥" },
+  { id: 4, label: "Clinical Risk Engine", village: "Decision Support", icon: "🔮" },
+  { id: 5, label: "Referral Network", village: "Hospital Network", icon: "🏥" },
   { id: 6, label: "Doctor Command", village: "District Hospital", icon: "👨‍⚕️" },
 ];
 
@@ -143,7 +143,7 @@ export const PatientJourney3D: React.FC<PatientJourney3DProps> = ({
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
           <span className="font-bold text-white tracking-widest uppercase">
-            3D Clinical Pathway Architecture
+            Clinical Pathway Architecture
           </span>
         </div>
         <div className="flex items-center gap-2">

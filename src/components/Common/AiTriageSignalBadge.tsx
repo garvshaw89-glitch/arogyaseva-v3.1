@@ -179,7 +179,37 @@ export const AiTriageSignalBadge: React.FC<AiTriageSignalBadgeProps> = ({
             <span>LLM Triage Assist (Gemini / GPT):</span>
           </div>
           {typeof triageSignal.llm_assist === "object" ? (
-            <div className="space-y-1 text-[11px] text-slate-300">
+            <div className="space-y-1.5 text-[11px] text-slate-300">
+              {triageSignal.llm_assist.diagnosticHypothesis && (
+                <p>
+                  <strong className="text-cyan-300">Diagnostic Hypothesis:</strong>{" "}
+                  {triageSignal.llm_assist.diagnosticHypothesis}
+                </p>
+              )}
+              {triageSignal.llm_assist.riskRationale && (
+                <p>
+                  <strong className="text-cyan-300">Risk Rationale:</strong>{" "}
+                  {triageSignal.llm_assist.riskRationale}
+                </p>
+              )}
+              {triageSignal.llm_assist.recommendedReferralTier && (
+                <p>
+                  <strong className="text-amber-300">Recommended Referral Tier:</strong>{" "}
+                  <span className="bg-amber-950/60 text-amber-200 px-1.5 py-0.5 rounded border border-amber-800 font-semibold">
+                    {triageSignal.llm_assist.recommendedReferralTier}
+                  </span>
+                </p>
+              )}
+              {triageSignal.llm_assist.suggestedQuestions && Array.isArray(triageSignal.llm_assist.suggestedQuestions) && (
+                <div>
+                  <strong className="text-cyan-300 block mb-0.5">Recommended Clinical Clarifications:</strong>
+                  <ul className="list-disc pl-4 space-y-0.5 text-slate-300">
+                    {triageSignal.llm_assist.suggestedQuestions.map((q: string, idx: number) => (
+                      <li key={idx}>{q}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               {triageSignal.llm_assist.recommendation && (
                 <p>
                   <strong className="text-cyan-300">Recommendation:</strong>{" "}

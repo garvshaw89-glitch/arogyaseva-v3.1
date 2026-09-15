@@ -1,6 +1,8 @@
-import React, { useEffect } from "react";
-import { PatientCase, SupportedLanguage } from "../../types";
+import React, { useEffect, useState } from "react";
+import { PatientCase, SupportedLanguage, HealthcareFacility } from "../../types";
 import confetti from "canvas-confetti";
+import { LiveLocationTracker } from "./LiveLocationTracker";
+import { playHapticSound } from "../../utils/audioFeedback";
 import {
   FileText,
   Printer,
@@ -14,7 +16,8 @@ import {
   User,
   Activity,
   PhoneCall,
-  Download
+  Download,
+  Radio,
 } from "lucide-react";
 
 interface ReferralSlipModalProps {
@@ -30,6 +33,8 @@ export const ReferralSlipModal: React.FC<ReferralSlipModalProps> = ({
   onViewDoctorPortal,
   language,
 }) => {
+  const [showTracker, setShowTracker] = useState(false);
+
   useEffect(() => {
     confetti({
       particleCount: 50,
@@ -213,23 +218,67 @@ export const ReferralSlipModal: React.FC<ReferralSlipModalProps> = ({
 
         {/* Modal Footer Controls */}
         <div className="bg-slate-50 px-6 py-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100"
-          >
-            Close & Start Next Patient
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 cursor-pointer"
+            >
+              Close & Start Next Patient
+            </button>
+            <button
+              onClick={() => {
+                playHapticSound("click");
+                setShowTracker(true);
+              }}
+              className="px-4 py-2 text-xs font-bold text-cyan-700 bg-cyan-50 border border-cyan-300 rounded-xl hover:bg-cyan-100 flex items-center gap-1.5 cursor-pointer"
+            >
+              <Radio className="w-3.5 h-3.5 text-cyan-600 animate-pulse" />
+              <span>Track Live Ambulance</span>
+            </button>
+          </div>
 
           <button
             id="btn-switch-to-doctor-view"
             onClick={onViewDoctorPortal}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-blue-100 flex items-center gap-2 transition-all"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-blue-100 flex items-center gap-2 transition-all cursor-pointer"
           >
             <span>View on Doctor Hospital Dashboard</span>
             <Hospital className="w-4 h-4" />
           </button>
         </div>
       </div>
+
+      {showTracker && (
+        <LiveLocationTracker
+          patientData={caseData}
+          selectedFacility={
+            caseData.referredFacility
+              ? {
+                  id: caseData.referredFacility.id,
+                  name: caseData.referredFacility.name,
+                  type: caseData.referredFacility.type as any,
+                  distanceKm: caseData.referredFacility.distanceKm,
+                  travelTimeMins: Math.round((caseData.referredFacility.distanceKm / 45) * 60),
+                  address: "Verified Emergency Trauma Hub",
+                  contactNumber: "108 / Emergency Desk",
+                  emergencyHotline: "108",
+                  hasOxygen: true,
+                  hasBloodBank: true,
+                  hasCSection: true,
+                  hasNICU: true,
+                  hasSnakeAntivenom: true,
+                  hasAmbulance24x7: true,
+                  availableBeds: 45,
+                  icuBedsAvailable: 8,
+                  latitude: 22.8115,
+                  longitude: 77.7845,
+                }
+              : null
+          }
+          isOpen={showTracker}
+          onClose={() => setShowTracker(false)}
+        />
+      )}
     </div>
   );
 };

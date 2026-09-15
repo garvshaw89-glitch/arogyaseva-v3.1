@@ -146,7 +146,8 @@ export function ruleBasedTriage(payload: any) {
 }
 
 // LLM assist helper — supports Gemini & OpenAI
-async function llmAssist(payload: any) {
+async function llmAssist(payload: any, ruleResult?: any) {
+  const result = ruleResult || ruleBasedTriage(payload);
   const systemPrompt = [
     "You are an assistant that explains clinical triage reasoning in a short paragraph.",
     "Be concise, do NOT provide a diagnosis, and instruct to seek emergency care for life-threatening findings.",
@@ -207,25 +208,69 @@ Return JSON with keys: recommendation, reasons, safety_instruction.`;
   // 2. Default to Google Gemini if available
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
-    try {
-      const ai = new GoogleGenAI({ apiKey: geminiKey });
-      const response = await ai.models.generateContent({
-        model: "gemini-3.7-flash",
-        contents: `${systemPrompt}\n\n${userPrompt}`,
-        config: {
-          responseMimeType: "application/json",
-        },
-      });
+    const modelsToTry = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.1-flash-lite"];
+    for (const modelName of modelsToTry) {
+      try {
+        const ai = new GoogleGenAI({
+          apiKey: geminiKey,
+          httpOptions: {
+            headers: { "User-Agent": "aistudio-build" },
+          },
+        });
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: `${systemPrompt}\n\n${userPrompt}`,
+          config: {
+            responseMimeType: "application/json",
+          },
+        });
 
-      const parsed = JSON.parse(response.text?.trim() || "{}");
-      return parsed;
-    } catch (err: any) {
-      console.warn("Gemini LLM assist error:", err.message);
-      return { error: err.message };
+        const parsed = JSON.parse(response.text?.trim() || "{}");
+        if (parsed && typeof parsed === "object") {
+          return { ...parsed, source: `gemini_${modelName}` };
+        }
+      } catch (err: any) {
+        // Log brief notice and try next fallback model in cascade
+        const errMsg = err?.message || String(err);
+        if (
+          errMsg.includes("503") ||
+          errMsg.includes("high demand") ||
+          errMsg.includes("quota") ||
+          errMsg.includes("UNAVAILABLE") ||
+          errMsg.includes("429")
+        ) {
+          // Model temporarily congested; wait 300ms and move to fallback
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          continue;
+        }
+      }
     }
   }
 
-  return null;
+  // 3. Resilient deterministic clinical reasoning fallback (active when LLM is unavailable or congested)
+  const isEmergency = result.level === "emergency";
+  const isUrgent = result.level === "urgent";
+
+  return {
+    diagnosticHypothesis: isEmergency
+      ? `Critical physiological instability or acute red-flag presentation (${result.reasons.join(", ") || "Immediate tertiary attention required"})`
+      : isUrgent
+      ? `Sub-acute or high-risk symptomatic presentation requiring facility review (${result.reasons.join(", ") || "Prompt clinical evaluation"})`
+      : `Stable baseline presentation consistent with non-emergent frontline care`,
+    riskRationale: `Determined ${result.level.toUpperCase()} triage priority based on WHO/IMCI vital threshold cutoffs and trigger markers: ${result.reasons.join("; ") || "all vitals in acceptable baseline range"}.`,
+    suggestedQuestions: [
+      "Are symptoms sudden in onset or progressively worsening with physical exertion?",
+      "Is there any past history of cardiovascular, respiratory, diabetic, or neurological disease?",
+      "Is the patient experiencing any shortness of breath, dizziness, cold clammy sweat, or altered consciousness?",
+    ],
+    recommendedReferralTier: isEmergency
+      ? "Tertiary Care / District Hospital (Emergency Resuscitation & ICU)"
+      : isUrgent
+      ? "Community Health Centre (CHC) / Secondary Specialist Care"
+      : "Primary Health Centre (PHC) / Sub-Centre Routine Follow-up",
+    redFlags: result.reasons.length > 0 ? result.reasons : ["None currently detected in baseline telemetry"],
+    source: "clinical_rule_engine_synthesis",
+  };
 }
 
 router.get(["/triage", "/triage.js"], (req: Request, res: Response) => {
@@ -263,7 +308,7 @@ router.post(["/triage", "/triage.js"], async (req: Request, res: Response) => {
       process.env.GEMINI_API_KEY ||
       process.env.OPENAI_API_KEY
     ) {
-      llm = await llmAssist(payload);
+      llm = await llmAssist(payload, result);
     }
 
     const out = {
