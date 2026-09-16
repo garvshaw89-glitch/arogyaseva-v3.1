@@ -446,11 +446,11 @@ export default function App() {
             <div id="chw-workflow-stepper" className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-sm mb-6">
               <div className="flex items-center justify-between">
                 {[
-                  { step: 1, label: "1. Patient Info", icon: UserPlus },
-                  { step: 2, label: "2. Vitals", icon: Activity },
-                  { step: 3, label: "3. Danger Signs", icon: HelpCircle },
-                  { step: 4, label: "4. Risk Triage", icon: ShieldAlert },
-                  { step: 5, label: "5. Referral & Facility", icon: Hospital },
+                  { step: 1, label: "1. Patient Info", shortLabel: "Patient", icon: UserPlus },
+                  { step: 2, label: "2. Vitals", shortLabel: "Vitals", icon: Activity },
+                  { step: 3, label: "3. Danger Signs", shortLabel: "Danger Signs", icon: HelpCircle },
+                  { step: 4, label: "4. Risk Triage", shortLabel: "Risk Triage", icon: ShieldAlert },
+                  { step: 5, label: "5. Referral & Facility", shortLabel: "Referral", icon: Hospital },
                 ].map((item) => {
                   const Icon = item.icon;
                   const isActive = currentStep === item.step;
@@ -465,7 +465,7 @@ export default function App() {
                           setCurrentStep(item.step);
                         }
                       }}
-                      className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1.5 py-1.5 px-1 sm:px-3 rounded-xl text-center transition-all duration-300 ${
+                      className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-0.5 sm:px-2 md:px-3 rounded-xl text-center transition-all duration-300 ${
                         isActive
                           ? "text-blue-700 font-bold bg-blue-50/90 border border-blue-300 ring-2 ring-blue-500/20 shadow-xs scale-[1.02]"
                           : isPast
@@ -489,8 +489,9 @@ export default function App() {
                           {isPast ? "✓" : item.step}
                         </div>
                       </div>
-                      <span className="text-xs truncate hidden md:inline font-medium transition-colors duration-200">
-                        {item.label}
+                      <span className="text-[11px] lg:text-xs truncate hidden sm:inline font-medium transition-colors duration-200">
+                        <span className="hidden lg:inline">{item.label}</span>
+                        <span className="lg:hidden">{item.shortLabel}</span>
                       </span>
                     </button>
                   );

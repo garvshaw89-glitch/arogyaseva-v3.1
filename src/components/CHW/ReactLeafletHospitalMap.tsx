@@ -35,7 +35,7 @@ import {
   Route,
 } from "lucide-react";
 
-export type TileStyleKey = "osm_standard" | "carto_light" | "satellite";
+export type TileStyleKey = "osm_standard" | "satellite";
 
 export const TILE_STYLES: Record<
   TileStyleKey,
@@ -46,13 +46,6 @@ export const TILE_STYLES: Record<
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
-    maxZoom: 19,
-  },
-  carto_light: {
-    name: "CartoDB Voyager (Clean)",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-    attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
     maxZoom: 19,
   },
   satellite: {
@@ -80,10 +73,17 @@ function MapViewController({
 
   useEffect(() => {
     // Invalidate map size after mount / resize
-    const timer = setTimeout(() => {
+    const invalidate = () => {
       map.invalidateSize();
-    }, 200);
-    return () => clearTimeout(timer);
+    };
+    const timer = setTimeout(invalidate, 200);
+    window.addEventListener("resize", invalidate);
+    window.addEventListener("orientationchange", invalidate);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", invalidate);
+      window.removeEventListener("orientationchange", invalidate);
+    };
   }, [map]);
 
   useEffect(() => {
@@ -289,7 +289,6 @@ export const ReactLeafletHospitalMap: React.FC<ReactLeafletHospitalMapProps> = (
               {(
                 [
                   { key: "osm_standard", label: "OSM", icon: Layers },
-                  { key: "carto_light", label: "Light", icon: Sparkles },
                   { key: "satellite", label: "Satellite", icon: Sparkles },
                 ] as const
               ).map((tile) => (

@@ -206,21 +206,22 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
 
     animate();
 
-    const handleResize = () => {
-      if (!container) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      if (w > 0 && h > 0) {
-        camera.aspect = w / h;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, h);
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        const h = entry.contentRect.height;
+        if (w > 0 && h > 0) {
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+        }
       }
-    };
-    window.addEventListener("resize", handleResize);
+    });
+    resizeObserver.observe(container);
 
     return () => {
       cancelAnimationFrame(frameId);
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -556,14 +557,14 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
       </div>
 
       {/* Action Footer */}
-      <div className="flex items-center justify-between flex-wrap gap-3 pt-2">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2">
         <button
           id="btn-back-to-vitals"
           onClick={() => {
             playHapticSound("click");
             onBack();
           }}
-          className="px-5 py-3 text-xs font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 flex items-center gap-1.5 shadow-sm cursor-pointer transition-all"
+          className="px-5 py-3 text-xs font-bold text-slate-700 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 flex items-center justify-center gap-1.5 shadow-sm cursor-pointer transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to Clinical Questions</span>
@@ -576,11 +577,11 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
               playHapticSound("step");
               onProceedToFacilities();
             }}
-            className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-sm px-8 py-3.5 rounded-2xl shadow-xl shadow-red-600/30 flex items-center gap-3 transition-all hover:gap-4 cursor-pointer hover:scale-[1.02]"
+            className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white font-extrabold text-xs sm:text-sm px-6 sm:px-8 py-3.5 rounded-2xl shadow-xl shadow-red-600/30 flex items-center justify-center gap-2.5 sm:gap-3 transition-all cursor-pointer hover:scale-[1.02]"
           >
-            <Hospital className="w-5 h-5" />
+            <Hospital className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span>Match Facility & Open Referral Map</span>
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
           </button>
         ) : (
           <button
@@ -589,9 +590,9 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
               playHapticSound("success");
               onSaveRoutineCase();
             }}
-            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-sm px-8 py-3.5 rounded-2xl shadow-xl shadow-emerald-600/20 flex items-center gap-2 transition-all cursor-pointer hover:scale-[1.02]"
+            className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-extrabold text-xs sm:text-sm px-6 sm:px-8 py-3.5 rounded-2xl shadow-xl shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer hover:scale-[1.02]"
           >
-            <CheckCircle2 className="w-5 h-5" />
+            <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
             <span>Record Local Routine Case & Close</span>
           </button>
         )}

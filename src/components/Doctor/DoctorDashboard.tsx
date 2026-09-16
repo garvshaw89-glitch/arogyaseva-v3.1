@@ -308,12 +308,12 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             </div>
 
             {/* Risk Filters Tabs */}
-            <div className="flex gap-1.5 pt-1">
+            <div className="flex gap-1.5 pt-1 overflow-x-auto pb-1">
               {["ALL", "URGENT", "CONSULTATION", "ROUTINE"].map((lvl) => (
                 <button
                   key={lvl}
                   onClick={() => setRiskFilter(lvl)}
-                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all ${
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shrink-0 cursor-pointer ${
                     riskFilter === lvl
                       ? "bg-blue-600 text-white shadow-xs"
                       : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"

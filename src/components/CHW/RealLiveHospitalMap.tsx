@@ -41,18 +41,13 @@ interface RealLiveHospitalMapProps {
   compact?: boolean;
 }
 
-type TileLayerType = "street" | "clean" | "satellite";
+type TileLayerType = "street" | "satellite";
 
 const TILE_LAYERS: Record<TileLayerType, { url: string; attribution: string; name: string }> = {
   street: {
     name: "Street Map (OSM)",
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  },
-  clean: {
-    name: "Modern Light",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
   },
   satellite: {
     name: "Satellite Imagery",
@@ -637,7 +632,7 @@ export const RealLiveHospitalMap: React.FC<RealLiveHospitalMapProps> = ({
 
         {/* Map Tile Layer Selector */}
         <div className="flex items-center gap-1 bg-slate-200/80 p-0.5 rounded-xl text-xs font-semibold">
-          {(["street", "clean", "satellite"] as TileLayerType[]).map((layer) => (
+          {(["street", "satellite"] as TileLayerType[]).map((layer) => (
             <button
               key={layer}
               onClick={() => {
@@ -650,7 +645,7 @@ export const RealLiveHospitalMap: React.FC<RealLiveHospitalMapProps> = ({
                   : "text-slate-600 hover:text-slate-900"
               }`}
             >
-              {layer === "street" ? "🗺️ Street" : layer === "clean" ? "🏢 Clean" : "🛰️ Satellite"}
+              {layer === "street" ? "🗺️ OSM" : "🛰️ Satellite"}
             </button>
           ))}
         </div>

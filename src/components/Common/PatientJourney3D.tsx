@@ -115,20 +115,21 @@ export const PatientJourney3D: React.FC<PatientJourney3DProps> = ({
 
     animate();
 
-    const handleResize = () => {
-      if (!container) return;
-      const w = container.clientWidth;
-      if (w > 0) {
-        camera.aspect = w / height;
-        camera.updateProjectionMatrix();
-        renderer.setSize(w, height);
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const w = entry.contentRect.width;
+        if (w > 0) {
+          camera.aspect = w / height;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, height);
+        }
       }
-    };
-    window.addEventListener("resize", handleResize);
+    });
+    resizeObserver.observe(container);
 
     return () => {
       cancelAnimationFrame(frameId);
-      window.removeEventListener("resize", handleResize);
+      resizeObserver.disconnect();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
@@ -139,7 +140,7 @@ export const PatientJourney3D: React.FC<PatientJourney3DProps> = ({
   return (
     <div className="relative bg-slate-950/90 border border-slate-800/80 rounded-2xl p-3 sm:p-4 backdrop-blur-md shadow-2xl mb-6 overflow-hidden">
       {/* HUD Bar */}
-      <div className="flex items-center justify-between text-[10px] font-mono border-b border-slate-800/70 pb-2 mb-2 text-slate-400">
+      <div className="flex items-center justify-between text-[10px] font-mono border-b border-slate-800/70 pb-2 mb-2 text-slate-400 flex-wrap gap-1">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
           <span className="font-bold text-white tracking-widest uppercase">
@@ -160,7 +161,7 @@ export const PatientJourney3D: React.FC<PatientJourney3DProps> = ({
       <div ref={containerRef} className="w-full h-[70px] cursor-pointer" />
 
       {/* Interactive Stage Labels Grid */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-1">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 sm:gap-2 mt-1">
         {STAGES.map((s) => {
           const isActive = s.id === currentStage;
           const isPassed = s.id < currentStage;
