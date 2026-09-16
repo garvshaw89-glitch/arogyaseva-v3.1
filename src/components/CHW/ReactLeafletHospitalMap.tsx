@@ -194,7 +194,7 @@ export const ReactLeafletHospitalMap: React.FC<ReactLeafletHospitalMapProps> = (
   showTileSelector = true,
   onRefreshGps,
   isLocating = false,
-  overpassSource = "Overpass API",
+  overpassSource = "Healthcare Directory",
 }) => {
   const [activeTileKey, setActiveTileKey] = useState<TileStyleKey>("osm_standard");
   const [isRecenterRequested, setIsRecenterRequested] = useState(true);
@@ -249,7 +249,7 @@ export const ReactLeafletHospitalMap: React.FC<ReactLeafletHospitalMapProps> = (
 
           <span className="bg-blue-900/60 text-blue-200 text-[10px] font-bold px-2 py-0.5 rounded border border-blue-600/40 hidden sm:flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-cyan-300" />
-            OSM Overpass API ({facilities.length} found)
+            {facilities.length} Facilities Nearby
           </span>
 
           {accuracyMeters && (

@@ -54,7 +54,7 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
           <div className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
             <span className="text-slate-300 font-medium text-[10px] sm:text-xs">
-              {isOffline ? "OFFLINE CACHE" : "AI ENGINE: ONLINE"}
+              {isOffline ? "OFFLINE CACHE" : "CLINICAL PROTOCOL: ACTIVE"}
             </span>
           </div>
           <div className="flex items-center gap-1 text-slate-400 hidden xs:flex">

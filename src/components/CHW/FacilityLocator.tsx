@@ -68,7 +68,7 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
     count: number;
     areaName?: string;
   }>({
-    source: "OpenStreetMap Overpass API",
+    source: "Healthcare Directory",
     count: MOCK_FACILITIES.length,
   });
 
@@ -90,12 +90,7 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
         if (result.facilities && result.facilities.length > 0) {
           setFacilities(result.facilities);
           setOverpassInfo({
-            source:
-              result.source === "overpass_direct"
-                ? "Overpass API Direct"
-                : result.source === "api_proxy"
-                ? "Overpass API + OSM Proxy"
-                : "Regional Health Grid",
+            source: "Regional Healthcare Network",
             count: result.facilities.length,
             areaName: result.areaName,
           });
@@ -297,7 +292,7 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
 
               <span className="bg-blue-900/60 text-blue-200 border border-blue-500/40 px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1">
                 <Sparkles className="w-3 h-3 text-cyan-300" />
-                {isLoadingOverpass ? "Querying Overpass API..." : `${overpassInfo.source} (${facilities.length} facilities)`}
+                {isLoadingOverpass ? "Discovering Facilities..." : `${facilities.length} Healthcare Facilities Found`}
               </span>
             </div>
 

@@ -32,7 +32,6 @@ import {
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
-import { AiSignalInspectorModal } from "../Common/AiSignalInspectorModal";
 import { clientRuleBasedTriage } from "../../utils/triageSignal";
 
 interface DoctorDashboardProps {
@@ -57,7 +56,6 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [showTeleconsultModal, setShowTeleconsultModal] = useState(false);
   const [teleconsultStatus, setTeleconsultStatus] = useState<"connecting" | "active" | "ended">("connecting");
   const [activeVehicles, setActiveVehicles] = useState<any[]>([]);
-  const [showInspectorModal, setShowInspectorModal] = useState(false);
 
   // Poll live ambulance & fleet telemetry
   useEffect(() => {
@@ -153,13 +151,6 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               {activeVehicles.length > 0 ? `${activeVehicles.length} Live En-Route` : "2 Standby"}
             </span>
           </div>
-          <button
-            onClick={() => setShowInspectorModal(true)}
-            className="bg-cyan-500/10 border border-cyan-500/40 hover:bg-cyan-500/20 text-cyan-300 px-3.5 py-2 rounded-xl flex items-center gap-2 transition-all cursor-pointer font-bold shadow-md shadow-cyan-950/40 hover:scale-[1.02]"
-          >
-            <Zap className="w-4 h-4 text-cyan-400 animate-pulse" />
-            <span className="font-mono text-xs">AI SIGNAL INSPECTOR</span>
-          </button>
         </div>
       </div>
 
@@ -721,36 +712,6 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           </div>
         </div>
       )}
-
-      {/* Universal AI Signal Triage Tester & Inspector Modal */}
-      <AiSignalInspectorModal
-        isOpen={showInspectorModal}
-        onClose={() => setShowInspectorModal(false)}
-        initialPayload={
-          selectedCase
-            ? {
-                age: selectedCase.age,
-                sex: selectedCase.gender.toLowerCase() as any,
-                symptoms:
-                  (selectedCase.symptoms || []).join(", ") ||
-                  selectedCase.clinicalImpression ||
-                  "chest pain and sweating",
-                vitals: {
-                  spo2: selectedCase.vitals.spo2,
-                  bp_systolic: selectedCase.vitals.bpSystolic,
-                  bp_diastolic: selectedCase.vitals.bpDiastolic,
-                  hr: selectedCase.vitals.heartRate,
-                  rr: selectedCase.vitals.respiratoryRate,
-                  temp: selectedCase.vitals.temperature
-                    ? Number(((selectedCase.vitals.temperature - 32) * 5 / 9).toFixed(1))
-                    : 37.0,
-                },
-                comorbidities: selectedCase.chronicConditions,
-                onset: selectedCase.symptomDuration || "sudden",
-              }
-            : undefined
-        }
-      />
     </div>
   );
 };

@@ -36,7 +36,6 @@ import { evaluateClinicalRiskLocally } from "./utils/clinicalRules";
 import { TRANSLATIONS } from "./utils/translations";
 import { CinematicHero } from "./components/Common/CinematicHero";
 import { playHapticSound } from "./utils/audioFeedback";
-import { AiSignalInspectorModal } from "./components/Common/AiSignalInspectorModal";
 import { motion, AnimatePresence } from "motion/react";
 import {
   UserPlus,
@@ -88,7 +87,6 @@ export default function App() {
   const [casesList, setCasesList] = useState<PatientCase[]>([]);
   const [offlineQueue, setOfflineQueue] = useState<PatientCase[]>([]);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
-  const [showAiInspector, setShowAiInspector] = useState<boolean>(false);
   const [showLiveTracker, setShowLiveTracker] = useState<boolean>(false);
   const [step5ViewMode, setStep5ViewMode] = useState<"locator" | "map">("locator");
 
@@ -357,7 +355,6 @@ export default function App() {
         onSyncOfflineQueue={handleSyncOffline}
         isSyncing={isSyncing}
         onNewAssessment={handleNewAssessment}
-        onOpenAiInspector={() => setShowAiInspector(true)}
         onOpenLiveTracker={() => {
           playHapticSound("click");
           setShowLiveTracker(true);
@@ -704,30 +701,6 @@ export default function App() {
           language={language}
         />
       )}
-
-      {/* Universal AI Signal Tester / Inspector Modal */}
-      <AiSignalInspectorModal
-        isOpen={showAiInspector}
-        onClose={() => setShowAiInspector(false)}
-        initialPayload={{
-          age: patientData.age || 45,
-          sex: (patientData.gender?.toLowerCase() as any) || "female",
-          symptoms: Array.isArray(patientData.symptoms) ? patientData.symptoms.join(", ") : "chest pain and sweating",
-          vitals: {
-            temp: patientData.vitals?.temperature
-              ? Number(((patientData.vitals.temperature - 32) * 5 / 9).toFixed(1))
-              : 37.0,
-            hr: patientData.vitals?.heartRate || 110,
-            bp_systolic: patientData.vitals?.bpSystolic || 110,
-            bp_diastolic: patientData.vitals?.bpDiastolic || 70,
-            rr: patientData.vitals?.respiratoryRate || 18,
-            spo2: patientData.vitals?.spo2 || 96,
-          },
-          comorbidities: patientData.chronicConditions || ["diabetes"],
-          onset: patientData.symptomDuration || "sudden",
-          duration_minutes: 30,
-        }}
-      />
 
       {/* Live Location Tracker Overlay */}
       {showLiveTracker && (

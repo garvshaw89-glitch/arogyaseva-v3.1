@@ -56,10 +56,10 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
 
-  // Overpass API facilities state
+  // Facility discovery state
   const [facilityList, setFacilityList] = useState<HealthcareFacility[]>(MOCK_FACILITIES);
   const [isLoadingHospitals, setIsLoadingHospitals] = useState<boolean>(false);
-  const [overpassStatus, setOverpassStatus] = useState<string>("Initializing Overpass API...");
+  const [facilityStatus, setFacilityStatus] = useState<string>("Locating nearby hospitals...");
 
   const [selectedFacilityId, setSelectedFacilityId] = useState<string>(
     assessment.requiredFacilityLevel.includes("District")
@@ -69,17 +69,17 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
       : "PHC-01"
   );
 
-  // Fetch nearby hospitals using the Overpass API based on real-time coordinates
+  // Fetch nearby hospitals based on real-time coordinates
   const fetchHospitals = useCallback(
     async (lat: number, lon: number) => {
       setIsLoadingHospitals(true);
-      setOverpassStatus("Querying OpenStreetMap Overpass API...");
+      setFacilityStatus("Discovering nearest medical facilities...");
       try {
         const res: OverpassQueryResult = await fetchNearbyHospitalsOverpass(lat, lon, 40);
         if (res.facilities && res.facilities.length > 0) {
           setFacilityList(res.facilities);
-          setOverpassStatus(
-            `${res.source === "overpass_direct" ? "Live Overpass API" : "OSM Healthcare Registry"} (${res.count} facilities near GPS)`
+          setFacilityStatus(
+            `${res.count} facilities found near GPS`
           );
 
           // If current selection is not in list, auto-select the best match
@@ -93,8 +93,8 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
           }
         }
       } catch (err) {
-        console.error("Failed to load Overpass hospitals in ReferralMap3D:", err);
-        setOverpassStatus("Regional Healthcare Fallback Grid");
+        console.error("Failed to load facilities in ReferralMap3D:", err);
+        setFacilityStatus("Regional Healthcare Directory");
       } finally {
         setIsLoadingHospitals(false);
       }
@@ -154,19 +154,19 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <span className="bg-red-500/20 text-red-300 text-[10px] font-bold uppercase px-3 py-1 rounded-full tracking-wider border border-red-500/30 flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-red-400 animate-ping" />
-              REACT-LEAFLET TRAJECTORY MAP
+              LIVE REFERRAL TRAJECTORY
             </span>
             <span className="text-xs text-blue-200 font-semibold bg-blue-900/40 px-3 py-1 rounded-full border border-blue-700/50 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-cyan-300" />
-              {overpassStatus}
+              {facilityStatus}
             </span>
           </div>
 
           <h2 className="text-2xl font-black mt-2 tracking-tight text-white flex items-center gap-2">
-            <span>Live OpenStreetMap Referral Trajectory</span>
+            <span>Live Referral Trajectory & Facility Routing</span>
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
-            Real OpenStreetMap tiles and Overpass API hospital discovery matching for{" "}
+            Live hospital route & facility matching for{" "}
             <strong>{patientData.patientName || "Emergency Patient"}</strong> from{" "}
             <strong>{patientData.village || "Rampur Village"}</strong>.
           </p>
@@ -246,7 +246,7 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
         heightClass="h-[340px] sm:h-[440px] md:h-[520px]"
         onRefreshGps={handleDetectRealTimeGps}
         isLocating={isLocating}
-        overpassSource={overpassStatus}
+        overpassSource={facilityStatus}
       />
 
       {/* 4. Action / Dispatch Footer Card */}
