@@ -46,7 +46,7 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
           </div>
           <span className="text-slate-600 hidden sm:inline">•</span>
           <span className="text-slate-400 hidden sm:inline">
-            NODE: <span className="text-white font-semibold">ASHA-RAMPUR-04</span>
+            NODE: <span className="text-white font-semibold">ASHA-Kolkata</span>
           </span>
         </div>
 

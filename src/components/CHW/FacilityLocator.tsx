@@ -6,6 +6,8 @@ import { useLiveLocation, DEFAULT_REGION_COORDS } from "../../utils/useLiveLocat
 import { fetchNearbyHospitalsOverpass, OverpassQueryResult } from "../../utils/overpassService";
 import { LiveLocationTracker } from "./LiveLocationTracker";
 import { ReactLeafletHospitalMap } from "./ReactLeafletHospitalMap";
+import { LocationSearchInput } from "../Common/LocationSearchInput";
+import { getCachedLiveLocation } from "../../utils/geolocationHelper";
 import { playHapticSound } from "../../utils/audioFeedback";
 import {
   Hospital,
@@ -51,14 +53,26 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
   // Real-time geolocation coordinates state
-  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number }>({
-    latitude: DEFAULT_REGION_COORDS.latitude,
-    longitude: DEFAULT_REGION_COORDS.longitude,
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number }>(() => {
+    if (patientData.villageLatitude && patientData.villageLongitude) {
+      return { latitude: patientData.villageLatitude, longitude: patientData.villageLongitude };
+    }
+    const cached = getCachedLiveLocation();
+    if (cached) {
+      return { latitude: cached.latitude, longitude: cached.longitude };
+    }
+    return {
+      latitude: DEFAULT_REGION_COORDS.latitude,
+      longitude: DEFAULT_REGION_COORDS.longitude,
+    };
   });
   const [accuracyMeters, setAccuracyMeters] = useState<number | null>(null);
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
-  const [gpsSource, setGpsSource] = useState<"real_gps" | "fallback_cluster">("fallback_cluster");
+  const [gpsSource, setGpsSource] = useState<"real_gps" | "fallback_cluster">("real_gps");
+  const [currentVillageText, setCurrentVillageText] = useState<string>(
+    patientData.village || getCachedLiveLocation()?.villageName || "My Live Location"
+  );
 
   // Overpass API fetched hospitals state
   const [facilities, setFacilities] = useState<HealthcareFacility[]>(MOCK_FACILITIES);
@@ -137,21 +151,24 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
       (error) => {
         setIsLocating(false);
         let msg = "Could not access GPS coordinates";
-        if (error.code === 1) msg = "Location permission denied. Using district regional coordinates.";
-        else if (error.code === 2) msg = "GPS signal unavailable. Using district regional coordinates.";
-        else if (error.code === 3) msg = "Location request timed out. Using district regional coordinates.";
+        if (error.code === 1) msg = "Location permission denied. You can search your village above.";
+        else if (error.code === 2) msg = "GPS signal unavailable. You can search your village above.";
+        else if (error.code === 3) msg = "Location request timed out. You can search your village above.";
         setGpsError(msg);
-        // Fallback fetch around regional cluster
-        loadHospitalsFromOverpass(DEFAULT_REGION_COORDS.latitude, DEFAULT_REGION_COORDS.longitude);
+        loadHospitalsFromOverpass(userCoords.latitude, userCoords.longitude);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [loadHospitalsFromOverpass]);
+  }, [loadHospitalsFromOverpass, userCoords.latitude, userCoords.longitude]);
 
-  // Initial mount: trigger real-time geolocation lookup
+  // Initial mount: automatic live location detection or initial coordinate query
   useEffect(() => {
-    handleDetectRealTimeGeolocation();
-  }, [handleDetectRealTimeGeolocation]);
+    if (patientData.villageLatitude && patientData.villageLongitude) {
+      loadHospitalsFromOverpass(patientData.villageLatitude, patientData.villageLongitude);
+    } else {
+      handleDetectRealTimeGeolocation();
+    }
+  }, [handleDetectRealTimeGeolocation, loadHospitalsFromOverpass, patientData.villageLatitude, patientData.villageLongitude]);
 
   const selectedFacility = useMemo(() => {
     return facilities.find((f) => f.id === selectedFacilityId) || facilities[0] || MOCK_FACILITIES[0];
@@ -200,7 +217,7 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
           </h2>
           <p className="text-xs sm:text-sm text-red-100 mt-1 max-w-xl">
             Live interactive GPS navigation connecting rural patient in{" "}
-            <strong>{patientData.village || "Rampur Village"}</strong> directly to nearest capable hospital.
+            <strong>{currentVillageText || patientData.village || "Live Location"}</strong> directly to nearest capable hospital.
           </p>
         </div>
 
@@ -214,6 +231,41 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
             <span>Call 108 Ambulance</span>
           </button>
         </div>
+      </div>
+
+      {/* 1b. Location Search Bar with Live GPS & Pan-India Village Suggestions */}
+      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs space-y-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Navigation className="w-4 h-4 text-blue-600" />
+            <span className="text-xs font-bold text-slate-800">
+              Patient Village / Sub-Centre Origin:
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-500 font-medium">
+            Search any Indian village, or tap GPS icon to use live location
+          </span>
+        </div>
+        <LocationSearchInput
+          id="facility-locator-village-search"
+          value={currentVillageText}
+          placeholder="Search village, sub-centre, ward, or tap GPS..."
+          showCurrentLocationOption={true}
+          onChange={(newVillage, coords) => {
+            setCurrentVillageText(newVillage);
+            if (coords) {
+              setUserCoords({ latitude: coords.latitude, longitude: coords.longitude });
+              setGpsSource("real_gps");
+              loadHospitalsFromOverpass(coords.latitude, coords.longitude);
+            }
+          }}
+          onLocationSelected={(loc) => {
+            setCurrentVillageText(loc.village);
+            setUserCoords({ latitude: loc.latitude, longitude: loc.longitude });
+            setGpsSource("real_gps");
+            loadHospitalsFromOverpass(loc.latitude, loc.longitude);
+          }}
+        />
       </div>
 
       {/* 2. Mode Selector: Split View (Map + Cards) vs Full Map vs Cards */}
@@ -321,7 +373,7 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
             onSelectFacility={(fac) => setSelectedFacilityId(fac.id)}
             onConfirmFacility={onSelectFacilityAndGenerateSlip}
             requiredFacilityLevel={assessment.requiredFacilityLevel}
-            patientVillage={patientData.village || "Rampur Village"}
+            patientVillage={currentVillageText || patientData.village || "Current Location"}
             patientName={patientData.patientName || "Emergency Patient"}
             className="w-full"
             heightClass={viewMode === "map" ? "h-[440px] sm:h-[550px] md:h-[620px]" : "h-[320px] sm:h-[420px] md:h-[480px]"}

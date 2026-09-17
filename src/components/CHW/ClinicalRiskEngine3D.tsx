@@ -17,12 +17,16 @@ import {
   Info,
   Activity,
   FileCheck,
-  Check
+  Check,
+  HelpCircle,
+  Send,
+  RefreshCw,
 } from "lucide-react";
 import { Card3DTilt } from "../Common/Card3DTilt";
 import { playHapticSound } from "../../utils/audioFeedback";
 import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
 import { clientRuleBasedTriage } from "../../utils/triageSignal";
+import { askHealthcareAI, HealthResponse } from "../../utils/healthcareAiApi";
 
 interface ClinicalRiskEngine3DProps {
   assessment: RiskAssessment;
@@ -68,6 +72,78 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
   });
 
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  // Clinical Decision AI State (using provided Healthcare AI service)
+  const [clinicalGuidance, setClinicalGuidance] = useState<HealthResponse | null>(null);
+  const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
+  const [consultationQuery, setConsultationQuery] = useState("");
+  const [isSubmittingConsultation, setIsSubmittingConsultation] = useState(false);
+  const [consultationResponse, setConsultationResponse] = useState<HealthResponse | null>(null);
+
+  // Automatic clinical evaluation on patient presentation
+  useEffect(() => {
+    let isMounted = true;
+    const evaluateClinicalCase = async () => {
+      setIsLoadingGuidance(true);
+      try {
+        const vitals = patientData.vitals;
+        const context = `Patient Age: ${patientData.age ?? "Unknown"}, Sex: ${patientData.gender ?? "Unknown"}.
+Reported Symptoms: ${Array.isArray(patientData.symptoms) ? patientData.symptoms.join(", ") : "None stated"}.
+Duration: ${patientData.symptomDuration || "Unspecified"}.
+Vitals: Temperature ${vitals?.temperature ? `${vitals.temperature}°F` : "--"}, SpO2 ${vitals?.spo2 ? `${vitals.spo2}%` : "--"}, Heart Rate ${vitals?.heartRate ? `${vitals.heartRate} bpm` : "--"}, Blood Pressure ${vitals?.bpSystolic ? `${vitals.bpSystolic}/${vitals.bpDiastolic} mmHg` : "--"}, Respiratory Rate ${vitals?.respiratoryRate ? `${vitals.respiratoryRate}/min` : "--"}.
+Chronic Conditions: ${patientData.chronicConditions?.join(", ") || "None reported"}.
+Clinical Assessment Level: ${assessment.riskLevel}. Danger Signs: ${assessment.dangerSigns?.join("; ") || "None"}.`;
+
+        const res = await askHealthcareAI(
+          "Provide immediate clinical safety evaluation, acute risk assessment, and recommended frontline care stabilization actions for this patient presentation.",
+          context
+        );
+        if (isMounted) {
+          setClinicalGuidance(res);
+        }
+      } catch {
+        if (isMounted) {
+          setClinicalGuidance({
+            answer: `${assessment.clinicalImpression}. Follow protocol: ${assessment.recommendedAction}`,
+            warning:
+              "This is general health information, not a diagnosis or medical advice. Contact a qualified healthcare professional for personal guidance. For emergencies, contact local emergency services.",
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingGuidance(false);
+        }
+      }
+    };
+
+    evaluateClinicalCase();
+    return () => {
+      isMounted = false;
+    };
+  }, [assessment.riskLevel, patientData.age, patientData.gender, patientData.symptomDuration]);
+
+  const handleAskClinicalQuestion = async (preset?: string) => {
+    const query = (preset || consultationQuery).trim();
+    if (!query || isSubmittingConsultation) return;
+
+    setIsSubmittingConsultation(true);
+    try {
+      const vitals = patientData.vitals;
+      const context = `Patient Age: ${patientData.age ?? "--"}, Sex: ${patientData.gender ?? "--"}, Symptoms: ${(patientData.symptoms || []).join(", ")}, SpO2: ${vitals?.spo2 || "--"}%, Temp: ${vitals?.temperature || "--"}°F, Assessment: ${assessment.riskLevel}.`;
+      const res = await askHealthcareAI(query, context);
+      setConsultationResponse(res);
+      playHapticSound("success");
+    } catch {
+      setConsultationResponse({
+        answer: "Refer to local clinical protocols and emergency transport guidelines.",
+        warning:
+          "This is general health information, not a diagnosis or medical advice. Contact a qualified healthcare professional for personal guidance. For emergencies, contact local emergency services.",
+      });
+      playHapticSound("alert");
+    } finally {
+      setIsSubmittingConsultation(false);
+    }
+  };
 
   useEffect(() => {
     if (isUrgent) {
@@ -552,6 +628,124 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
               <strong className="text-slate-900 block mb-0.5">Recommendation (R):</strong>
               <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.recommendation}</p>
             </div>
+          </div>
+        </div>
+
+        {/* Clinical Assessment & Protocol Guidance */}
+        <div className="mt-5 pt-4 border-t border-slate-100 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-blue-600" />
+              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
+                Clinical Assessment & Decision Guidance
+              </h4>
+            </div>
+            {isLoadingGuidance && (
+              <span className="text-[11px] font-mono text-blue-600 flex items-center gap-1.5">
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                Synthesizing Guidance...
+              </span>
+            )}
+          </div>
+
+          {clinicalGuidance && (
+            <div className="space-y-3">
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-xs text-slate-800 leading-relaxed font-sans">
+                {clinicalGuidance.answer}
+              </div>
+
+              {/* Verified Safety Warning Banner */}
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 flex items-start gap-2.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="space-y-0.5">
+                  <span className="text-[11px] font-bold text-amber-900 uppercase tracking-wider block">
+                    Clinical Advisory Notice
+                  </span>
+                  <p className="text-xs text-amber-800 leading-relaxed">
+                    {clinicalGuidance.warning}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Interactive Clinical Consultation Q&A Console */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-blue-600" />
+              <span className="text-xs font-bold text-slate-800 font-mono uppercase tracking-wider">
+                Clinical Consultation Inquiries
+              </span>
+            </div>
+
+            {/* Suggested quick inquiries */}
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                "What immediate medications or oral fluids are safe before transport?",
+                "What vital sign changes indicate rapid decompensation?",
+                "What are transit positioning instructions for acute respiratory distress?",
+              ].map((queryPreset, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setConsultationQuery(queryPreset);
+                    handleAskClinicalQuestion(queryPreset);
+                  }}
+                  className="text-[11px] bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-300 px-2.5 py-1 rounded-lg transition-colors text-left cursor-pointer"
+                >
+                  {queryPreset}
+                </button>
+              ))}
+            </div>
+
+            {/* Question Input */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={consultationQuery}
+                onChange={(e) => setConsultationQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !isSubmittingConsultation) {
+                    e.preventDefault();
+                    handleAskClinicalQuestion();
+                  }
+                }}
+                placeholder="Ask clinical decision question about this patient..."
+                className="flex-1 bg-white border border-slate-300 focus:border-blue-500 rounded-xl px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-hidden"
+              />
+              <button
+                type="button"
+                onClick={() => handleAskClinicalQuestion()}
+                disabled={isSubmittingConsultation || !consultationQuery.trim()}
+                className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all shrink-0"
+              >
+                {isSubmittingConsultation ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Send className="w-3.5 h-3.5" />
+                )}
+                <span>{isSubmittingConsultation ? "Inquiring..." : "Consult"}</span>
+              </button>
+            </div>
+
+            {/* Consultation Response */}
+            {consultationResponse && (
+              <div className="bg-white p-3.5 rounded-xl border border-blue-200 space-y-2 animate-fadeIn">
+                <span className="text-[10px] font-mono text-blue-600 font-bold uppercase block">
+                  CLINICAL GUIDANCE
+                </span>
+                <p className="text-xs text-slate-800 leading-relaxed">
+                  {consultationResponse.answer}
+                </p>
+                <div className="bg-amber-50 border border-amber-200 p-2 rounded-lg flex items-start gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-amber-800 leading-tight">
+                    {consultationResponse.warning}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

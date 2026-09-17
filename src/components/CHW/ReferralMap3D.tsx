@@ -5,6 +5,8 @@ import { TRANSLATIONS } from "../../utils/translations";
 import { DEFAULT_REGION_COORDS } from "../../utils/useLiveLocation";
 import { fetchNearbyHospitalsOverpass, OverpassQueryResult } from "../../utils/overpassService";
 import { ReactLeafletHospitalMap } from "./ReactLeafletHospitalMap";
+import { LocationSearchInput } from "../Common/LocationSearchInput";
+import { getCachedLiveLocation } from "../../utils/geolocationHelper";
 import {
   Hospital,
   MapPin,
@@ -48,13 +50,25 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
   // Real-time geolocation coordinates state
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number }>({
-    latitude: DEFAULT_REGION_COORDS.latitude,
-    longitude: DEFAULT_REGION_COORDS.longitude,
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number }>(() => {
+    if (patientData.villageLatitude && patientData.villageLongitude) {
+      return { latitude: patientData.villageLatitude, longitude: patientData.villageLongitude };
+    }
+    const cached = getCachedLiveLocation();
+    if (cached) {
+      return { latitude: cached.latitude, longitude: cached.longitude };
+    }
+    return {
+      latitude: DEFAULT_REGION_COORDS.latitude,
+      longitude: DEFAULT_REGION_COORDS.longitude,
+    };
   });
   const [accuracyMeters, setAccuracyMeters] = useState<number | null>(null);
   const [isLocating, setIsLocating] = useState<boolean>(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [currentVillageText, setCurrentVillageText] = useState<string>(
+    patientData.village || getCachedLiveLocation()?.villageName || "Live Location"
+  );
 
   // Facility discovery state
   const [facilityList, setFacilityList] = useState<HealthcareFacility[]>(MOCK_FACILITIES);
@@ -127,20 +141,24 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
       (error) => {
         setIsLocating(false);
         let msg = "Could not acquire real-time GPS coordinates";
-        if (error.code === 1) msg = "Location permission denied. Showing district cluster.";
-        else if (error.code === 2) msg = "GPS signal unavailable. Showing district cluster.";
-        else if (error.code === 3) msg = "GPS timed out. Showing district cluster.";
+        if (error.code === 1) msg = "Location permission denied. Search village or sub-centre below.";
+        else if (error.code === 2) msg = "GPS signal unavailable. Search village or sub-centre below.";
+        else if (error.code === 3) msg = "GPS timed out. Search village or sub-centre below.";
         setGpsError(msg);
-        fetchHospitals(DEFAULT_REGION_COORDS.latitude, DEFAULT_REGION_COORDS.longitude);
+        fetchHospitals(coords.latitude, coords.longitude);
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
-  }, [fetchHospitals]);
+  }, [coords.latitude, coords.longitude, fetchHospitals]);
 
   // Initial load
   useEffect(() => {
-    handleDetectRealTimeGps();
-  }, [handleDetectRealTimeGps]);
+    if (patientData.villageLatitude && patientData.villageLongitude) {
+      fetchHospitals(patientData.villageLatitude, patientData.villageLongitude);
+    } else {
+      handleDetectRealTimeGps();
+    }
+  }, [fetchHospitals, handleDetectRealTimeGps, patientData.villageLatitude, patientData.villageLongitude]);
 
   const selectedFacility = useMemo(() => {
     return facilityList.find((f) => f.id === selectedFacilityId) || facilityList[0] || MOCK_FACILITIES[0];
@@ -168,7 +186,7 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
           <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl">
             Live hospital route & facility matching for{" "}
             <strong>{patientData.patientName || "Emergency Patient"}</strong> from{" "}
-            <strong>{patientData.village || "Rampur Village"}</strong>.
+            <strong>{currentVillageText || patientData.village || "Live Location"}</strong>.
           </p>
         </div>
 
@@ -183,6 +201,39 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
             <span>Call 108 Ambulance</span>
           </button>
         </div>
+      </div>
+
+      {/* 1b. Village & Sub-Centre Search Bar with GPS Option */}
+      <div className="bg-slate-900 text-white p-3.5 rounded-2xl border border-slate-800 shadow-md space-y-2">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Navigation className="w-4 h-4 text-cyan-400" />
+            <span className="text-xs font-bold text-slate-200">
+              Change Origin Village / Sub-Centre:
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400 font-medium">
+            Type village or sub-centre name anywhere in India, or tap GPS
+          </span>
+        </div>
+        <LocationSearchInput
+          id="referral-map-village-search"
+          value={currentVillageText}
+          placeholder="Type village name, sub-centre, or tap GPS..."
+          showCurrentLocationOption={true}
+          onChange={(newVillage, newCoords) => {
+            setCurrentVillageText(newVillage);
+            if (newCoords) {
+              setCoords({ latitude: newCoords.latitude, longitude: newCoords.longitude });
+              fetchHospitals(newCoords.latitude, newCoords.longitude);
+            }
+          }}
+          onLocationSelected={(loc) => {
+            setCurrentVillageText(loc.village);
+            setCoords({ latitude: loc.latitude, longitude: loc.longitude });
+            fetchHospitals(loc.latitude, loc.longitude);
+          }}
+        />
       </div>
 
       {/* 2. Real-Time Telemetry Bar */}
@@ -240,7 +291,7 @@ export const ReferralMap3D: React.FC<ReferralMap3DProps> = ({
         }}
         onConfirmFacility={onSelectFacilityAndGenerateSlip}
         requiredFacilityLevel={assessment.requiredFacilityLevel}
-        patientVillage={patientData.village || "Rampur Village"}
+        patientVillage={currentVillageText || patientData.village || "Current Location"}
         patientName={patientData.patientName || "Emergency Patient"}
         className="w-full"
         heightClass="h-[340px] sm:h-[440px] md:h-[520px]"

@@ -68,6 +68,8 @@ export interface HealthcareFacility {
   icuBedsAvailable: number;
   latitude: number;
   longitude: number;
+  isGovt?: boolean;
+  sector?: "Government" | "Private" | "Trust";
 }
 
 export interface PatientCase {
@@ -76,6 +78,8 @@ export interface PatientCase {
   age: number;
   gender: "Male" | "Female" | "Other";
   village: string;
+  villageLatitude?: number;
+  villageLongitude?: number;
   chwName: string;
   contactNumber?: string;
   symptoms: string[];

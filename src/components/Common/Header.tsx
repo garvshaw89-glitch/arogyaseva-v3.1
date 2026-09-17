@@ -13,7 +13,10 @@ import {
   ShieldCheck,
   UserCheck,
   Radio,
-  Zap
+  Zap,
+  Siren,
+  PhoneCall,
+  AlertOctagon,
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 
@@ -29,6 +32,7 @@ interface HeaderProps {
   isSyncing: boolean;
   onNewAssessment: () => void;
   onOpenLiveTracker?: () => void;
+  onTriggerEmergencySos?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -43,6 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
   isSyncing,
   onNewAssessment,
   onOpenLiveTracker,
+  onTriggerEmergencySos,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
@@ -126,6 +131,28 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
               <span>({offlineQueue.length})</span>
+            </button>
+          )}
+
+          {/* Floating Emergency SOS 1-Tap Ambulance Action Button */}
+          {onTriggerEmergencySos && (
+            <button
+              id="header-floating-emergency-sos-btn"
+              type="button"
+              onClick={() => {
+                playHapticSound("alert");
+                onTriggerEmergencySos();
+              }}
+              className="group relative bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full flex items-center gap-1.5 shadow-md shadow-red-600/30 hover:shadow-lg hover:shadow-red-600/50 border border-red-300/40 transition-all hover:scale-105 active:scale-95 cursor-pointer animate-pulse shrink-0"
+              title="RAPID 1-TAP SOS: Bypasses standard intake workflows to alert and dispatch 108 Emergency Ambulance immediately"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-80" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+              </span>
+              <Siren className="w-3.5 h-3.5 text-white animate-spin" style={{ animationDuration: "3s" }} />
+              <span className="tracking-wider uppercase font-mono font-black">SOS</span>
+              <span className="hidden sm:inline font-bold text-[11px] tracking-tight">AMBULANCE</span>
             </button>
           )}
 
@@ -221,7 +248,7 @@ export const Header: React.FC<HeaderProps> = ({
                 {currentRole === "CHW" ? "Anjali Devi (ASHA)" : "Dr. S. K. Verma"}
               </p>
               <p className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">
-                {currentRole === "CHW" ? "SECTOR: RAMPUR" : "DISTRICT HOSPITAL"}
+                {currentRole === "CHW" ? "NODE: ASHA-KOLKATA" : "DISTRICT HOSPITAL"}
               </p>
             </div>
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold text-xs flex items-center justify-center border-2 border-white shadow-xs">

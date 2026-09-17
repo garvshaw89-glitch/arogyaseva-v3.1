@@ -39,6 +39,7 @@ interface DoctorDashboardProps {
   onUpdateCase: (caseId: string, updates: Partial<PatientCase>) => void;
   language: SupportedLanguage;
   onRefresh: () => void;
+  onOpenPdfReport?: (caseData: PatientCase) => void;
 }
 
 export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
@@ -46,6 +47,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   onUpdateCase,
   language,
   onRefresh,
+  onOpenPdfReport,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [selectedCaseId, setSelectedCaseId] = useState<string>(cases[0]?.id || "");
@@ -443,6 +445,21 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                   <p className="text-[10px] text-slate-400 mt-1 font-mono">
                     Case: {selectedCase.id}
                   </p>
+                  {onOpenPdfReport && (
+                    <button
+                      type="button"
+                      id="btn-doctor-generate-pdf-report"
+                      onClick={() => {
+                        playHapticSound("click");
+                        onOpenPdfReport(selectedCase);
+                      }}
+                      className="mt-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
+                      title="Generate and print standardized PDF referral report"
+                    >
+                      <Printer className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Print PDF Report</span>
+                    </button>
+                  )}
                 </div>
               </div>
 

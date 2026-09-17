@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 import { VoiceIntake3D } from "./VoiceIntake3D";
+import { LocationSearchInput } from "../Common/LocationSearchInput";
 
 interface PatientRegistrationProps {
   formData: Partial<PatientCase>;
@@ -339,18 +340,32 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
             </select>
           </div>
 
-          {/* Village */}
+          {/* Village & Sub-Centre Location Autocomplete */}
           <div className="space-y-1">
-            <label className="text-[10px] text-slate-400 font-bold uppercase">
-              {t.village}
-            </label>
-            <input
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] text-slate-400 font-bold uppercase">
+                {t.village} / Sub-Centre
+              </label>
+              <span className="text-[10px] text-blue-600 font-medium">
+                Live GPS / Search
+              </span>
+            </div>
+            <LocationSearchInput
               id="input-patient-village"
-              type="text"
-              value={formData.village || "Rampur Village"}
-              onChange={(e) => onChange({ village: e.target.value })}
-              placeholder="Village / Ward"
-              className="w-full text-sm font-semibold text-slate-800 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white focus:outline-none"
+              value={formData.village || ""}
+              placeholder="Search village, sub-centre, or tap GPS..."
+              showCurrentLocationOption={true}
+              onChange={(villageName, coords) => {
+                if (coords) {
+                  onChange({
+                    village: villageName,
+                    villageLatitude: coords.latitude,
+                    villageLongitude: coords.longitude,
+                  });
+                } else {
+                  onChange({ village: villageName });
+                }
+              }}
             />
           </div>
         </div>

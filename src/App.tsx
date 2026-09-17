@@ -21,6 +21,8 @@ import { RiskAssessmentView } from "./components/CHW/RiskAssessmentView";
 import { FacilityLocator } from "./components/CHW/FacilityLocator";
 import { ReferralSlipModal } from "./components/CHW/ReferralSlipModal";
 import { DoctorDashboard } from "./components/Doctor/DoctorDashboard";
+import { ReferralReportPDFModal } from "./components/Doctor/ReferralReportPDFModal";
+import { EmergencySosModal } from "./components/Common/EmergencySosModal";
 import { PatientJourney3D } from "./components/Common/PatientJourney3D";
 import { ClinicalRiskEngine3D } from "./components/CHW/ClinicalRiskEngine3D";
 import { ReferralMap3D } from "./components/CHW/ReferralMap3D";
@@ -36,6 +38,7 @@ import { evaluateClinicalRiskLocally } from "./utils/clinicalRules";
 import { TRANSLATIONS } from "./utils/translations";
 import { CinematicHero } from "./components/Common/CinematicHero";
 import { playHapticSound } from "./utils/audioFeedback";
+import { acquireLiveLocation, getCachedLiveLocation } from "./utils/geolocationHelper";
 import { motion, AnimatePresence } from "motion/react";
 import {
   UserPlus,
@@ -49,6 +52,9 @@ import {
   Sparkles,
   Compass,
   Radio,
+  Printer,
+  FileText,
+  Siren,
 } from "lucide-react";
 
 export default function App() {
@@ -58,30 +64,38 @@ export default function App() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>(undefined);
 
-  const [patientData, setPatientData] = useState<Partial<PatientCase>>({
-    patientName: "",
-    age: 35,
-    gender: "Male",
-    village: "Rampur Village (Sector 4)",
-    chwName: "Anjali Devi (ASHA)",
-    symptoms: ["High Fever", "Severe Shortness of Breath"],
-    symptomDuration: "3 days",
-    rawVoiceInput: "",
-    vitals: {
-      temperature: 102.4,
-      heartRate: 112,
-      spo2: 88,
-      bpSystolic: 136,
-      bpDiastolic: 88,
-      respiratoryRate: 28,
-    },
-    isPregnant: false,
-    followUpAnswers: {},
+  const [patientData, setPatientData] = useState<Partial<PatientCase>>(() => {
+    const cached = getCachedLiveLocation();
+    return {
+      patientName: "",
+      age: 35,
+      gender: "Male",
+      village: cached?.villageName || "",
+      villageLatitude: cached?.latitude,
+      villageLongitude: cached?.longitude,
+      chwName: "Anjali Devi (ASHA)",
+      symptoms: ["High Fever", "Severe Shortness of Breath"],
+      symptomDuration: "3 days",
+      rawVoiceInput: "",
+      vitals: {
+        temperature: 102.4,
+        heartRate: 112,
+        spo2: 88,
+        bpSystolic: 136,
+        bpDiastolic: 88,
+        respiratoryRate: 28,
+      },
+      isPregnant: false,
+      followUpAnswers: {},
+    };
   });
 
   const [assessment, setAssessment] = useState<RiskAssessment | null>(null);
   const [completedCase, setCompletedCase] = useState<PatientCase | null>(null);
   const [showReferralModal, setShowReferralModal] = useState<boolean>(false);
+  const [showPdfReportModal, setShowPdfReportModal] = useState<boolean>(false);
+  const [pdfReportCase, setPdfReportCase] = useState<PatientCase | null>(null);
+  const [showSosModal, setShowSosModal] = useState<boolean>(false);
   const [showCinematicHero, setShowCinematicHero] = useState<boolean>(true);
 
   const [casesList, setCasesList] = useState<PatientCase[]>([]);
@@ -94,6 +108,32 @@ export default function App() {
 
   useEffect(() => {
     loadInitialData();
+
+    // Pan-India Automatic Live Location Detection on App Start
+    acquireLiveLocation()
+      .then((loc) => {
+        if (loc && loc.villageName) {
+          setPatientData((prev) => {
+            // Only populate if village was not manually set by user
+            if (!prev.village || prev.village.includes("Rampur")) {
+              return {
+                ...prev,
+                village: loc.villageName,
+                villageLatitude: loc.latitude,
+                villageLongitude: loc.longitude,
+              };
+            }
+            return {
+              ...prev,
+              villageLatitude: prev.villageLatitude || loc.latitude,
+              villageLongitude: prev.villageLongitude || loc.longitude,
+            };
+          });
+        }
+      })
+      .catch(() => {
+        // Handled silently if browser permission not yet given
+      });
   }, []);
 
   const loadInitialData = async () => {
@@ -152,11 +192,14 @@ export default function App() {
 
   const handleNewAssessment = () => {
     setSelectedPresetId(undefined);
+    const cached = getCachedLiveLocation();
     setPatientData({
       patientName: "",
       age: 30,
       gender: "Male",
-      village: "Rampur Village",
+      village: cached?.villageName || "",
+      villageLatitude: cached?.latitude,
+      villageLongitude: cached?.longitude,
       chwName: "Anjali Devi (ASHA)",
       symptoms: [],
       symptomDuration: "1-2 days",
@@ -223,7 +266,9 @@ export default function App() {
       patientName: patientData.patientName || "Village Resident",
       age: patientData.age || 30,
       gender: (patientData.gender as any) || "Male",
-      village: patientData.village || "Rampur Village",
+      village: patientData.village || "Local Area",
+      villageLatitude: patientData.villageLatitude,
+      villageLongitude: patientData.villageLongitude,
       chwName: patientData.chwName || "Anjali Devi (ASHA)",
       contactNumber: patientData.contactNumber,
       symptoms: patientData.symptoms || ["General Malaise"],
@@ -273,7 +318,9 @@ export default function App() {
       patientName: patientData.patientName || "Emergency Patient",
       age: patientData.age || 40,
       gender: (patientData.gender as any) || "Male",
-      village: patientData.village || "Rampur Village",
+      village: patientData.village || "Local Area",
+      villageLatitude: patientData.villageLatitude,
+      villageLongitude: patientData.villageLongitude,
       chwName: patientData.chwName || "Anjali Devi (ASHA)",
       contactNumber: patientData.contactNumber,
       symptoms: patientData.symptoms || ["Acute Symptoms"],
@@ -341,6 +388,70 @@ export default function App() {
     }
   };
 
+  const handleTriggerEmergencySos = () => {
+    playHapticSound("alert");
+    const sosCaseId = `SOS-${Date.now().toString().slice(-5)}`;
+    const emergencyCase: PatientCase = {
+      id: sosCaseId,
+      patientName: "Emergency 1-Tap SOS Patient",
+      age: patientData.age || 40,
+      gender: patientData.gender || "Other",
+      village: patientData.village || "Rampur Village (Auto-Located)",
+      villageLatitude: patientData.villageLatitude || 22.8115,
+      villageLongitude: patientData.villageLongitude || 77.7845,
+      contactNumber: "108 Emergency Control CAD",
+      chwName: patientData.chwName || "Anjali Devi (ASHA)",
+      symptoms: ["Critical Life Threat", "Rapid 1-Tap SOS Triggered"],
+      symptomDuration: "Immediate / Acute",
+      rawVoiceInput: "Rapid one-tap 108 Emergency Ambulance dispatch triggered from header, bypassing standard intake workflows.",
+      vitals: {
+        temperature: 98.6,
+        heartRate: 118,
+        spo2: 86,
+        bpSystolic: 146,
+        bpDiastolic: 94,
+        respiratoryRate: 28,
+      },
+      isPregnant: patientData.isPregnant || false,
+      riskLevel: "URGENT",
+      riskScore: 98,
+      dangerSigns: [
+        "Rapid one-tap 108 Emergency Ambulance alert",
+        "Immediate ALS transit dispatched",
+        "Standard field triage workflow bypassed",
+      ],
+      clinicalImpression: "Acute Emergency: 108 ALS Ambulance dispatched via rapid one-tap bypass.",
+      recommendedAction: "Emergency ALS ambulance transfer to nearest District Emergency Trauma Center.",
+      sbarSummary: {
+        situation: `ONE-TAP EMERGENCY SOS: Ambulance 108 dispatched to ${patientData.village || "Rampur"}. Standard intake workflow bypassed.`,
+        background: "Frontline health worker triggered direct emergency ambulance alert for acute life threat.",
+        assessment: "Unstable / Acute Life Threatening Emergency requiring advanced airway and emergency room resuscitation.",
+        recommendation: "Emergency Department alert: Prepare trauma resuscitation bay, ALS stretcher, and on-call Emergency Medical Officer.",
+      },
+      fieldStabilizingActions: [
+        "High-flow 100% Oxygen support via non-rebreather mask",
+        "Keep patient in 30° head-elevated left lateral position",
+        "Continuous SpO2 and hemodynamic monitoring until ALS arrives",
+      ],
+      followUpAnswers: {
+        urgent_sos_note: "1-Tap rapid ambulance bypass triggered by frontline worker.",
+      },
+      referredFacility: {
+        id: "dh-district-emergency",
+        name: "District Emergency Trauma Center",
+        type: "District Hospital (DH)",
+        distanceKm: 8.5,
+      },
+      status: "DISPATCHED",
+      createdAt: new Date().toISOString(),
+    };
+
+    setCasesList((prev) => [emergencyCase, ...prev]);
+    setCompletedCase(emergencyCase);
+    setPdfReportCase(emergencyCase);
+    setShowSosModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-200">
       {/* Header with Professional Polish */}
@@ -355,6 +466,7 @@ export default function App() {
         onSyncOfflineQueue={handleSyncOffline}
         isSyncing={isSyncing}
         onNewAssessment={handleNewAssessment}
+        onTriggerEmergencySos={handleTriggerEmergencySos}
         onOpenLiveTracker={() => {
           playHapticSound("click");
           setShowLiveTracker(true);
@@ -682,6 +794,10 @@ export default function App() {
             onUpdateCase={handleUpdateCaseFromDoctor}
             language={language}
             onRefresh={loadInitialData}
+            onOpenPdfReport={(c) => {
+              setPdfReportCase(c);
+              setShowPdfReportModal(true);
+            }}
           />
         )}
       </main>
@@ -698,8 +814,72 @@ export default function App() {
             setShowReferralModal(false);
             setRole("DOCTOR");
           }}
+          onGeneratePdfReport={(c) => {
+            setPdfReportCase(c);
+            setShowPdfReportModal(true);
+          }}
           language={language}
         />
+      )}
+
+      {/* Standardized Printable PDF Referral Report Modal */}
+      {showPdfReportModal && (pdfReportCase || completedCase) && (
+        <ReferralReportPDFModal
+          caseData={(pdfReportCase || completedCase)!}
+          isOpen={showPdfReportModal}
+          onClose={() => setShowPdfReportModal(false)}
+          language={language}
+        />
+      )}
+
+      {/* Rapid One-Tap Emergency SOS Ambulance Dispatch Modal */}
+      {showSosModal && (
+        <EmergencySosModal
+          isOpen={showSosModal}
+          onClose={() => setShowSosModal(false)}
+          currentLocation={{
+            village: patientData.village || "Rampur Village (Auto-Located)",
+            latitude: patientData.villageLatitude,
+            longitude: patientData.villageLongitude,
+          }}
+          onGenerateReport={(sosCase) => {
+            setShowSosModal(false);
+            setPdfReportCase(sosCase);
+            setShowPdfReportModal(true);
+          }}
+          onOpenMapTracker={() => {
+            setShowSosModal(false);
+            setShowLiveTracker(true);
+          }}
+        />
+      )}
+
+      {/* Quick Floating Action to re-view / print standardized PDF Referral Report from completedCase */}
+      {completedCase && !showReferralModal && !showPdfReportModal && !showSosModal && (
+        <div className="fixed bottom-4 left-4 z-40 print:hidden animate-in fade-in slide-in-from-bottom-3 duration-300">
+          <button
+            id="floating-btn-view-pdf-report"
+            type="button"
+            onClick={() => {
+              playHapticSound("click");
+              setPdfReportCase(completedCase);
+              setShowPdfReportModal(true);
+            }}
+            className="bg-slate-900/95 hover:bg-slate-800 text-white text-xs font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-2.5 transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md"
+            title="Open and print standardized PDF referral report for current patient"
+          >
+            <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-sm shadow-blue-500/40">
+              <Printer className="w-3.5 h-3.5" />
+            </div>
+            <div className="text-left leading-tight">
+              <span className="block text-[10px] text-slate-400 font-normal">Active Case Summary</span>
+              <span className="font-semibold text-slate-100 flex items-center gap-1">
+                <span>Print PDF Report</span>
+                <span className="text-[9px] font-mono text-cyan-300 uppercase">({completedCase.riskLevel})</span>
+              </span>
+            </div>
+          </button>
+        </div>
       )}
 
       {/* Live Location Tracker Overlay */}

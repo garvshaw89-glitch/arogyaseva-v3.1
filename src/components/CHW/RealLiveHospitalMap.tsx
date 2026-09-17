@@ -270,6 +270,11 @@ export const RealLiveHospitalMap: React.FC<RealLiveHospitalMapProps> = ({
     // Initial fetch of hospitals around starting location
     fetchHospitals(currentCoords.latitude, currentCoords.longitude, searchRadiusKm);
 
+    // Automatically detect live location on initial map open
+    if (!initialCoords && navigator.geolocation) {
+      handleDetectLiveGps();
+    }
+
     return () => {
       map.remove();
       mapRef.current = null;
@@ -611,8 +616,25 @@ export const RealLiveHospitalMap: React.FC<RealLiveHospitalMapProps> = ({
           </div>
 
           {/* Autocomplete suggestions dropdown */}
-          {showSearchResults && locationResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-56 overflow-y-auto">
+          {showSearchResults && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-60 overflow-y-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowSearchResults(false);
+                  handleDetectLiveGps();
+                }}
+                className="w-full text-left px-3 py-2 text-xs hover:bg-emerald-50 transition-colors border-b border-emerald-100 flex items-center gap-2 cursor-pointer bg-emerald-50/70 text-emerald-900 font-bold"
+              >
+                <Crosshair className="w-3.5 h-3.5 text-emerald-600 shrink-0 animate-pulse" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span>📍 Use Current Live Location</span>
+                    <span className="text-[9px] bg-emerald-200/80 text-emerald-800 px-1.5 py-0.2 rounded font-mono">GPS</span>
+                  </div>
+                  <div className="text-[10px] text-emerald-700 font-normal">Detect current GPS position across India</div>
+                </div>
+              </button>
               {locationResults.map((item) => (
                 <button
                   key={item.placeId}
