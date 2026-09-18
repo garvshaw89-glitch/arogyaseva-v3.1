@@ -163,7 +163,7 @@ ArogyaSeva avoids static or simulated maps by interfacing directly with the Open
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/Garv-Shaw/ArogyaSeva.git
+git clone https://github.com/garvshaw89-glitch/ArogyaSeva.git
 cd ArogyaSeva
 ```
 
@@ -212,7 +212,7 @@ npm start
 
 ## 📄 Author & License
 
-Developed with ❤️ for rural healthcare workers and frontline medical champions.
+Developed for rural healthcare workers and frontline medical champions.
 
 - **Author**: Garv Shaw
 - **Email**: [garvshaw89@gmail.com](mailto:garvshaw89@gmail.com) • [garvshawinfo@gmail.com](mailto:garvshawinfo@gmail.com)
