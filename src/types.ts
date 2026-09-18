@@ -47,6 +47,7 @@ export interface RiskAssessment {
   requiredFacilityLevel: FacilityType;
   fieldStabilizingActions: string[];
   sbarSummary: SBARSummary;
+  triageSignal?: TriageSignalResult;
 }
 
 export interface HealthcareFacility {
@@ -99,6 +100,7 @@ export interface PatientCase {
   recommendedAction: string;
   sbarSummary: SBARSummary;
   fieldStabilizingActions: string[];
+  triageSignal?: TriageSignalResult;
   referredFacility?: {
     id: string;
     name: string;
@@ -152,6 +154,10 @@ export interface TriageSignalResult {
     recommendation?: string;
     reasons?: string;
     safety_instruction?: string;
+    diagnosticHypothesis?: string;
+    riskRationale?: string;
+    recommendedReferralTier?: string;
+    suggestedQuestions?: string[];
     raw?: string;
     error?: string;
   } | null;
@@ -168,4 +174,27 @@ export interface ClinicalPreset {
   patientData: Partial<PatientCase>;
 }
 
-export type SupportedLanguage = "en" | "hi" | "mr" | "bn" | "ta" | "te";
+export type SupportedLanguage =
+  | "en" // English
+  | "hi" // Hindi (हिन्दी)
+  | "mr" // Marathi (मराठी)
+  | "bn" // Bengali (বাংলা)
+  | "ta" // Tamil (தமிழ்)
+  | "te" // Telugu (తెలుగు)
+  | "gu" // Gujarati (ગુજરાતી)
+  | "kn" // Kannada (ಕನ್ನಡ)
+  | "ml" // Malayalam (മലയാളം)
+  | "pa" // Punjabi (ਪੰਜਾਬੀ)
+  | "or" // Odia (ଓଡ଼ିଆ)
+  | "as" // Assamese (অসমীয়া)
+  | "ur" // Urdu (اردو)
+  | "mai" // Maithili (मैथिली)
+  | "sa" // Sanskrit (संस्कृतम्)
+  | "kok" // Konkani (कोंकणी)
+  | "ne" // Nepali (नेपाली)
+  | "doi" // Dogri (डोगरी)
+  | "ks" // Kashmiri (कश्मीरी)
+  | "mni" // Manipuri (মৈতৈলোন্ / মণিপুরী)
+  | "brx" // Bodo (बड़ो)
+  | "sat" // Santali (संथाली)
+  | "sd"; // Sindhi (سنڌي / सिंधी)

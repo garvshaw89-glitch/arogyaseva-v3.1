@@ -74,3 +74,61 @@ export const playHapticSound = (type: "click" | "success" | "alert" | "step" | "
     // Ignore audio autoplay restrictions gracefully
   }
 };
+
+/**
+ * High-reliability clinical Web Speech Synthesis utility
+ * Ensures voices speak aloud when triggered by user gestures
+ */
+export const speakClinicalPrompt = (
+  text: string,
+  lang: string = "en",
+  onStart?: () => void,
+  onEnd?: () => void
+): SpeechSynthesisUtterance | null => {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+    return null;
+  }
+
+  try {
+    window.speechSynthesis.cancel();
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang === "hi" ? "hi-IN" : "en-IN";
+    utterance.rate = 0.95;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    utterance.onstart = () => {
+      if (onStart) onStart();
+    };
+
+    utterance.onend = () => {
+      if (onEnd) onEnd();
+    };
+
+    utterance.onerror = (e) => {
+      console.warn("Speech synthesis notice:", e);
+      if (onEnd) onEnd();
+    };
+
+    window.speechSynthesis.speak(utterance);
+    return utterance;
+  } catch (err) {
+    console.warn("Speech synthesis error:", err);
+    if (onEnd) onEnd();
+    return null;
+  }
+};
+
+export const stopClinicalSpeech = () => {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch {
+      // ignore
+    }
+  }
+};

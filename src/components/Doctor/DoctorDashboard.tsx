@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { PatientCase, SupportedLanguage } from "../../types";
 import { TRANSLATIONS } from "../../utils/translations";
+import { IndianStateData } from "../../data/indianStates";
 import {
   Stethoscope,
   ShieldAlert,
@@ -40,6 +41,7 @@ interface DoctorDashboardProps {
   language: SupportedLanguage;
   onRefresh: () => void;
   onOpenPdfReport?: (caseData: PatientCase) => void;
+  selectedState?: IndianStateData;
 }
 
 export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
@@ -48,6 +50,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   language,
   onRefresh,
   onOpenPdfReport,
+  selectedState,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [selectedCaseId, setSelectedCaseId] = useState<string>(cases[0]?.id || "");
@@ -124,7 +127,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
-                DISTRICT CLINICAL COMMAND CENTER
+                {selectedState ? `${selectedState.shortCode} • ${selectedState.name.toUpperCase()}` : "DISTRICT CLINICAL COMMAND CENTER"}
               </span>
               <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
@@ -132,8 +135,13 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               </span>
             </div>
             <h3 className="text-base sm:text-lg font-bold text-white mt-1">
-              District Civil Hospital & Trauma Centre (Sector 1)
+              {selectedState?.hospital || "District Civil Hospital & Trauma Centre (Sector 1)"}
             </h3>
+            {selectedState && (
+              <p className="text-xs text-slate-400 font-mono">
+                Attending: <span className="text-slate-200 font-bold">{selectedState.doctor}</span> • Coverage: {selectedState.ashaUnit}
+              </p>
+            )}
           </div>
         </div>
 
@@ -430,36 +438,52 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                   </p>
                 </div>
 
-                <div className="text-right">
-                  <span
-                    className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded inline-block ${
-                      selectedCase.riskLevel === "URGENT"
-                        ? "bg-red-600 text-white"
-                        : selectedCase.riskLevel === "CONSULTATION"
-                        ? "bg-amber-600 text-white"
-                        : "bg-slate-200 text-slate-800"
-                    }`}
-                  >
-                    {selectedCase.riskLevel} PRIORITY
-                  </span>
-                  <p className="text-[10px] text-slate-400 mt-1 font-mono">
-                    Case: {selectedCase.id}
-                  </p>
-                  {onOpenPdfReport && (
-                    <button
-                      type="button"
-                      id="btn-doctor-generate-pdf-report"
-                      onClick={() => {
-                        playHapticSound("click");
-                        onOpenPdfReport(selectedCase);
-                      }}
-                      className="mt-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
-                      title="Generate and print standardized PDF referral report"
+                <div className="flex items-start gap-2 text-right">
+                  <div>
+                    <span
+                      className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded inline-block ${
+                        selectedCase.riskLevel === "URGENT"
+                          ? "bg-red-600 text-white"
+                          : selectedCase.riskLevel === "CONSULTATION"
+                          ? "bg-amber-600 text-white"
+                          : "bg-slate-200 text-slate-800"
+                      }`}
                     >
-                      <Printer className="w-3.5 h-3.5 text-blue-600" />
-                      <span>Print PDF Report</span>
-                    </button>
-                  )}
+                      {selectedCase.riskLevel} PRIORITY
+                    </span>
+                    <p className="text-[10px] text-slate-400 mt-1 font-mono">
+                      Case: {selectedCase.id}
+                    </p>
+                    {onOpenPdfReport && (
+                      <button
+                        type="button"
+                        id="btn-doctor-generate-pdf-report"
+                        onClick={() => {
+                          playHapticSound("click");
+                          onOpenPdfReport(selectedCase);
+                        }}
+                        className="mt-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
+                        title="Generate and print standardized PDF referral report"
+                      >
+                        <Printer className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Print PDF Report</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <button
+                    type="button"
+                    id="btn-close-doctor-case-summary"
+                    onClick={() => {
+                      playHapticSound("click");
+                      setSelectedCaseId("");
+                    }}
+                    className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                    title="Remove case summary from screen"
+                    aria-label="Remove case summary from screen"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 

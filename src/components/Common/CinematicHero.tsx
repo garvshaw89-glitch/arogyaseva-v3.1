@@ -21,6 +21,7 @@ interface CinematicHeroProps {
   onExploreDoctorPortal: () => void;
   language: SupportedLanguage;
   isOffline: boolean;
+  stateName?: string;
 }
 
 export const CinematicHero: React.FC<CinematicHeroProps> = ({
@@ -29,6 +30,7 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
   onExploreDoctorPortal,
   language,
   isOffline,
+  stateName,
 }) => {
   return (
     <div className="relative mb-6 overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white shadow-2xl">
@@ -46,7 +48,7 @@ export const CinematicHero: React.FC<CinematicHeroProps> = ({
           </div>
           <span className="text-slate-600 hidden sm:inline">•</span>
           <span className="text-slate-400 hidden sm:inline">
-            NODE: <span className="text-white font-semibold">ASHA-Kolkata</span>
+            STATE: <span className="text-white font-semibold">{stateName || "Pan-India Health Network"}</span>
           </span>
         </div>
 

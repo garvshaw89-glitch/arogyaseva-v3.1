@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import * as THREE from "three";
 import { RiskAssessment, PatientCase, SupportedLanguage } from "../../types";
 import { TRANSLATIONS } from "../../utils/translations";
 import {
@@ -21,10 +20,12 @@ import {
   HelpCircle,
   Send,
   RefreshCw,
+  X,
 } from "lucide-react";
 import { Card3DTilt } from "../Common/Card3DTilt";
 import { playHapticSound } from "../../utils/audioFeedback";
 import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
+import { RiskPulse } from "../three/RiskPulse";
 import { clientRuleBasedTriage } from "../../utils/triageSignal";
 import { askHealthcareAI, HealthResponse } from "../../utils/healthcareAiApi";
 
@@ -35,7 +36,7 @@ interface ClinicalRiskEngine3DProps {
   onSaveRoutineCase: () => void;
   onBack: () => void;
   language: SupportedLanguage;
-  isOffline: boolean;
+  isOffline?: boolean;
 }
 
 export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
@@ -45,10 +46,11 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
   onSaveRoutineCase,
   onBack,
   language,
-  isOffline,
+  isOffline = false,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [showSbarSummary, setShowSbarSummary] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "reasoning" | "stabilization">("overview");
 
   const isUrgent = assessment.riskLevel === "URGENT";
@@ -70,8 +72,6 @@ export const ClinicalRiskEngine3D: React.FC<ClinicalRiskEngine3DProps> = ({
     comorbidities: patientData.chronicConditions,
     onset: patientData.symptomDuration,
   });
-
-  const canvasRef = useRef<HTMLDivElement>(null);
 
   // Clinical Decision AI State (using provided Healthcare AI service)
   const [clinicalGuidance, setClinicalGuidance] = useState<HealthResponse | null>(null);
@@ -152,158 +152,6 @@ Clinical Assessment Level: ${assessment.riskLevel}. Danger Signs: ${assessment.d
       playHapticSound("success");
     }
   }, [assessment.riskLevel]);
-
-  // Three.js 3D Risk Vortex / Core
-  useEffect(() => {
-    const container = canvasRef.current;
-    if (!container) return;
-
-    const width = container.clientWidth || 320;
-    const height = container.clientHeight || 280;
-
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
-    camera.position.set(0, 0, 8);
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.innerHTML = "";
-    container.appendChild(renderer.domElement);
-
-    // Color based on risk state
-    const primaryColor = isUrgent ? 0xef4444 : isConsultation ? 0xf59e0b : 0x10b981;
-    const secondaryColor = isUrgent ? 0xf97316 : isConsultation ? 0xfbbf24 : 0x06b6d4;
-
-    // 1. Central Bio-Core Icosahedron
-    const coreGeo = new THREE.IcosahedronGeometry(1.5, isUrgent ? 2 : 1);
-    const coreMat = new THREE.MeshStandardMaterial({
-      color: primaryColor,
-      wireframe: true,
-      roughness: 0.2,
-      metalness: 0.8,
-    });
-    const coreMesh = new THREE.Mesh(coreGeo, coreMat);
-    scene.add(coreMesh);
-
-    // 2. Orbital Particle Rings
-    const ringGeo = new THREE.TorusGeometry(2.5, 0.04, 16, 100);
-    const ringMat = new THREE.MeshBasicMaterial({
-      color: secondaryColor,
-      transparent: true,
-      opacity: 0.7,
-    });
-    const ringMesh1 = new THREE.Mesh(ringGeo, ringMat);
-    ringMesh1.rotation.x = Math.PI / 3;
-    scene.add(ringMesh1);
-
-    const ringMesh2 = new THREE.Mesh(ringGeo, ringMat);
-    ringMesh2.rotation.y = Math.PI / 3;
-    scene.add(ringMesh2);
-
-    // 3. Incoming Data Stream Particles
-    const particleCount = isUrgent ? 160 : 70;
-    const particleGeo = new THREE.BufferGeometry();
-    const positions = new Float32Array(particleCount * 3);
-    const speeds = new Float32Array(particleCount);
-
-    for (let i = 0; i < particleCount; i++) {
-      const radius = 3.5 + Math.random() * 2.5;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
-
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = radius * Math.cos(phi);
-      speeds[i] = 0.02 + Math.random() * 0.04 * (isUrgent ? 2.5 : 1);
-    }
-
-    particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const particleMat = new THREE.PointsMaterial({
-      color: primaryColor,
-      size: 0.12,
-      transparent: true,
-      opacity: 0.85,
-    });
-    const particleSystem = new THREE.Points(particleGeo, particleMat);
-    scene.add(particleSystem);
-
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-    scene.add(ambientLight);
-
-    const pointLight = new THREE.PointLight(primaryColor, 3, 20);
-    pointLight.position.set(2, 3, 4);
-    scene.add(pointLight);
-
-    let frameId: number;
-    const clock = new THREE.Clock();
-
-    const animate = () => {
-      frameId = requestAnimationFrame(animate);
-      const elapsed = clock.getElapsedTime();
-      const rotSpeed = isUrgent ? 1.8 : isConsultation ? 1.0 : 0.5;
-
-      coreMesh.rotation.x = elapsed * 0.3 * rotSpeed;
-      coreMesh.rotation.y = elapsed * 0.5 * rotSpeed;
-
-      ringMesh1.rotation.z = elapsed * 0.4 * rotSpeed;
-      ringMesh2.rotation.x = elapsed * -0.4 * rotSpeed;
-
-      // Pulse core size
-      const pulseFreq = isUrgent ? 6 : isConsultation ? 3 : 1.5;
-      const scale = 1 + Math.sin(elapsed * pulseFreq) * (isUrgent ? 0.12 : 0.05);
-      coreMesh.scale.set(scale, scale, scale);
-
-      // Data stream flow inward
-      const posAttr = particleGeo.attributes.position as THREE.BufferAttribute;
-      const array = posAttr.array as Float32Array;
-      for (let i = 0; i < particleCount; i++) {
-        const idx = i * 3;
-        array[idx] *= 0.985;
-        array[idx + 1] *= 0.985;
-        array[idx + 2] *= 0.985;
-
-        // Reset if too close to core
-        const distSq = array[idx] ** 2 + array[idx + 1] ** 2 + array[idx + 2] ** 2;
-        if (distSq < 1.5) {
-          const radius = 4.5 + Math.random() * 1.5;
-          const theta = Math.random() * Math.PI * 2;
-          const phi = Math.acos(Math.random() * 2 - 1);
-          array[idx] = radius * Math.sin(phi) * Math.cos(theta);
-          array[idx + 1] = radius * Math.sin(phi) * Math.sin(theta);
-          array[idx + 2] = radius * Math.cos(phi);
-        }
-      }
-      posAttr.needsUpdate = true;
-
-      renderer.render(scene, camera);
-    };
-
-    animate();
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        const w = entry.contentRect.width;
-        const h = entry.contentRect.height;
-        if (w > 0 && h > 0) {
-          camera.aspect = w / h;
-          camera.updateProjectionMatrix();
-          renderer.setSize(w, h);
-        }
-      }
-    });
-    resizeObserver.observe(container);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-      resizeObserver.disconnect();
-      renderer.dispose();
-      if (container.contains(renderer.domElement)) {
-        container.removeChild(renderer.domElement);
-      }
-    };
-  }, [assessment.riskLevel, isUrgent, isConsultation]);
 
   const speakAssessment = () => {
     playHapticSound("click");
@@ -446,31 +294,9 @@ Clinical Assessment Level: ${assessment.riskLevel}. Danger Signs: ${assessment.d
             </div>
           </div>
 
-          {/* Right 3D Interactive Three.js Risk Core */}
+          {/* Right 3D Interactive Risk Core */}
           <div className="lg:col-span-5 flex flex-col items-center justify-center">
-            <div className="w-full h-64 sm:h-72 rounded-3xl border border-slate-800 bg-slate-950/80 overflow-hidden relative shadow-2xl">
-              <div ref={canvasRef} className="w-full h-full cursor-pointer" />
-              <div className="absolute top-3 right-4 text-right">
-                <span className="text-[9px] font-mono uppercase tracking-widest text-slate-400 block">
-                  BIO-CORE STATUS
-                </span>
-                <span
-                  className={`text-xs font-black font-mono ${
-                    isUrgent ? "text-red-400" : isConsultation ? "text-amber-400" : "text-emerald-400"
-                  }`}
-                >
-                  {assessment.riskLevel} TRIAGE
-                </span>
-              </div>
-              <div className="absolute bottom-3 left-4 text-left">
-                <span className="text-[9px] font-mono text-slate-500 block">
-                  DATA STREAMS ACTIVE
-                </span>
-                <span className="text-[10px] text-cyan-300 font-mono">
-                  SPO2 • HR • RR • DANGER FLAGS
-                </span>
-              </div>
-            </div>
+            <RiskPulse riskLevel={assessment.riskLevel} riskScore={assessment.riskScore} />
           </div>
         </div>
 
@@ -606,30 +432,61 @@ Clinical Assessment Level: ${assessment.riskLevel}. Danger Signs: ${assessment.d
         </div>
 
         {/* SBAR Handover Block */}
-        <div className="mt-5 pt-4 border-t border-slate-100">
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-2 font-mono flex items-center gap-1.5">
-            <FileCheck className="w-3.5 h-3.5 text-blue-600" />
-            Structured SBAR Hospital Handover Summary
-          </h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <strong className="text-slate-900 block mb-0.5">Situation (S):</strong>
-              <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.situation}</p>
+        {showSbarSummary ? (
+          <div className="mt-5 pt-4 border-t border-slate-100">
+            <div className="flex items-center justify-between mb-2">
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                <FileCheck className="w-3.5 h-3.5 text-blue-600" />
+                Structured SBAR Hospital Handover Summary
+              </h4>
+              <button
+                type="button"
+                id="btn-remove-clinical-sbar-summary"
+                onClick={() => {
+                  playHapticSound("click");
+                  setShowSbarSummary(false);
+                }}
+                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                title="Remove summary from screen"
+                aria-label="Remove summary from screen"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <strong className="text-slate-900 block mb-0.5">Background (B):</strong>
-              <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.background}</p>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <strong className="text-slate-900 block mb-0.5">Assessment (A):</strong>
-              <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.assessment}</p>
-            </div>
-            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-              <strong className="text-slate-900 block mb-0.5">Recommendation (R):</strong>
-              <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.recommendation}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <strong className="text-slate-900 block mb-0.5">Situation (S):</strong>
+                <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.situation}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <strong className="text-slate-900 block mb-0.5">Background (B):</strong>
+                <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.background}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <strong className="text-slate-900 block mb-0.5">Assessment (A):</strong>
+                <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.assessment}</p>
+              </div>
+              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <strong className="text-slate-900 block mb-0.5">Recommendation (R):</strong>
+                <p className="text-slate-600 leading-relaxed">{assessment.sbarSummary.recommendation}</p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                playHapticSound("click");
+                setShowSbarSummary(true);
+              }}
+              className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
+            >
+              <FileCheck className="w-3.5 h-3.5" />
+              <span>Show SBAR Hospital Handover Summary</span>
+            </button>
+          </div>
+        )}
 
         {/* Clinical Assessment & Protocol Guidance */}
         <div className="mt-5 pt-4 border-t border-slate-100 space-y-4">

@@ -1,6 +1,6 @@
 import { SupportedLanguage } from "../../types";
 
-export type GuidedVoiceStepId = "age" | "fever_temp" | "duration" | "gender" | "problem_details";
+export type GuidedVoiceStepId = "patient_name" | "age" | "fever_temp" | "duration" | "gender" | "problem_details";
 
 export interface GuidedStepDefinition {
   id: GuidedVoiceStepId;
@@ -13,7 +13,7 @@ export interface GuidedStepDefinition {
   promptVoiceHi: string;
   instructionEn: string;
   instructionHi: string;
-  field: "age" | "temperature" | "duration" | "gender" | "problemDetails";
+  field: "patientName" | "age" | "temperature" | "duration" | "gender" | "problemDetails";
   chips: Array<{
     label: string;
     value: any;
@@ -22,6 +22,7 @@ export interface GuidedStepDefinition {
 }
 
 export interface GuidedVoiceAnswers {
+  patientName: string;
   age: number | null;
   hasFever: boolean | null;
   temperature: number | null;
@@ -32,10 +33,31 @@ export interface GuidedVoiceAnswers {
 
 export const GUIDED_STEPS: GuidedStepDefinition[] = [
   {
-    id: "age",
+    id: "patient_name",
     stepNumber: 1,
-    labelEn: "1. Patient Age",
-    labelHi: "१. मरीज की उम्र",
+    labelEn: "1. Patient Name",
+    labelHi: "१. मरीज का नाम",
+    questionEn: "What is the patient's full name?",
+    questionHi: "मरीज का नाम क्या है? (कृपया मरीज का पूरा नाम बताएं)",
+    promptVoiceEn: "What is the patient's full name?",
+    promptVoiceHi: "मरीज का नाम क्या है? कृपया मरीज का पूरा नाम बताएं।",
+    instructionEn: "Speak patient's full name or select a quick option (e.g., 'Rajesh Kumar')",
+    instructionHi: "मरीज का नाम बोलें या विकल्प चुनें (जैसे 'राजेश कुमार')",
+    field: "patientName",
+    chips: [
+      { label: "Rajesh Kumar", value: "Rajesh Kumar", spokenText: "Patient name is Rajesh Kumar" },
+      { label: "Sunita Devi", value: "Sunita Devi", spokenText: "Patient name is Sunita Devi" },
+      { label: "Aarav Sharma", value: "Aarav Sharma", spokenText: "Patient name is Aarav Sharma" },
+      { label: "Pooja Patel", value: "Pooja Patel", spokenText: "Patient name is Pooja Patel" },
+      { label: "Ramesh Singh", value: "Ramesh Singh", spokenText: "Patient name is Ramesh Singh" },
+      { label: "Ananya Das", value: "Ananya Das", spokenText: "Patient name is Ananya Das" },
+    ],
+  },
+  {
+    id: "age",
+    stepNumber: 2,
+    labelEn: "2. Patient Age",
+    labelHi: "२. मरीज की उम्र",
     questionEn: "What is the patient's age?",
     questionHi: "मरीज की उम्र कितनी है? (कृपया उम्र बताएं)",
     promptVoiceEn: "What is the patient's age?",
@@ -54,9 +76,9 @@ export const GUIDED_STEPS: GuidedStepDefinition[] = [
   },
   {
     id: "fever_temp",
-    stepNumber: 2,
-    labelEn: "2. Fever & Body Temperature",
-    labelHi: "२. बुखार व शरीर का तापमान",
+    stepNumber: 3,
+    labelEn: "3. Fever & Body Temperature",
+    labelHi: "३. बुखार व शरीर का तापमान",
     questionEn: "Does the patient have a fever? If yes, what is the body temperature?",
     questionHi: "क्या मरीज को बुखार है? यदि हाँ, तो शरीर का तापमान कितना है?",
     promptVoiceEn: "Does the patient have a fever? If yes, what is the body temperature?",
@@ -73,9 +95,9 @@ export const GUIDED_STEPS: GuidedStepDefinition[] = [
   },
   {
     id: "duration",
-    stepNumber: 3,
-    labelEn: "3. Symptom Duration",
-    labelHi: "३. समस्या की अवधि",
+    stepNumber: 4,
+    labelEn: "4. Symptom Duration",
+    labelHi: "४. समस्या की अवधि",
     questionEn: "How long has the patient had these symptoms or problem?",
     questionHi: "यह समस्या या तकलीफ कितने समय अथवा दिनों से है?",
     promptVoiceEn: "How long has the patient had these symptoms or problem?",
@@ -93,9 +115,9 @@ export const GUIDED_STEPS: GuidedStepDefinition[] = [
   },
   {
     id: "gender",
-    stepNumber: 4,
-    labelEn: "4. Gender",
-    labelHi: "४. मरीज का लिंग",
+    stepNumber: 5,
+    labelEn: "5. Gender",
+    labelHi: "५. मरीज का लिंग",
     questionEn: "What is the patient's gender?",
     questionHi: "मरीज का लिंग क्या है? (महिला, पुरुष या अन्य)",
     promptVoiceEn: "What is the patient's gender?",
@@ -111,9 +133,9 @@ export const GUIDED_STEPS: GuidedStepDefinition[] = [
   },
   {
     id: "problem_details",
-    stepNumber: 5,
-    labelEn: "5. Details of the Problem",
-    labelHi: "५. समस्या का पूरा विवरण",
+    stepNumber: 6,
+    labelEn: "6. Details of the Problem",
+    labelHi: "६. समस्या का पूरा विवरण",
     questionEn: "Now, please tell all the details of what problem the patient is facing.",
     questionHi: "अब मरीज की पूरी समस्या, लक्षण और तकलीफ का विस्तार से विवरण बताएं।",
     promptVoiceEn: "Now, please tell all the details of what problem the patient is facing.",
@@ -147,6 +169,32 @@ export const GUIDED_STEPS: GuidedStepDefinition[] = [
 ];
 
 // Parser utilities for each individual guided step
+export function parsePatientNameFromText(text: string): string | null {
+  if (!text) return null;
+  let cleaned = text.trim();
+
+  // Remove common filler spoken phrases in English and Hindi
+  const prefixRegexes = [
+    /^(?:patient(?:'s)?\s+name\s+is\s+|patient\s+is\s+|the\s+patient\s+is\s+|name\s+is\s+|my\s+name\s+is\s+|his\s+name\s+is\s+|her\s+name\s+is\s+|this\s+is\s+|call\s+me\s+)/i,
+    /^(?:मरीज\s+का\s+नाम\s+|मरीज\s+है\s+|नाम\s+है\s+|नाम\s+|मेरा\s+नाम\s+)/i,
+  ];
+
+  for (const rx of prefixRegexes) {
+    cleaned = cleaned.replace(rx, "");
+  }
+
+  // Remove trailing punctuation or quotation marks
+  cleaned = cleaned.replace(/[.,;!?"]+$/g, "").trim();
+
+  if (cleaned.length < 2) return null;
+
+  // Capitalize words nicely
+  return cleaned
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export function parseAgeFromText(text: string): number | null {
   if (!text) return null;
   const lower = text.toLowerCase();

@@ -3,7 +3,9 @@ import { SupportedLanguage } from "../../types";
 import {
   GuidedStepDefinition,
   GuidedVoiceAnswers,
+  GuidedVoiceStepId,
   GUIDED_STEPS,
+  parsePatientNameFromText,
   parseAgeFromText,
   parseFeverTempFromText,
   parseDurationFromText,
@@ -29,11 +31,14 @@ import {
   Check,
   Radio,
 } from "lucide-react";
-import { playHapticSound } from "../../utils/audioFeedback";
+import { playHapticSound, speakClinicalPrompt, stopClinicalSpeech } from "../../utils/audioFeedback";
 
 interface GuidedVoiceEngineProps {
   language: SupportedLanguage;
+  initialPatientName?: string;
+  initialStepId?: GuidedVoiceStepId;
   onComplete: (completedData: {
+    patientName?: string;
     age: number;
     gender: "Male" | "Female" | "Other";
     temperature: number;
@@ -47,12 +52,22 @@ interface GuidedVoiceEngineProps {
 
 export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
   language,
+  initialPatientName,
+  initialStepId,
   onComplete,
   onCancel,
   isCompact = false,
 }) => {
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(() => {
+    if (initialStepId) {
+      const idx = GUIDED_STEPS.findIndex((s) => s.id === initialStepId);
+      return idx >= 0 ? idx : 0;
+    }
+    return 0;
+  });
+
   const [answers, setAnswers] = useState<GuidedVoiceAnswers>({
+    patientName: initialPatientName || "",
     age: null,
     hasFever: null,
     temperature: null,
@@ -70,32 +85,38 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
   const recognitionRef = useRef<any>(null);
   const currentStep: GuidedStepDefinition = GUIDED_STEPS[currentStepIndex] || GUIDED_STEPS[0];
 
-  // Speak the question prompt using browser Web Speech API
+  // Update initial patient name if supplied externally
+  useEffect(() => {
+    if (initialPatientName && !answers.patientName) {
+      setAnswers((prev) => ({ ...prev, patientName: initialPatientName }));
+    }
+  }, [initialPatientName]);
+
+  // Jump to step if initialStepId changes
+  useEffect(() => {
+    if (initialStepId) {
+      const idx = GUIDED_STEPS.findIndex((s) => s.id === initialStepId);
+      if (idx >= 0 && idx !== currentStepIndex) {
+        setCurrentStepIndex(idx);
+      }
+    }
+  }, [initialStepId]);
+
+  // Speak the question prompt using high-reliability Web Speech API
   const speakQuestion = (step: GuidedStepDefinition) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
     if (!ttsEnabled) return;
 
-    try {
-      window.speechSynthesis.cancel();
-      const textToSpeak = language === "hi" ? step.promptVoiceHi : step.promptVoiceEn;
-      const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      utterance.lang = language === "hi" ? "hi-IN" : "en-IN";
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-
-      utterance.onstart = () => setIsSpeakingPrompt(true);
-      utterance.onend = () => {
+    const textToSpeak = language === "hi" ? step.promptVoiceHi : step.promptVoiceEn;
+    speakClinicalPrompt(
+      textToSpeak,
+      language,
+      () => setIsSpeakingPrompt(true),
+      () => {
         setIsSpeakingPrompt(false);
-        // Automatically start listening for patient response after prompt finishes!
+        // Automatically activate listening sensor for patient response after speech ends
         startListeningForCurrentStep();
-      };
-      utterance.onerror = () => setIsSpeakingPrompt(false);
-
-      window.speechSynthesis.speak(utterance);
-    } catch (err) {
-      console.warn("SpeechSynthesis error:", err);
-      setIsSpeakingPrompt(false);
-    }
+      }
+    );
   };
 
   // Trigger prompt when step changes
@@ -105,9 +126,7 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
     speakQuestion(currentStep);
 
     return () => {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopClinicalSpeech();
       stopListening();
     };
   }, [currentStepIndex, language]);
@@ -185,7 +204,14 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
   const handleAnalyzeSpokenAnswer = (text: string, step: GuidedStepDefinition) => {
     if (!text.trim()) return;
 
-    if (step.id === "age") {
+    if (step.id === "patient_name") {
+      const parsedName = parsePatientNameFromText(text) || text.trim();
+      if (parsedName) {
+        setAnswers((prev) => ({ ...prev, patientName: parsedName }));
+        setDetectedValueLabel(`Patient: ${parsedName}`);
+        playHapticSound("step");
+      }
+    } else if (step.id === "age") {
       const age = parseAgeFromText(text);
       if (age !== null) {
         setAnswers((prev) => ({ ...prev, age }));
@@ -233,7 +259,10 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
     playHapticSound("click");
     const step = currentStep;
 
-    if (step.id === "age") {
+    if (step.id === "patient_name") {
+      setAnswers((prev) => ({ ...prev, patientName: chip.value }));
+      setDetectedValueLabel(`Patient: ${chip.value}`);
+    } else if (step.id === "age") {
       setAnswers((prev) => ({ ...prev, age: chip.value }));
       setDetectedValueLabel(`Age: ${chip.value} Years`);
     } else if (step.id === "fever_temp") {
@@ -272,9 +301,12 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
     playHapticSound("step");
 
     if (currentStepIndex < GUIDED_STEPS.length - 1) {
-      setCurrentStepIndex((prev) => prev + 1);
+      const nextIdx = currentStepIndex + 1;
+      setCurrentStepIndex(nextIdx);
+      // Immediately speak the next step prompt in response to user click!
+      speakQuestion(GUIDED_STEPS[nextIdx]);
     } else {
-      // Finished all 5 steps! Compile structured output
+      // Finished all guided steps! Compile structured output
       finalizeGuidedFlow();
     }
   };
@@ -283,7 +315,9 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
     if (currentStepIndex > 0) {
       stopListening();
       playHapticSound("step");
-      setCurrentStepIndex((prev) => prev - 1);
+      const prevIdx = currentStepIndex - 1;
+      setCurrentStepIndex(prevIdx);
+      speakQuestion(GUIDED_STEPS[prevIdx]);
     }
   };
 
@@ -291,6 +325,7 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
     playHapticSound("success");
     stopListening();
 
+    const finalName = answers.patientName.trim();
     const finalAge = answers.age || 45;
     const finalGender = answers.gender || "Female";
     const finalTemp = answers.temperature || (answers.hasFever ? 102.0 : 98.6);
@@ -305,13 +340,16 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
     }
 
     // Assemble comprehensive spoken narrative
-    const rawNarrative = `Patient is a ${finalAge} year old ${finalGender}. ${
+    const rawNarrative = `${
+      finalName ? `Patient Name is ${finalName}. ` : ""
+    }Patient is a ${finalAge} year old ${finalGender}. ${
       answers.hasFever
         ? `Has high fever with body temperature recorded at ${finalTemp}°F`
         : `Body temperature is ${finalTemp}°F without high fever`
     }. Symptom duration is ${finalDuration}. Problem details: ${finalProblem}.`;
 
     onComplete({
+      patientName: finalName || undefined,
       age: finalAge,
       gender: finalGender,
       temperature: finalTemp,
@@ -323,6 +361,7 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
 
   // Current answer status preview
   const isCurrentStepAnswered = () => {
+    if (currentStep.id === "patient_name") return Boolean(answers.patientName.trim());
     if (currentStep.id === "age") return answers.age !== null;
     if (currentStep.id === "fever_temp") return answers.temperature !== null;
     if (currentStep.id === "duration") return Boolean(answers.duration);
@@ -352,7 +391,7 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
                 GUIDED CLINICAL VOICE ENGINE
               </span>
               <h3 className="text-sm sm:text-base font-black text-white">
-                Step {currentStep.stepNumber} of 5: {language === "hi" ? currentStep.labelHi : currentStep.labelEn}
+                Step {currentStep.stepNumber} of 6: {language === "hi" ? currentStep.labelHi : currentStep.labelEn}
               </h3>
             </div>
           </div>
@@ -364,8 +403,8 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
               id="btn-toggle-voice-tts"
               onClick={() => {
                 setTtsEnabled(!ttsEnabled);
-                if (ttsEnabled && typeof window !== "undefined" && "speechSynthesis" in window) {
-                  window.speechSynthesis.cancel();
+                if (ttsEnabled) {
+                  stopClinicalSpeech();
                 }
               }}
               className={`p-2 rounded-xl text-xs font-mono flex items-center gap-1.5 transition-all border ${
@@ -391,8 +430,8 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
           </div>
         </div>
 
-        {/* 5-Step Visual Stepper Bar */}
-        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+        {/* 6-Step Visual Stepper Bar */}
+        <div className="grid grid-cols-6 gap-1.5 sm:gap-2">
           {GUIDED_STEPS.map((step, idx) => {
             const isPassed = idx < currentStepIndex;
             const isCurrent = idx === currentStepIndex;
@@ -404,13 +443,15 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
                 onClick={() => {
                   playHapticSound("click");
                   setCurrentStepIndex(idx);
+                  // Speak step question immediately on click!
+                  speakQuestion(GUIDED_STEPS[idx]);
                 }}
-                className={`flex flex-col items-center p-1.5 sm:p-2 rounded-xl transition-all text-left border ${
+                className={`flex flex-col items-center p-1.5 sm:p-2 rounded-xl transition-all text-left border cursor-pointer ${
                   isCurrent
                     ? "bg-cyan-950/90 border-cyan-400 text-white shadow-md shadow-cyan-500/20 ring-1 ring-cyan-400"
                     : isPassed
                     ? "bg-slate-950/70 border-emerald-500/40 text-emerald-300"
-                    : "bg-slate-950/40 border-slate-800 text-slate-400 opacity-60"
+                    : "bg-slate-950/40 border-slate-800 text-slate-400 opacity-60 hover:opacity-100"
                 }`}
               >
                 <div className="flex items-center gap-1 w-full justify-between">
@@ -422,6 +463,7 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
                   )}
                 </div>
                 <span className="text-[10px] font-medium truncate w-full mt-0.5 hidden sm:inline">
+                  {step.id === "patient_name" && "Name"}
                   {step.id === "age" && "Age"}
                   {step.id === "fever_temp" && "Fever/Temp"}
                   {step.id === "duration" && "Duration"}
@@ -461,19 +503,35 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
               </p>
             </div>
 
-            {/* Repeat Question TTS Button */}
-            <button
-              type="button"
-              id="btn-repeat-step-question"
-              onClick={() => {
-                playHapticSound("click");
-                speakQuestion(currentStep);
-              }}
-              className="p-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-xl transition-all shrink-0 hover:scale-105"
-              title="Repeat question aloud"
-            >
-              <Volume2 className="w-4 h-4" />
-            </button>
+            {/* Hear / Repeat Question TTS Action Buttons */}
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                id="btn-voice-entry-speak"
+                onClick={() => {
+                  playHapticSound("click");
+                  speakQuestion(currentStep);
+                }}
+                className="px-2.5 py-1.5 bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 border border-cyan-500/40 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all hover:scale-105 cursor-pointer"
+                title="Click to speak this question aloud"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden sm:inline">Hear Prompt</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-repeat-step-question"
+                onClick={() => {
+                  playHapticSound("click");
+                  speakQuestion(currentStep);
+                }}
+                className="p-2.5 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 rounded-xl transition-all shrink-0 hover:scale-105 cursor-pointer"
+                title="Repeat question aloud"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -507,7 +565,13 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
             <button
               type="button"
               id={`btn-mic-step-${currentStep.id}`}
-              onClick={toggleListening}
+              onClick={() => {
+                if (!isListening) {
+                  // If starting, also ensure prompt audio is stopped so listening is clear
+                  stopClinicalSpeech();
+                }
+                toggleListening();
+              }}
               className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all shadow-lg cursor-pointer ${
                 isListening
                   ? "bg-red-600 text-white ring-4 ring-red-400/40 animate-pulse"
@@ -518,6 +582,24 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
               {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
             </button>
           </div>
+
+          {/* Patient Name inline edit field for immediate review */}
+          {currentStep.id === "patient_name" && (
+            <div className="pt-2 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center gap-2">
+              <span className="text-[10px] font-mono text-slate-400 shrink-0 uppercase">Patient Name:</span>
+              <input
+                id="input-guided-patient-name"
+                type="text"
+                value={answers.patientName}
+                onChange={(e) => {
+                  setAnswers((prev) => ({ ...prev, patientName: e.target.value }));
+                  setDetectedValueLabel(e.target.value ? `Patient: ${e.target.value}` : null);
+                }}
+                placeholder="Speak above or type full name (e.g. Rajesh Kumar)..."
+                className="w-full text-xs font-semibold px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400"
+              />
+            </div>
+          )}
 
           {/* Quick-Response Options (One-Tap Voice Chips) */}
           <div className="space-y-1.5 pt-1">
@@ -530,7 +612,7 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
                   key={idx}
                   type="button"
                   onClick={() => handleSelectChip(chip)}
-                  className="px-3 py-1.5 bg-slate-900 hover:bg-cyan-950 text-slate-200 hover:text-cyan-300 border border-slate-800 hover:border-cyan-500 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95"
+                  className="px-3 py-1.5 bg-slate-900 hover:bg-cyan-950 text-slate-200 hover:text-cyan-300 border border-slate-800 hover:border-cyan-500 rounded-xl text-xs font-medium transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   {chip.label}
                 </button>
@@ -539,32 +621,37 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
           </div>
         </div>
 
-        {/* Real-time Structured Answer Summary Banner */}
-        <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
+        {/* Real-time Structured Answer Summary Banner (6 steps) */}
+        <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-center text-xs">
+          <div className={`p-2 rounded-xl border ${answers.patientName ? "bg-cyan-950/40 border-cyan-800 text-cyan-300" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
+            <span className="text-[9px] font-mono block text-slate-400 uppercase">1. Patient Name</span>
+            <span className="font-bold truncate block">{answers.patientName || "--"}</span>
+          </div>
+
           <div className={`p-2 rounded-xl border ${answers.age ? "bg-cyan-950/40 border-cyan-800 text-cyan-300" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
-            <span className="text-[9px] font-mono block text-slate-400 uppercase">1. Age</span>
+            <span className="text-[9px] font-mono block text-slate-400 uppercase">2. Age</span>
             <span className="font-bold">{answers.age ? `${answers.age} Yrs` : "--"}</span>
           </div>
 
           <div className={`p-2 rounded-xl border ${answers.temperature ? "bg-amber-950/40 border-amber-800 text-amber-300" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
-            <span className="text-[9px] font-mono block text-slate-400 uppercase">2. Fever / Temp</span>
+            <span className="text-[9px] font-mono block text-slate-400 uppercase">3. Fever / Temp</span>
             <span className="font-bold">
               {answers.temperature ? `${answers.temperature}°F` : "--"}
             </span>
           </div>
 
           <div className={`p-2 rounded-xl border ${answers.duration ? "bg-blue-950/40 border-blue-800 text-blue-300" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
-            <span className="text-[9px] font-mono block text-slate-400 uppercase">3. Duration</span>
+            <span className="text-[9px] font-mono block text-slate-400 uppercase">4. Duration</span>
             <span className="font-bold truncate block">{answers.duration || "--"}</span>
           </div>
 
           <div className={`p-2 rounded-xl border ${answers.gender ? "bg-indigo-950/40 border-indigo-800 text-indigo-300" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
-            <span className="text-[9px] font-mono block text-slate-400 uppercase">4. Gender</span>
+            <span className="text-[9px] font-mono block text-slate-400 uppercase">5. Gender</span>
             <span className="font-bold">{answers.gender || "--"}</span>
           </div>
 
-          <div className={`col-span-2 sm:col-span-1 p-2 rounded-xl border ${answers.problemDetails ? "bg-emerald-950/40 border-emerald-800 text-emerald-300" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
-            <span className="text-[9px] font-mono block text-slate-400 uppercase">5. Problem</span>
+          <div className={`p-2 rounded-xl border ${answers.problemDetails ? "bg-emerald-950/40 border-emerald-800 text-emerald-300" : "bg-slate-900/60 border-slate-800 text-slate-500"}`}>
+            <span className="text-[9px] font-mono block text-slate-400 uppercase">6. Problem</span>
             <span className="font-bold truncate block">{answers.problemDetails ? "Recorded ✓" : "--"}</span>
           </div>
         </div>
@@ -576,7 +663,7 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
             id="btn-guided-prev"
             onClick={handlePrevStep}
             disabled={currentStepIndex === 0}
-            className="px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none text-xs font-bold flex items-center gap-1.5 transition-all"
+            className="px-4 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800 disabled:opacity-30 disabled:pointer-events-none text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Previous</span>
@@ -590,7 +677,7 @@ export const GuidedVoiceEngine: React.FC<GuidedVoiceEngineProps> = ({
                 playHapticSound("click");
                 speakQuestion(currentStep);
               }}
-              className="px-3 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:text-cyan-300 text-xs font-medium flex items-center gap-1 transition-all"
+              className="px-3 py-2.5 rounded-xl border border-slate-800 text-slate-300 hover:text-cyan-300 text-xs font-medium flex items-center gap-1 transition-all cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Repeat</span>

@@ -522,12 +522,12 @@ SBAR: ${caseData.sbarSummary?.situation} -> ${caseData.sbarSummary?.recommendati
                 <strong className="text-slate-900">{caseData.chwName || "Anjali Devi (ASHA)"}</strong>
               </div>
               <div>
-                <span className="text-[10px] text-slate-500 uppercase block font-semibold">Sub-Center / Node</span>
-                <span className="text-slate-800 font-medium">Kolkata Sub-Center • Node: ASHA-Kolkata</span>
+                <span className="text-[10px] text-slate-500 uppercase block font-semibold">Sub-Center / Health Facility</span>
+                <span className="text-slate-800 font-medium">{caseData.village ? `${caseData.village} Health Center` : "Primary Health Center"}</span>
               </div>
               <div>
                 <span className="text-[10px] text-slate-500 uppercase block font-semibold">Emergency Channel</span>
-                <span className="font-mono text-emerald-700 font-semibold">Mesh Sync / 108 CAD Uplink</span>
+                <span className="font-mono text-emerald-700 font-semibold">Live System / 108 CAD Uplink</span>
               </div>
             </div>
           </div>
@@ -757,7 +757,7 @@ SBAR: ${caseData.sbarSummary?.situation} -> ${caseData.sbarSummary?.recommendati
               <span className="font-bold text-slate-900">{caseData.chwName || "Anjali Devi (ASHA)"}</span>
             </div>
             <p className="font-bold text-slate-800">Referring Frontline Worker Signature</p>
-            <p className="text-[10px] text-slate-500">Designation: ASHA / CHW • Node: ASHA-Kolkata</p>
+            <p className="text-[10px] text-slate-500">Designation: ASHA / Frontline Health Worker</p>
           </div>
 
           <div className="space-y-1 text-center">

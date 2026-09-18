@@ -15,7 +15,8 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
-  Zap
+  Zap,
+  X,
 } from "lucide-react";
 import { BioMatrix3D } from "../Common/BioMatrix3D";
 import { Card3DTilt } from "../Common/Card3DTilt";
@@ -42,6 +43,7 @@ export const RiskAssessmentView: React.FC<RiskAssessmentViewProps> = ({
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [showSbarSummary, setShowSbarSummary] = useState(true);
 
   const isUrgent = assessment.riskLevel === "URGENT";
   const isConsultation = assessment.riskLevel === "CONSULTATION";
@@ -243,49 +245,80 @@ export const RiskAssessmentView: React.FC<RiskAssessmentViewProps> = ({
       </div>
 
       {/* SBAR Handover Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-          <div className="flex items-center gap-2">
-            <FileCheck className="w-4 h-4 text-blue-600" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
-              Structured SBAR Clinical Summary for Receiving Hospital
-            </h3>
+      {showSbarSummary ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div className="flex items-center gap-2">
+              <FileCheck className="w-4 h-4 text-blue-600" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                Structured SBAR Clinical Summary for Receiving Hospital
+              </h3>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded-md border border-blue-200">
+                Standard WHO Handover
+              </span>
+              <button
+                type="button"
+                id="btn-remove-sbar-summary-card"
+                onClick={() => {
+                  playHapticSound("click");
+                  setShowSbarSummary(false);
+                }}
+                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+                title="Remove summary from screen"
+                aria-label="Remove summary from screen"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-          <span className="text-[10px] bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded-md border border-blue-200">
-            Standard WHO Handover
-          </span>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <Card3DTilt maxTilt={4}>
+              <div className="p-4 bg-slate-50/80 hover:bg-white rounded-xl border border-slate-200 transition-all h-full">
+                <span className="font-bold text-slate-900 block mb-1 text-xs">Situation (S):</span>
+                <p className="text-slate-700 leading-relaxed">{assessment.sbarSummary.situation}</p>
+              </div>
+            </Card3DTilt>
+
+            <Card3DTilt maxTilt={4}>
+              <div className="p-4 bg-slate-50/80 hover:bg-white rounded-xl border border-slate-200 transition-all h-full">
+                <span className="font-bold text-slate-900 block mb-1 text-xs">Background (B):</span>
+                <p className="text-slate-700 leading-relaxed">{assessment.sbarSummary.background}</p>
+              </div>
+            </Card3DTilt>
+
+            <Card3DTilt maxTilt={4}>
+              <div className="p-4 bg-slate-50/80 hover:bg-white rounded-xl border border-slate-200 transition-all h-full">
+                <span className="font-bold text-slate-900 block mb-1 text-xs">Assessment (A):</span>
+                <p className="text-slate-700 leading-relaxed">{assessment.sbarSummary.assessment}</p>
+              </div>
+            </Card3DTilt>
+
+            <Card3DTilt maxTilt={4}>
+              <div className="p-4 bg-slate-50/80 hover:bg-white rounded-xl border border-slate-200 transition-all h-full">
+                <span className="font-bold text-slate-900 block mb-1 text-xs">Recommendation (R):</span>
+                <p className="text-slate-700 leading-relaxed">{assessment.sbarSummary.recommendation}</p>
+              </div>
+            </Card3DTilt>
+          </div>
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <Card3DTilt maxTilt={4}>
-            <div className="p-4 bg-slate-50/80 hover:bg-white rounded-xl border border-slate-200 transition-all h-full">
-              <span className="font-bold text-slate-900 block mb-1 text-xs">Situation (S):</span>
-              <p className="text-slate-700 leading-relaxed">{assessment.sbarSummary.situation}</p>
-            </div>
-          </Card3DTilt>
-
-          <Card3DTilt maxTilt={4}>
-            <div className="p-4 bg-slate-50/80 hover:bg-white rounded-xl border border-slate-200 transition-all h-full">
-              <span className="font-bold text-slate-900 block mb-1 text-xs">Background (B):</span>
-              <p className="text-slate-700 leading-relaxed">{assessment.sbarSummary.background}</p>
-            </div>
-          </Card3DTilt>
-
-          <Card3DTilt maxTilt={4}>
-            <div className="p-4 bg-slate-50/80 hover:bg-white rounded-xl border border-slate-200 transition-all h-full">
-              <span className="font-bold text-slate-900 block mb-1 text-xs">Assessment (A):</span>
-              <p className="text-slate-700 leading-relaxed">{assessment.sbarSummary.assessment}</p>
-            </div>
-          </Card3DTilt>
-
-          <Card3DTilt maxTilt={4}>
-            <div className="p-4 bg-slate-50/80 hover:bg-white rounded-xl border border-slate-200 transition-all h-full">
-              <span className="font-bold text-slate-900 block mb-1 text-xs">Recommendation (R):</span>
-              <p className="text-slate-700 leading-relaxed">{assessment.sbarSummary.recommendation}</p>
-            </div>
-          </Card3DTilt>
+      ) : (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              playHapticSound("click");
+              setShowSbarSummary(true);
+            }}
+            className="text-xs text-blue-600 hover:text-blue-700 font-semibold flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors cursor-pointer"
+          >
+            <FileCheck className="w-3.5 h-3.5" />
+            <span>Show SBAR Case Summary</span>
+          </button>
         </div>
-      </div>
+      )}
 
       {/* Action Footer */}
       <div className="flex items-center justify-between flex-wrap gap-3 pt-2">

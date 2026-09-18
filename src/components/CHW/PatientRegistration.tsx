@@ -20,7 +20,7 @@ import {
   Radio,
   Layers
 } from "lucide-react";
-import { playHapticSound } from "../../utils/audioFeedback";
+import { playHapticSound, speakClinicalPrompt } from "../../utils/audioFeedback";
 import { VoiceIntake3D } from "./VoiceIntake3D";
 import { LocationSearchInput } from "../Common/LocationSearchInput";
 
@@ -70,13 +70,30 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
       recognition.continuous = true;
       recognition.interimResults = true;
 
-      const langCodeMap: Record<SupportedLanguage, string> = {
+      const langCodeMap: Record<string, string> = {
         en: "en-IN",
         hi: "hi-IN",
         mr: "mr-IN",
         bn: "bn-IN",
         ta: "ta-IN",
         te: "te-IN",
+        gu: "gu-IN",
+        kn: "kn-IN",
+        ml: "ml-IN",
+        pa: "pa-IN",
+        or: "or-IN",
+        as: "as-IN",
+        ur: "ur-IN",
+        mai: "mai-IN",
+        sa: "sa-IN",
+        kok: "kok-IN",
+        ne: "ne-NP",
+        doi: "doi-IN",
+        ks: "ks-IN",
+        mni: "mni-IN",
+        brx: "brx-IN",
+        sat: "sat-IN",
+        sd: "sd-IN",
       };
       recognition.lang = langCodeMap[language] || "hi-IN";
 
@@ -245,6 +262,7 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
   };
 
   const handleVoiceExtracted = (extracted: {
+    patientName?: string;
     age?: number;
     gender?: "Male" | "Female" | "Other";
     symptoms: string[];
@@ -258,6 +276,7 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
       extracted.rawText.toLowerCase().includes("shortness");
 
     onChange({
+      patientName: extracted.patientName || formData.patientName,
       age: extracted.age ?? formData.age,
       gender: extracted.gender ?? formData.gender,
       symptoms: extracted.symptoms.length > 0 ? extracted.symptoms : formData.symptoms,
@@ -273,6 +292,21 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
     });
   };
 
+  const handleVoiceEntryPatientName = () => {
+    playHapticSound("click");
+    const promptText =
+      language === "hi"
+        ? "कृपया मरीज का पूरा नाम बताएं"
+        : "Please speak the patient's full name";
+    speakClinicalPrompt(promptText, language);
+
+    // Scroll smoothly to voice engine
+    const voiceCard = document.getElementById("guided-voice-intake-card");
+    if (voiceCard) {
+      voiceCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   return (
     <div id="patient-registration-step" className="space-y-6">
       {/* 1. Signature 3D Voice Intake & Live AI Extraction HUD */}
@@ -280,22 +314,38 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
         onDataExtracted={handleVoiceExtracted}
         language={language}
         currentRawText={formData.rawVoiceInput}
+        initialPatientName={formData.patientName}
       />
 
       {/* 2. Structured Patient Form Details */}
       <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
-        <div>
-          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
             Patient Identity & Demographic Records
           </h3>
+          <span className="text-[10px] font-mono text-cyan-700 bg-cyan-50 border border-cyan-200 px-2 py-0.5 rounded-full font-bold">
+            Syncs with Voice Engine
+          </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Patient Name */}
           <div className="space-y-1">
-            <label className="text-[10px] text-slate-400 font-bold uppercase">
-              {t.patientName} <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] text-slate-400 font-bold uppercase">
+                {t.patientName} <span className="text-red-500">*</span>
+              </label>
+              <button
+                type="button"
+                id="btn-patient-name-voice-entry"
+                onClick={handleVoiceEntryPatientName}
+                className="text-[10px] text-cyan-700 hover:text-cyan-800 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 px-1.5 py-0.5 rounded font-bold flex items-center gap-1 transition-all cursor-pointer"
+                title="Click to speak patient name prompt"
+              >
+                <Volume2 className="w-2.5 h-2.5" />
+                <span>Voice Entry</span>
+              </button>
+            </div>
             <input
               id="input-patient-name"
               type="text"

@@ -213,7 +213,7 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
           </div>
 
           <h2 className="text-xl sm:text-2xl font-black mt-2 tracking-tight">
-            {t.selectReferralFacility}
+            {(t as any).selectReferralFacility || (t as any).referralFacilities || "Select Nearest Referral Facility"}
           </h2>
           <p className="text-xs sm:text-sm text-red-100 mt-1 max-w-xl">
             Live interactive GPS navigation connecting rural patient in{" "}

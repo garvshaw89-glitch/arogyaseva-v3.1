@@ -78,7 +78,7 @@ export function generateReferralPDF(caseData: PatientCase): GeneratedPdfBundle {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(203, 213, 225); // slate-300
   doc.text(`DATE: ${formattedDate} ${formattedTime}`, pageWidth - margin, 14, { align: "right" });
-  doc.text("NODE: ASHA-Kolkata", pageWidth - margin, 19, { align: "right" });
+  doc.text("AROGYASEVA CLINICAL REFERRAL", pageWidth - margin, 19, { align: "right" });
 
   let y = 33;
 
@@ -167,10 +167,10 @@ export function generateReferralPDF(caseData: PatientCase): GeneratedPdfBundle {
   doc.text(caseData.chwName || "Anjali Devi (ASHA)", col3X + 24, y + 18);
 
   doc.setFont("helvetica", "bold");
-  doc.text("Health Node:", col3X, y + 24);
+  doc.text("Health Facility:", col3X, y + 24);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(2, 132, 199); // sky-600
-  doc.text("ASHA-Kolkata", col3X + 24, y + 24);
+  doc.text(caseData.village ? `${caseData.village} Health Center` : "Primary Health Center", col3X + 24, y + 24);
   doc.setTextColor(15, 23, 42);
 
   y += 33;
@@ -368,7 +368,7 @@ export function generateReferralPDF(caseData: PatientCase): GeneratedPdfBundle {
   doc.setTextColor(71, 85, 105);
   doc.text(`Name: ${caseData.chwName || "Anjali Devi (ASHA)"}`, margin, y + 5);
   doc.text("Designation: Frontline Health Worker (ASHA / CHW)", margin, y + 10);
-  doc.text("Node: ASHA-Kolkata", margin, y + 15);
+  doc.text(`Location: ${caseData.village || "Field Unit"}`, margin, y + 15);
   doc.text("Signature: ___________________________", margin, y + 22);
 
   // Right: Receiving Doctor

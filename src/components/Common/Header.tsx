@@ -1,6 +1,7 @@
 import React from "react";
 import { SupportedLanguage, PatientCase } from "../../types";
-import { TRANSLATIONS } from "../../utils/translations";
+import { TRANSLATIONS, ALL_INDIAN_LANGUAGES } from "../../utils/translations";
+import { IndianStateData } from "../../data/indianStates";
 import {
   Activity,
   Wifi,
@@ -17,6 +18,8 @@ import {
   Siren,
   PhoneCall,
   AlertOctagon,
+  MapPin,
+  ChevronDown,
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 
@@ -33,6 +36,8 @@ interface HeaderProps {
   onNewAssessment: () => void;
   onOpenLiveTracker?: () => void;
   onTriggerEmergencySos?: () => void;
+  currentState: IndianStateData;
+  onOpenStateModal: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -48,19 +53,27 @@ export const Header: React.FC<HeaderProps> = ({
   onNewAssessment,
   onOpenLiveTracker,
   onTriggerEmergencySos,
+  currentState,
+  onOpenStateModal,
 }) => {
   const t = TRANSLATIONS[language] || TRANSLATIONS.en;
 
   return (
-    <header id="main-app-header" className="bg-white/90 backdrop-blur-md border-b border-slate-200/90 shadow-xs sticky top-0 z-40 transition-all duration-200">
+    <header
+      id="main-app-header"
+      className="bg-white text-[#1A1A1A] border-b-[2.5px] border-[#1A1A1A] sticky top-0 z-40 transition-all duration-150"
+    >
       {/* Top Offline Notification Bar */}
       {isOfflineMode && (
-        <div id="offline-alert-strip" className="bg-amber-500 text-amber-950 text-xs font-semibold px-4 py-1.5 flex items-center justify-between border-b border-amber-600/30">
+        <div
+          id="offline-alert-strip"
+          className="bg-[#1A1A1A] text-white text-xs font-mono px-4 py-1.5 flex items-center justify-between border-b border-[#E32E10]"
+        >
           <div className="flex items-center gap-2">
-            <WifiOff className="w-4 h-4 shrink-0 animate-pulse" />
-            <span>
-              <strong>OFFLINE MODE ACTIVE:</strong> Autonomous WHO/IMCI decision algorithms in memory.
-              {offlineQueue.length > 0 && ` (${offlineQueue.length} record(s) queued for sync)`}
+            <span className="text-[#E32E10] font-bold animate-pulse">● OFFLINE_PROTOCOL_ACTIVE</span>
+            <span className="text-slate-300 hidden sm:inline">
+              | Autonomous WHO IMCI/ETAT algorithms in local memory
+              {offlineQueue.length > 0 && ` [QUEUED: ${offlineQueue.length}]`}
             </span>
           </div>
           <button
@@ -68,54 +81,116 @@ export const Header: React.FC<HeaderProps> = ({
               playHapticSound("click");
               onToggleOffline();
             }}
-            className="underline font-bold text-amber-950 hover:text-black text-xs ml-3 cursor-pointer"
+            className="text-[#E32E10] hover:underline font-bold text-xs uppercase cursor-pointer"
           >
-            Re-enable Cloud AI
+            Reconnect Cloud →
           </button>
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-3">
-        {/* Brand and Logo */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 bg-gradient-to-br from-cyan-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center text-white shadow-md shadow-blue-500/25 relative overflow-hidden group shrink-0">
-            <Activity className="w-4 h-4 sm:w-5 sm:h-5 animate-pulse" />
-            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-extrabold text-base sm:text-xl tracking-tight text-slate-900 font-display flex items-center gap-1.5 truncate">
-              <span>ArogyaSeva</span>
-              <span className="text-blue-600 font-normal text-[11px] sm:text-xs px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 hidden md:inline shrink-0">
-                {currentRole === "CHW" ? "CHW Field Mesh" : "Hospital Command"}
-              </span>
-            </h1>
-            <p className="text-[10px] sm:text-[11px] text-slate-500 font-medium hidden lg:block truncate">
-              AI Rural Clinical Decision & Referral Network
-            </p>
-          </div>
+      <div className="w-full px-3 sm:px-6 h-[60px] flex items-center justify-between gap-3">
+        {/* Brand Block (Variation 12) */}
+        <div className="flex items-center gap-3 sm:border-r sm:border-black/10 sm:pr-5 h-full shrink-0">
+          <div className="w-6 h-6 bg-[#E32E10] shrink-0" />
+          <h1 className="font-['Oswald'] text-xl sm:text-2xl font-semibold uppercase tracking-[0.05em] text-[#1A1A1A] leading-none">
+            ArogyaSeva
+          </h1>
+          <span className="hidden md:inline-block font-mono text-[10px] font-bold px-1.5 py-0.5 bg-[#1A1A1A] text-white uppercase">
+            {currentRole === "CHW" ? "CHW_TRIAGE" : "DOC_HUB"}
+          </span>
         </div>
 
-        {/* Right Section: Sync Badge, Role Toggle, Language, Worker Profile */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-          {/* Online/Offline Status Indicator Pill */}
+        {/* Center / Telemetry Status (Variation 12) */}
+        <div className="hidden lg:flex items-center gap-4 text-[11px] font-mono shrink-0">
           <button
-            id="header-btn-network-toggle"
+            type="button"
             onClick={() => {
               playHapticSound("click");
-              onToggleOffline();
+              onOpenStateModal();
             }}
-            className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-              isOfflineMode
-                ? "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 shadow-xs"
-                : "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-xs"
-            }`}
-            title="Toggle Network connectivity simulation"
+            className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[#1A1A1A] hover:text-[#E32E10] transition-colors cursor-pointer border-b border-dashed border-[#1A1A1A]"
+            title="Change Indian State (Updates ASHA Unit, Hospital & Regional Directory)"
           >
-            <div className={`w-2 h-2 rounded-full shrink-0 ${isOfflineMode ? "bg-amber-500" : "bg-emerald-500 animate-ping"}`} />
-            <span className="text-[10px] sm:text-[11px] uppercase tracking-wide hidden xs:inline">
-              {isOfflineMode ? "OFFLINE" : "CLOUD"}
-            </span>
+            <MapPin className="w-3.5 h-3.5 text-[#E32E10]" />
+            <span>STATE: {currentState.shortCode}_{currentState.name.toUpperCase()}</span>
           </button>
+
+          <span className="text-[#E32E10] font-bold flex items-center gap-1">
+            <span className="inline-block w-2 h-2 rounded-full bg-[#E32E10] animate-ping" />
+            <span>CONNECTION_ENCRYPTED</span>
+          </span>
+
+          <span className="text-[#8E8E85] font-mono text-[10px]">
+            {currentRole === "CHW" ? `ASHA: ${currentState.ashaWorker}` : `HOSP: ${currentState.hospital.split("/")[0]}`}
+          </span>
+        </div>
+
+        {/* Right Controls (Variation 12) */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Mobile State Change Trigger */}
+          <button
+            type="button"
+            onClick={() => {
+              playHapticSound("click");
+              onOpenStateModal();
+            }}
+            className="lg:hidden flex items-center gap-1 text-[10px] font-mono font-bold bg-[#F2F2EB] px-2 py-1 border border-[#1A1A1A] cursor-pointer"
+          >
+            <MapPin className="w-3 h-3 text-[#E32E10]" />
+            <span>{currentState.shortCode}</span>
+          </button>
+
+          {/* Role Toggle Switch */}
+          <div className="flex border border-[#1A1A1A] bg-[#F2F2EB]">
+            <button
+              id="header-role-chw"
+              onClick={() => {
+                playHapticSound("click");
+                onRoleChange("CHW");
+              }}
+              className={`px-2 sm:px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                currentRole === "CHW"
+                  ? "bg-[#1A1A1A] text-white font-bold"
+                  : "text-[#1A1A1A] hover:bg-black/5"
+              }`}
+            >
+              CHW
+            </button>
+            <button
+              id="header-role-doctor"
+              onClick={() => {
+                playHapticSound("click");
+                onRoleChange("DOCTOR");
+              }}
+              className={`px-2 sm:px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+                currentRole === "DOCTOR"
+                  ? "bg-[#1A1A1A] text-white font-bold"
+                  : "text-[#1A1A1A] hover:bg-black/5"
+              }`}
+            >
+              Doctor
+            </button>
+          </div>
+
+          {/* Language Selector (Variation 12 Space Mono border-bottom style) */}
+          <div className="flex items-center">
+            <select
+              id="header-language-select"
+              value={language}
+              onChange={(e) => {
+                playHapticSound("click");
+                onLanguageChange(e.target.value as SupportedLanguage);
+              }}
+              className="font-mono text-[11px] font-bold border-none bg-transparent border-b-2 border-[#1A1A1A] text-[#1A1A1A] focus:outline-none cursor-pointer py-1 max-w-[90px] sm:max-w-[120px]"
+              title="Select Language (All 22 Official Indian Languages Supported)"
+            >
+              {ALL_INDIAN_LANGUAGES.map((lang) => (
+                <option key={lang.code} value={lang.code} className="bg-white text-black font-mono">
+                  {lang.code.toUpperCase()} - {lang.nativeName}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Sync Button if queue exists */}
           {offlineQueue.length > 0 && (
@@ -126,15 +201,15 @@ export const Header: React.FC<HeaderProps> = ({
                 onSyncOfflineQueue();
               }}
               disabled={isSyncing}
-              className="bg-amber-600 hover:bg-amber-700 text-white text-[11px] sm:text-xs font-semibold px-2 py-1 rounded-lg flex items-center gap-1 sm:gap-1.5 animate-bounce shadow-xs transition-colors cursor-pointer"
-              title="Sync pending local records with central cloud"
+              className="bg-[#1A1A1A] text-[#E32E10] text-[11px] font-mono font-bold px-2 py-1 border border-[#1A1A1A] flex items-center gap-1 cursor-pointer"
+              title="Sync pending local records"
             >
               <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
-              <span>({offlineQueue.length})</span>
+              <span>SYNC ({offlineQueue.length})</span>
             </button>
           )}
 
-          {/* Floating Emergency SOS 1-Tap Ambulance Action Button */}
+          {/* SOS Dispatch Button (Variation 12 btn-sos) */}
           {onTriggerEmergencySos && (
             <button
               id="header-floating-emergency-sos-btn"
@@ -143,118 +218,13 @@ export const Header: React.FC<HeaderProps> = ({
                 playHapticSound("alert");
                 onTriggerEmergencySos();
               }}
-              className="group relative bg-gradient-to-r from-red-600 via-rose-600 to-red-700 hover:from-red-500 hover:to-rose-500 text-white font-black text-xs px-3 sm:px-3.5 py-1 sm:py-1.5 rounded-full flex items-center gap-1.5 shadow-md shadow-red-600/30 hover:shadow-lg hover:shadow-red-600/50 border border-red-300/40 transition-all hover:scale-105 active:scale-95 cursor-pointer animate-pulse shrink-0"
-              title="RAPID 1-TAP SOS: Bypasses standard intake workflows to alert and dispatch 108 Emergency Ambulance immediately"
+              className="btn-sos flex items-center gap-1.5 shadow-sm hover:brightness-110 active:scale-95"
+              title="RAPID 1-TAP SOS: Alert and dispatch 108 Emergency Ambulance immediately"
             >
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-80" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
-              </span>
-              <Siren className="w-3.5 h-3.5 text-white animate-spin" style={{ animationDuration: "3s" }} />
-              <span className="tracking-wider uppercase font-mono font-black">SOS</span>
-              <span className="hidden sm:inline font-bold text-[11px] tracking-tight">AMBULANCE</span>
+              <Siren className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: "3s" }} />
+              <span>SOS DISPATCH</span>
             </button>
           )}
-
-          {/* New Assessment Button */}
-          {currentRole === "CHW" && (
-            <button
-              id="header-btn-new-patient"
-              onClick={() => {
-                playHapticSound("click");
-                onNewAssessment();
-              }}
-              className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm shadow-blue-500/20 hover:scale-[1.02] cursor-pointer"
-            >
-              <PlusCircle className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">New Intake</span>
-            </button>
-          )}
-
-          {onOpenLiveTracker && (
-            <button
-              id="header-btn-live-tracker"
-              onClick={() => {
-                playHapticSound("click");
-                onOpenLiveTracker();
-              }}
-              className="hidden md:flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-2xs hover:scale-[1.02]"
-              title="Open Live Location Tracker & OSM Hospital Radar"
-            >
-              <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse shrink-0" />
-              <span className="font-mono text-[11px]">GPS Radar</span>
-            </button>
-          )}
-
-          {/* Language Selector */}
-          <div className="flex items-center bg-slate-100/90 rounded-lg border border-slate-200 px-1.5 sm:px-2 py-1 shadow-2xs">
-            <Languages className="w-3.5 h-3.5 text-slate-500 mr-0.5 sm:mr-1 shrink-0" />
-            <select
-              id="header-language-select"
-              value={language}
-              onChange={(e) => {
-                playHapticSound("click");
-                onLanguageChange(e.target.value as SupportedLanguage);
-              }}
-              className="bg-transparent text-[11px] sm:text-xs text-slate-800 font-semibold focus:outline-none cursor-pointer"
-            >
-              <option value="en">EN</option>
-              <option value="hi">हिन्दी</option>
-              <option value="mr">मराठी</option>
-              <option value="bn">বাংলা</option>
-              <option value="ta">தமிழ்</option>
-              <option value="te">తెలుగు</option>
-            </select>
-          </div>
-
-          {/* Role Toggle Switch */}
-          <div className="flex bg-slate-100/90 p-0.5 rounded-lg border border-slate-200 shadow-2xs">
-            <button
-              id="header-role-chw"
-              onClick={() => {
-                playHapticSound("click");
-                onRoleChange("CHW");
-              }}
-              className={`px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
-                currentRole === "CHW"
-                  ? "bg-white text-blue-600 shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <Users className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">CHW</span>
-            </button>
-            <button
-              id="header-role-doctor"
-              onClick={() => {
-                playHapticSound("click");
-                onRoleChange("DOCTOR");
-              }}
-              className={`px-2 sm:px-2.5 py-1 rounded-md text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
-                currentRole === "DOCTOR"
-                  ? "bg-white text-blue-600 shadow-xs font-bold"
-                  : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <Stethoscope className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden sm:inline">Doctor</span>
-            </button>
-          </div>
-
-          {/* Worker / Doctor Badge */}
-          <div className="hidden xl:flex items-center gap-2.5 border-l border-slate-200 pl-3">
-            <div className="text-right leading-tight">
-              <p className="text-xs font-bold text-slate-800">
-                {currentRole === "CHW" ? "Anjali Devi (ASHA)" : "Dr. S. K. Verma"}
-              </p>
-              <p className="text-[10px] text-slate-500 uppercase font-semibold tracking-wider">
-                {currentRole === "CHW" ? "NODE: ASHA-KOLKATA" : "DISTRICT HOSPITAL"}
-              </p>
-            </div>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 font-bold text-xs flex items-center justify-center border-2 border-white shadow-xs">
-              {currentRole === "CHW" ? "AD" : "DR"}
-            </div>
-          </div>
         </div>
       </div>
     </header>

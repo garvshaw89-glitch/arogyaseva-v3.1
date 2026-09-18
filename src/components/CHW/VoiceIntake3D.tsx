@@ -29,9 +29,12 @@ import {
   HealthResponse,
 } from "../../utils/healthcareAiApi";
 import { GuidedVoiceEngine } from "./GuidedVoiceEngine";
+import { Canvas } from "@react-three/fiber";
+import { VoicePulseOrb } from "../three/VoicePulseOrb";
 
 interface VoiceIntake3DProps {
   onDataExtracted: (extracted: {
+    patientName?: string;
     age?: number;
     gender?: "Male" | "Female" | "Other";
     symptoms: string[];
@@ -41,6 +44,7 @@ interface VoiceIntake3DProps {
   }) => void;
   language: SupportedLanguage;
   currentRawText?: string;
+  initialPatientName?: string;
 }
 
 const VOICE_PRESETS = [
@@ -92,6 +96,7 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
   onDataExtracted,
   language,
   currentRawText,
+  initialPatientName,
 }) => {
   const [isListening, setIsListening] = useState(false);
   const [liveTranscript, setLiveTranscript] = useState(currentRawText || "");
@@ -111,8 +116,9 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  // Handler for completing the 5-step guided voice flow
+  // Handler for completing the guided voice flow (now with patient name)
   const handleGuidedComplete = async (completedData: {
+    patientName?: string;
     age: number;
     gender: "Male" | "Female" | "Other";
     temperature: number;
@@ -125,6 +131,7 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
     playHapticSound("success");
 
     const extracted = {
+      patientName: completedData.patientName,
       age: completedData.age,
       gender: completedData.gender,
       symptoms: completedData.symptoms,
@@ -446,7 +453,7 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
               }`}
             >
               <MessageSquareText className="w-3.5 h-3.5" />
-              <span>Guided 5-Step Voice Flow</span>
+              <span>Guided 6-Step Voice Flow</span>
             </button>
 
             <button
@@ -487,6 +494,7 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
           {/* Step-by-Step Guided Clinical Voice Engine */}
           <GuidedVoiceEngine
             language={language}
+            initialPatientName={initialPatientName}
             onComplete={handleGuidedComplete}
             onCancel={() => setIntakeMode("freeform")}
           />
@@ -512,7 +520,14 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
                 </div>
 
                 {/* Extracted Structured Chips Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5">
+                  <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl">
+                    <span className="text-[10px] font-mono text-slate-400 block">PATIENT NAME</span>
+                    <span className="text-sm sm:text-base font-black text-cyan-300 font-mono truncate block">
+                      {extractedState?.patientName || "--"}
+                    </span>
+                  </div>
+
                   <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl">
                     <span className="text-[10px] font-mono text-slate-400 block">PATIENT AGE</span>
                     <span className="text-base font-black text-cyan-300 font-mono">
@@ -534,7 +549,7 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
                     </span>
                   </div>
 
-                  <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl">
+                  <div className="bg-slate-950/80 border border-slate-800 p-2.5 rounded-xl col-span-2 sm:col-span-1">
                     <span className="text-[10px] font-mono text-slate-400 block">GENDER</span>
                     <span className="text-base font-black text-slate-200 font-mono">
                       {extractedState?.gender || "--"}
@@ -717,47 +732,55 @@ export const VoiceIntake3D: React.FC<VoiceIntake3DProps> = ({
       ) : (
         /* Freeform 3D Holographic Microphone & Visualizer */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
-        {/* Left: 3D Holographic Pulsing Microphone */}
-        <div className="lg:col-span-4 flex flex-col items-center justify-center py-4">
-          <div className="relative group flex items-center justify-center">
-            {/* Pulsing rings */}
-            <div
-              className={`absolute w-36 h-36 rounded-full border border-cyan-500/30 transition-all duration-700 ${
-                isListening ? "scale-125 animate-ping opacity-60" : "scale-100 opacity-20"
-              }`}
-            />
-            <div
-              className={`absolute w-28 h-28 rounded-full border border-blue-500/40 transition-all duration-500 ${
-                isListening ? "scale-110 animate-pulse opacity-80" : "scale-95 opacity-30"
-              }`}
-            />
+        {/* Left: 3D Holographic Care Companion & Pulsing Microphone */}
+        <div className="lg:col-span-4 flex flex-col items-center justify-center py-2">
+          {/* 3D Care Companion Canvas */}
+          <div className="relative h-56 w-full max-w-[280px] overflow-hidden rounded-3xl border border-white/10 bg-[#081522] shadow-2xl flex items-center justify-center mb-3">
+            <div className="absolute inset-0 z-0">
+              <Canvas camera={{ position: [0, 0, 3.2], fov: 45 }} gl={{ alpha: true }}>
+                <ambientLight intensity={0.5} />
+                <pointLight position={[2, 2, 3]} intensity={4} color={isListening ? "#14B8A6" : "#3B82F6"} />
+                <VoicePulseOrb isListening={isListening} intensity={audioLevel > 0 ? audioLevel / 40 : 0.6} />
+              </Canvas>
+            </div>
 
-            {/* Central Animated Mic Orb */}
-            <button
-              id="btn-voice-mic-hero"
-              onClick={toggleListening}
-              className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300 shadow-2xl cursor-pointer ${
-                isListening
-                  ? "bg-gradient-to-tr from-red-600 via-rose-600 to-amber-500 text-white shadow-red-500/50 scale-110 animate-pulse ring-4 ring-red-400/40"
-                  : "bg-gradient-to-tr from-cyan-600 via-blue-600 to-indigo-700 text-white shadow-cyan-500/30 hover:scale-105 hover:ring-4 hover:ring-cyan-400/30"
-              }`}
-              title="Click to activate voice recording"
-            >
-              {isListening ? (
-                <Mic className="w-9 h-9 animate-bounce" />
-              ) : (
-                <Mic className="w-9 h-9" />
-              )}
-            </button>
+            {/* Top Indicator */}
+            <div className="pointer-events-none absolute top-3 inset-x-3 flex items-center justify-between text-[10px] font-mono z-10">
+              <span className="flex items-center gap-1.5 text-cyan-300 font-bold bg-slate-950/60 px-2 py-0.5 rounded-full border border-cyan-500/20">
+                <span className={`w-2 h-2 rounded-full ${isListening ? "bg-teal-400 animate-ping" : "bg-blue-500"}`} />
+                CARE COMPANION
+              </span>
+              <span className="text-slate-400 bg-slate-950/60 px-2 py-0.5 rounded-full border border-slate-800">
+                {isListening ? "RECORDING" : "STANDBY"}
+              </span>
+            </div>
+
+            {/* Bottom Floating Mic Action Pill */}
+            <div className="absolute inset-x-0 bottom-3 flex flex-col items-center justify-center z-10">
+              <button
+                id="btn-voice-mic-hero"
+                type="button"
+                onClick={toggleListening}
+                className={`px-4 py-2 rounded-xl text-xs font-mono font-bold flex items-center gap-2 transition-all cursor-pointer shadow-xl ${
+                  isListening
+                    ? "bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-red-500/40 ring-2 ring-red-400/50 animate-pulse"
+                    : "bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white shadow-cyan-500/30 ring-1 ring-cyan-400/30"
+                }`}
+                title="Click to toggle voice recording"
+              >
+                <Mic className={`w-3.5 h-3.5 ${isListening ? "animate-bounce" : ""}`} />
+                <span>{isListening ? "Listening... (Tap to stop)" : "Hold / Tap to Speak"}</span>
+              </button>
+            </div>
           </div>
 
-          <p className="text-xs font-semibold text-slate-300 mt-5 text-center">
-            {isListening ? "Listening... Speak symptoms in your mother tongue" : "Tap Mic or select clinical preset"}
+          <p className="text-[11px] font-medium text-slate-400 text-center">
+            {isListening ? "Speak symptoms clearly in your language" : "Voice amplitude synchronizes with 3D Care Companion"}
           </p>
 
           {/* Audio frequency wave canvas */}
-          <div className="w-full max-w-[260px] h-10 mt-3 rounded-lg overflow-hidden border border-slate-800 bg-slate-900/60 p-1">
-            <canvas ref={canvasRef} width={250} height={32} className="w-full h-full" />
+          <div className="w-full max-w-[260px] h-9 mt-2 rounded-lg overflow-hidden border border-slate-800 bg-slate-900/60 p-1">
+            <canvas ref={canvasRef} width={250} height={28} className="w-full h-full" />
           </div>
         </div>
 

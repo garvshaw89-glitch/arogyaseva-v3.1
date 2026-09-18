@@ -37,8 +37,12 @@ import {
 import { evaluateClinicalRiskLocally } from "./utils/clinicalRules";
 import { TRANSLATIONS } from "./utils/translations";
 import { CinematicHero } from "./components/Common/CinematicHero";
+import { CareCommandHero } from "./components/ui/CareCommandHero";
+import { PatientJourneyTimeline3D } from "./components/three/PatientJourneyTimeline3D";
 import { playHapticSound } from "./utils/audioFeedback";
 import { acquireLiveLocation, getCachedLiveLocation } from "./utils/geolocationHelper";
+import { IndianStateData, DEFAULT_INDIAN_STATE, INDIAN_STATES } from "./data/indianStates";
+import { StateSelectorModal } from "./components/Common/StateSelectorModal";
 import { motion, AnimatePresence } from "motion/react";
 import {
   UserPlus,
@@ -55,11 +59,14 @@ import {
   Printer,
   FileText,
   Siren,
+  X,
 } from "lucide-react";
 
 export default function App() {
   const [role, setRole] = useState<"CHW" | "DOCTOR">("CHW");
   const [language, setLanguage] = useState<SupportedLanguage>("en");
+  const [selectedState, setSelectedState] = useState<IndianStateData>(DEFAULT_INDIAN_STATE);
+  const [showStateModal, setShowStateModal] = useState<boolean>(false);
   const [isOfflineMode, setIsOfflineMode] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedPresetId, setSelectedPresetId] = useState<string | undefined>(undefined);
@@ -70,10 +77,10 @@ export default function App() {
       patientName: "",
       age: 35,
       gender: "Male",
-      village: cached?.villageName || "",
-      villageLatitude: cached?.latitude,
-      villageLongitude: cached?.longitude,
-      chwName: "Anjali Devi (ASHA)",
+      village: cached?.villageName || DEFAULT_INDIAN_STATE.defaultVillage,
+      villageLatitude: cached?.latitude || DEFAULT_INDIAN_STATE.coordinates.lat,
+      villageLongitude: cached?.longitude || DEFAULT_INDIAN_STATE.coordinates.lng,
+      chwName: DEFAULT_INDIAN_STATE.ashaWorker,
       symptoms: ["High Fever", "Severe Shortness of Breath"],
       symptomDuration: "3 days",
       rawVoiceInput: "",
@@ -92,6 +99,7 @@ export default function App() {
 
   const [assessment, setAssessment] = useState<RiskAssessment | null>(null);
   const [completedCase, setCompletedCase] = useState<PatientCase | null>(null);
+  const [dismissedCaseSummaryId, setDismissedCaseSummaryId] = useState<string | null>(null);
   const [showReferralModal, setShowReferralModal] = useState<boolean>(false);
   const [showPdfReportModal, setShowPdfReportModal] = useState<boolean>(false);
   const [pdfReportCase, setPdfReportCase] = useState<PatientCase | null>(null);
@@ -190,6 +198,20 @@ export default function App() {
     setAssessment(null);
   };
 
+  const handleSelectState = (state: IndianStateData, autoSwitchLanguage: boolean = true) => {
+    setSelectedState(state);
+    setPatientData((prev) => ({
+      ...prev,
+      chwName: state.ashaWorker,
+      village: (!prev.village || prev.village === selectedState.defaultVillage || prev.village.includes("Rampur") || prev.village.includes("Dharavi") || prev.village.includes("Kolkata")) ? state.defaultVillage : prev.village,
+      villageLatitude: state.coordinates.lat,
+      villageLongitude: state.coordinates.lng,
+    }));
+    if (autoSwitchLanguage && state.primaryLanguage) {
+      setLanguage(state.primaryLanguage);
+    }
+  };
+
   const handleNewAssessment = () => {
     setSelectedPresetId(undefined);
     const cached = getCachedLiveLocation();
@@ -197,10 +219,10 @@ export default function App() {
       patientName: "",
       age: 30,
       gender: "Male",
-      village: cached?.villageName || "",
-      villageLatitude: cached?.latitude,
-      villageLongitude: cached?.longitude,
-      chwName: "Anjali Devi (ASHA)",
+      village: cached?.villageName || selectedState.defaultVillage,
+      villageLatitude: cached?.latitude || selectedState.coordinates.lat,
+      villageLongitude: cached?.longitude || selectedState.coordinates.lng,
+      chwName: selectedState.ashaWorker,
       symptoms: [],
       symptomDuration: "1-2 days",
       rawVoiceInput: "",
@@ -453,7 +475,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 flex flex-col font-sans antialiased selection:bg-blue-200">
+    <div className="min-h-screen bg-[#07111F] text-slate-100 flex flex-col font-sans antialiased selection:bg-cyan-900 selection:text-cyan-100">
       {/* Header with Professional Polish */}
       <Header
         currentRole={role}
@@ -467,6 +489,8 @@ export default function App() {
         isSyncing={isSyncing}
         onNewAssessment={handleNewAssessment}
         onTriggerEmergencySos={handleTriggerEmergencySos}
+        currentState={selectedState}
+        onOpenStateModal={() => setShowStateModal(true)}
         onOpenLiveTracker={() => {
           playHapticSound("click");
           setShowLiveTracker(true);
@@ -477,30 +501,23 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6">
         {role === "CHW" ? (
           <div>
-            {/* Cinematic 3D Telemetry HUD & Hero */}
+            {/* ArogyaSeva Care Command 3D Hero */}
             {showCinematicHero && (
-              <CinematicHero
-                currentRisk={assessment?.riskLevel || "ROUTINE"}
-                onQuickStart={() => {
+              <CareCommandHero
+                onStartNewCase={() => {
                   playHapticSound("click");
-                  setCurrentStep(1);
+                  handleNewAssessment();
                   const el = document.getElementById("chw-workflow-stepper");
                   el?.scrollIntoView({ behavior: "smooth" });
                 }}
-                onExploreDoctorPortal={() => {
-                  playHapticSound("click");
-                  setRole("DOCTOR");
-                }}
-                language={language}
-                isOffline={isOfflineMode}
               />
             )}
 
             {/* Toggle bar for 3D Hero */}
             <div className="flex items-center justify-between mb-3 text-xs">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-slate-600 font-semibold tracking-wide uppercase text-[11px]">
+                <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="text-slate-400 font-mono tracking-wide uppercase text-[11px]">
                   CHW Frontline Workflow & Triage Mesh
                 </span>
               </div>
@@ -510,9 +527,9 @@ export default function App() {
                   playHapticSound("click");
                   setShowCinematicHero(!showCinematicHero);
                 }}
-                className="text-slate-500 hover:text-slate-800 font-medium hover:underline flex items-center gap-1 cursor-pointer"
+                className="text-cyan-400 hover:text-cyan-300 font-mono text-[11px] hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <span>{showCinematicHero ? "Collapse Telemetry HUD" : "Expand Telemetry HUD"}</span>
+                <span>{showCinematicHero ? "Collapse Command HUD" : "Expand Command HUD"}</span>
               </button>
             </div>
 
@@ -524,35 +541,27 @@ export default function App() {
             />
 
             {/* 3D Dynamic Clinical Pathway Pipeline */}
-            <div className="mb-4">
-              <PatientJourney3D
+            <div className="mb-5">
+              <PatientJourneyTimeline3D
                 currentStage={
-                  role === "DOCTOR"
-                    ? "doctor"
-                    : currentStep === 1
-                    ? "patient"
-                    : currentStep === 2
-                    ? "chw"
-                    : currentStep === 3
-                    ? "assessment"
-                    : currentStep === 4
-                    ? "risk"
-                    : "referral"
+                  (role as string) === "DOCTOR"
+                    ? 6
+                    : currentStep
                 }
                 riskLevel={assessment?.riskLevel || "ROUTINE"}
                 onSelectStage={(stage) => {
-                  if (stage === "patient") { setRole("CHW"); setCurrentStep(1); }
-                  else if (stage === "chw") { setRole("CHW"); setCurrentStep(2); }
-                  else if (stage === "assessment") { setRole("CHW"); setCurrentStep(3); }
-                  else if (stage === "risk") { if (assessment) { setRole("CHW"); setCurrentStep(4); } }
-                  else if (stage === "referral") { if (assessment) { setRole("CHW"); setCurrentStep(5); } }
-                  else if (stage === "doctor") { setRole("DOCTOR"); }
+                  if (stage === 1) { setRole("CHW"); setCurrentStep(1); }
+                  else if (stage === 2) { setRole("CHW"); setCurrentStep(2); }
+                  else if (stage === 3) { setRole("CHW"); setCurrentStep(3); }
+                  else if (stage === 4) { if (assessment) { setRole("CHW"); setCurrentStep(4); } }
+                  else if (stage === 5) { if (assessment) { setRole("CHW"); setCurrentStep(5); } }
+                  else if (stage === 6) { setRole("DOCTOR"); }
                 }}
               />
             </div>
 
             {/* 2. Step Stepper with Professional Polish */}
-            <div id="chw-workflow-stepper" className="bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-2xl p-3 sm:p-4 shadow-sm mb-6">
+            <div id="chw-workflow-stepper" className="bg-[#0c1a2e]/90 backdrop-blur-xl border border-slate-800/90 rounded-2xl p-3 sm:p-4 shadow-xl mb-6 text-white">
               <div className="flex items-center justify-between">
                 {[
                   { step: 1, label: "1. Patient Info", shortLabel: "Patient", icon: UserPlus },
@@ -574,25 +583,25 @@ export default function App() {
                           setCurrentStep(item.step);
                         }
                       }}
-                      className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-1.5 px-0.5 sm:px-2 md:px-3 rounded-xl text-center transition-all duration-300 ${
+                      className={`relative flex-1 flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-1.5 py-2 px-1 sm:px-2 md:px-3 rounded-xl text-center transition-all duration-300 ${
                         isActive
-                          ? "text-blue-700 font-bold bg-blue-50/90 border border-blue-300 ring-2 ring-blue-500/20 shadow-xs scale-[1.02]"
+                          ? "text-white font-bold bg-gradient-to-r from-blue-600 to-cyan-600 border border-cyan-400/50 shadow-lg shadow-cyan-500/20 scale-[1.02]"
                           : isPast
-                          ? "text-slate-600 hover:text-blue-700 hover:bg-slate-50 cursor-pointer"
-                          : "text-slate-400 cursor-not-allowed opacity-75"
+                          ? "text-emerald-400 hover:text-emerald-300 hover:bg-slate-900/60 cursor-pointer"
+                          : "text-slate-500 cursor-not-allowed opacity-60"
                       }`}
                     >
                       <div className="relative flex items-center justify-center shrink-0">
                         {isActive && (
-                          <span className="absolute -inset-0.5 rounded-full bg-blue-500/40 animate-ping" />
+                          <span className="absolute -inset-0.5 rounded-full bg-cyan-400/40 animate-ping" />
                         )}
                         <div
                           className={`relative w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                             isActive
-                              ? "bg-blue-600 text-white shadow-xs ring-2 ring-blue-400/40"
+                              ? "bg-white text-blue-900 shadow-sm ring-2 ring-cyan-300"
                               : isPast
-                              ? "bg-blue-100 text-blue-800"
-                              : "bg-slate-100 text-slate-400"
+                              ? "bg-emerald-950 text-emerald-400 border border-emerald-700"
+                              : "bg-slate-800 text-slate-500"
                           }`}
                         >
                           {isPast ? "✓" : item.step}
@@ -698,6 +707,7 @@ export default function App() {
                   <ClinicalRiskEngine3D
                     assessment={assessment}
                     patientData={patientData}
+                    isOffline={isOfflineMode}
                     onProceedToFacilities={() => {
                       playHapticSound("step");
                       setCurrentStep(5);
@@ -794,6 +804,7 @@ export default function App() {
             onUpdateCase={handleUpdateCaseFromDoctor}
             language={language}
             onRefresh={loadInitialData}
+            selectedState={selectedState}
             onOpenPdfReport={(c) => {
               setPdfReportCase(c);
               setShowPdfReportModal(true);
@@ -855,30 +866,47 @@ export default function App() {
       )}
 
       {/* Quick Floating Action to re-view / print standardized PDF Referral Report from completedCase */}
-      {completedCase && !showReferralModal && !showPdfReportModal && !showSosModal && (
+      {completedCase && completedCase.id !== dismissedCaseSummaryId && !showReferralModal && !showPdfReportModal && !showSosModal && (
         <div className="fixed bottom-4 left-4 z-40 print:hidden animate-in fade-in slide-in-from-bottom-3 duration-300">
-          <button
-            id="floating-btn-view-pdf-report"
-            type="button"
-            onClick={() => {
-              playHapticSound("click");
-              setPdfReportCase(completedCase);
-              setShowPdfReportModal(true);
-            }}
-            className="bg-slate-900/95 hover:bg-slate-800 text-white text-xs font-bold px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-2.5 transition-all hover:scale-105 active:scale-95 cursor-pointer backdrop-blur-md"
-            title="Open and print standardized PDF referral report for current patient"
-          >
-            <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-sm shadow-blue-500/40">
-              <Printer className="w-3.5 h-3.5" />
-            </div>
-            <div className="text-left leading-tight">
-              <span className="block text-[10px] text-slate-400 font-normal">Active Case Summary</span>
-              <span className="font-semibold text-slate-100 flex items-center gap-1">
-                <span>Print PDF Report</span>
-                <span className="text-[9px] font-mono text-cyan-300 uppercase">({completedCase.riskLevel})</span>
-              </span>
-            </div>
-          </button>
+          <div className="bg-slate-900/95 text-white text-xs font-bold pl-3.5 pr-1.5 py-1.5 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-2 backdrop-blur-md transition-all hover:border-slate-600">
+            <button
+              id="floating-btn-view-pdf-report"
+              type="button"
+              onClick={() => {
+                playHapticSound("click");
+                setPdfReportCase(completedCase);
+                setShowPdfReportModal(true);
+              }}
+              className="flex items-center gap-2.5 text-left cursor-pointer hover:opacity-90 transition-opacity py-1"
+              title="Open and print standardized PDF referral report for current patient"
+            >
+              <div className="w-6 h-6 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-sm shadow-blue-500/40 shrink-0">
+                <Printer className="w-3.5 h-3.5" />
+              </div>
+              <div className="text-left leading-tight pr-1">
+                <span className="block text-[10px] text-slate-400 font-normal">Active Case Summary</span>
+                <span className="font-semibold text-slate-100 flex items-center gap-1">
+                  <span>Print PDF Report</span>
+                  <span className="text-[9px] font-mono text-cyan-300 uppercase">({completedCase.riskLevel})</span>
+                </span>
+              </div>
+            </button>
+
+            <button
+              id="btn-dismiss-floating-case-summary"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                playHapticSound("click");
+                setDismissedCaseSummaryId(completedCase.id);
+              }}
+              className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              title="Remove case summary from screen"
+              aria-label="Remove case summary from screen"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -911,6 +939,15 @@ export default function App() {
           onClose={() => setShowLiveTracker(false)}
         />
       )}
+
+      {/* Indian State & Regional Health System Selector Modal */}
+      <StateSelectorModal
+        isOpen={showStateModal}
+        onClose={() => setShowStateModal(false)}
+        currentState={selectedState}
+        onSelectState={handleSelectState}
+        currentLanguage={language}
+      />
 
       {/* Footer (Professional Polish) */}
       <footer className="bg-slate-900 text-slate-400 text-[11px] py-3.5 px-6 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
