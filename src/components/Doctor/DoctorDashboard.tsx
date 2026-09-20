@@ -34,6 +34,7 @@ import {
 import { playHapticSound } from "../../utils/audioFeedback";
 import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
 import { clientRuleBasedTriage } from "../../utils/triageSignal";
+import { CaseAttachmentsManager } from "../Common/CaseAttachmentsManager";
 
 interface DoctorDashboardProps {
   cases: PatientCase[];
@@ -599,6 +600,12 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                 <p><strong>Assessment:</strong> {selectedCase.sbarSummary?.assessment}</p>
                 <p><strong>Recommendation:</strong> {selectedCase.sbarSummary?.recommendation}</p>
               </div>
+
+              {/* Case Diagnostic Attachments & Documents */}
+              <CaseAttachmentsManager
+                caseId={selectedCase.id}
+                attachments={selectedCase.attachments || []}
+              />
 
               {/* Doctor Action Panel */}
               <div className="border-t border-slate-200 pt-4 space-y-3">

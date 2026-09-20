@@ -136,20 +136,20 @@ ArogyaSeva avoids static or simulated maps by interfacing directly with the Open
   );
   out center 25;
   ```
-- **Failover Resiliency**: Multi-tier failover (Direct Overpass -> Backend Proxy -> Verified Regional Fallback Cluster) ensures frontline workers never experience map downtime during low-bandwidth conditions.
+- **Failover Resiliency**: Multi-tier failover (Direct Overpass -> Regional Network Proxy -> Verified Regional Fallback Cluster) ensures frontline workers never experience map downtime during low-bandwidth conditions.
 
 ---
 
-## 💻 Tech Stack
+## 💻 System Architecture & Core Stack
 
 | Domain | Technology | Purpose |
 | :--- | :--- | :--- |
-| **Frontend** | React 18, TypeScript | High-performance reactive UI |
+| **Clinical Workstation** | React 18, TypeScript | High-performance reactive clinical workstation UI |
 | **Styling** | Tailwind CSS v4 | Responsive, mobile-first design |
 | **Mapping** | `react-leaflet`, `leaflet` | Interactive GIS OpenStreetMap viewer |
 | **GIS Data** | OpenStreetMap, Overpass API | Real-time global hospital discovery |
 | **AI / NLP** | Google Gemini 2.5 Flash | Multilingual clinical symptom parsing |
-| **Backend** | Express, Node.js (TypeScript) | Full-stack proxy, caching & API routes |
+| **Application Layer** | Express, Node.js (TypeScript) | Unified synchronization service, caching & API routes |
 | **Audio/Haptics** | Web Audio API | Accessible auditory alerts for field workers |
 | **Icons** | Lucide React | Clean, lightweight SVG medical iconography |
 

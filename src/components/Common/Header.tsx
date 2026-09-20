@@ -3,7 +3,7 @@ import { SupportedLanguage, PatientCase } from "../../types";
 import { TRANSLATIONS, ALL_INDIAN_LANGUAGES } from "../../utils/translations";
 import { IndianStateData } from "../../data/indianStates";
 import {
-  Activity,
+  Dna,
   Wifi,
   WifiOff,
   RefreshCw,
@@ -17,9 +17,10 @@ import {
   Zap,
   Siren,
   PhoneCall,
-  AlertOctagon,
   MapPin,
   ChevronDown,
+  ArrowRight,
+  Activity,
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 
@@ -61,19 +62,22 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       id="main-app-header"
-      className="bg-white text-[#1A1A1A] border-b-[2.5px] border-[#1A1A1A] sticky top-0 z-40 transition-all duration-150"
+      className="sticky top-0 z-40 bg-[#f8fafc]/95 backdrop-blur-md border-b border-[rgba(0,0,0,0.08)] transition-all duration-150"
     >
-      {/* Top Offline Notification Bar */}
+      {/* Top Offline Alert Banner */}
       {isOfflineMode && (
         <div
           id="offline-alert-strip"
-          className="bg-[#1A1A1A] text-white text-xs font-mono px-4 py-1.5 flex items-center justify-between border-b border-[#E32E10]"
+          className="bg-[#0c2b64] text-white text-xs font-mono px-4 sm:px-16 py-1.5 flex items-center justify-between border-b border-[#1a56db]/40"
         >
           <div className="flex items-center gap-2">
-            <span className="text-[#E32E10] font-bold animate-pulse">● OFFLINE_PROTOCOL_ACTIVE</span>
-            <span className="text-slate-300 hidden sm:inline">
-              | Autonomous WHO IMCI/ETAT algorithms in local memory
-              {offlineQueue.length > 0 && ` [QUEUED: ${offlineQueue.length}]`}
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+            <span className="text-amber-300 font-bold uppercase tracking-wider">
+              OFFLINE PROTOCOL ENGAGED
+            </span>
+            <span className="text-slate-200 hidden sm:inline text-[11px]">
+              | Autonomous WHO IMCI triage in local memory
+              {offlineQueue.length > 0 && ` [QUEUED: ${offlineQueue.length} cases]`}
             </span>
           </div>
           <button
@@ -81,99 +85,167 @@ export const Header: React.FC<HeaderProps> = ({
               playHapticSound("click");
               onToggleOffline();
             }}
-            className="text-[#E32E10] hover:underline font-bold text-xs uppercase cursor-pointer"
+            className="text-cyan-300 hover:text-white underline font-bold text-xs uppercase cursor-pointer"
           >
             Reconnect Cloud →
           </button>
         </div>
       )}
 
-      <div className="w-full px-3 sm:px-6 h-[60px] flex items-center justify-between gap-3">
-        {/* Brand Block (Variation 12) */}
-        <div className="flex items-center gap-3 sm:border-r sm:border-black/10 sm:pr-5 h-full shrink-0">
-          <div className="w-6 h-6 bg-[#E32E10] shrink-0" />
-          <h1 className="font-['Oswald'] text-xl sm:text-2xl font-semibold uppercase tracking-[0.05em] text-[#1A1A1A] leading-none">
-            ArogyaSeva
-          </h1>
-          <span className="hidden md:inline-block font-mono text-[10px] font-bold px-1.5 py-0.5 bg-[#1A1A1A] text-white uppercase">
-            {currentRole === "CHW" ? "CHW_TRIAGE" : "DOC_HUB"}
-          </span>
+      {/* Main Navbar Container (Specification: Padding 1.5rem top/bottom, 4rem left/right on desktop) */}
+      <div className="w-full px-4 sm:px-8 lg:px-16 py-3 sm:py-4 flex items-center justify-between gap-4">
+        {/* Left: Logo container with DNA icon and stacked text (Specification: 1.5rem Bold, Subtext 0.65rem Medium 2px uppercase) */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-xs transition-transform duration-200 hover:scale-105"
+            style={{
+              backgroundColor: "#eff6ff",
+              color: "#1a56db",
+            }}
+          >
+            <Dna className="w-5 h-5" />
+          </div>
+          <div className="flex flex-col justify-center">
+            <span
+              className="font-bold tracking-tight text-[#0a192f] leading-none"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "1.35rem",
+              }}
+            >
+              ArogyaSeva
+            </span>
+            <span
+              className="font-medium uppercase leading-tight mt-0.5 text-[#475569]"
+              style={{
+                fontFamily: "'Inter', sans-serif",
+                fontSize: "0.65rem",
+                letterSpacing: "2px",
+              }}
+            >
+              CLINICAL AI &amp; REFERRAL
+            </span>
+          </div>
         </div>
 
-        {/* Center / Telemetry Status (Variation 12) */}
-        <div className="hidden lg:flex items-center gap-4 text-[11px] font-mono shrink-0">
+        {/* Center: Navigation Links (Specification: 0.95rem Medium, Gap 2.5rem, Color #475569, Hover #1a56db) */}
+        <nav className="hidden xl:flex items-center gap-10 text-[0.95rem] font-medium text-[#475569]">
+          <button
+            type="button"
+            onClick={() => {
+              playHapticSound("click");
+              onRoleChange("CHW");
+              const el = document.getElementById("chw-workflow-stepper");
+              el?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="inline-flex items-center gap-1.5 transition-colors duration-200 hover:text-[#1a56db] cursor-pointer"
+          >
+            <span>Clinical Workstation</span>
+            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+          </button>
+
           <button
             type="button"
             onClick={() => {
               playHapticSound("click");
               onOpenStateModal();
             }}
-            className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[#1A1A1A] hover:text-[#E32E10] transition-colors cursor-pointer border-b border-dashed border-[#1A1A1A]"
-            title="Change Indian State (Updates ASHA Unit, Hospital & Regional Directory)"
+            className="inline-flex items-center gap-1.5 transition-colors duration-200 hover:text-[#1a56db] cursor-pointer"
           >
-            <MapPin className="w-3.5 h-3.5 text-[#E32E10]" />
-            <span>STATE: {currentState.shortCode}_{currentState.name.toUpperCase()}</span>
+            <MapPin className="w-3.5 h-3.5 text-[#1a56db]" />
+            <span>State Directory</span>
           </button>
 
-          <span className="text-[#E32E10] font-bold flex items-center gap-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-[#E32E10] animate-ping" />
-            <span>CONNECTION_ENCRYPTED</span>
-          </span>
+          <button
+            type="button"
+            onClick={() => {
+              playHapticSound("click");
+              onRoleChange("CHW");
+            }}
+            className="transition-colors duration-200 hover:text-[#1a56db] cursor-pointer"
+          >
+            WHO IMCI Protocols
+          </button>
 
-          <span className="text-[#8E8E85] font-mono text-[10px]">
-            {currentRole === "CHW" ? `ASHA: ${currentState.ashaWorker}` : `HOSP: ${currentState.hospital.split("/")[0]}`}
-          </span>
-        </div>
+          <button
+            type="button"
+            onClick={() => {
+              playHapticSound("click");
+              onRoleChange("DOCTOR");
+              const el = document.getElementById("doctor-hospital-command");
+              el?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="inline-flex items-center gap-1 transition-colors duration-200 hover:text-[#1a56db] cursor-pointer"
+          >
+            <Stethoscope className="w-3.5 h-3.5 text-[#1a56db]" />
+            <span>Doctor Command</span>
+          </button>
 
-        {/* Right Controls (Variation 12) */}
+          <button
+            type="button"
+            onClick={() => {
+              playHapticSound("click");
+              onOpenLiveTracker?.();
+            }}
+            className="transition-colors duration-200 hover:text-[#1a56db] cursor-pointer"
+          >
+            GPS Live Radar
+          </button>
+        </nav>
+
+        {/* Right: Controls & Primary Action Button */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-          {/* Mobile State Change Trigger */}
+          {/* State Pill Button */}
           <button
             type="button"
             onClick={() => {
               playHapticSound("click");
               onOpenStateModal();
             }}
-            className="lg:hidden flex items-center gap-1 text-[10px] font-mono font-bold bg-[#F2F2EB] px-2 py-1 border border-[#1A1A1A] cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-[#eff6ff] text-[#1a56db] border border-[#bae6fd] hover:bg-[#dbeafe] transition-all cursor-pointer"
+            title="Change Indian State (All 36 States & UTs)"
           >
-            <MapPin className="w-3 h-3 text-[#E32E10]" />
-            <span>{currentState.shortCode}</span>
+            <MapPin className="w-3 h-3 text-[#1a56db]" />
+            <span className="hidden sm:inline">{currentState.shortCode} - {currentState.name}</span>
+            <span className="sm:hidden">{currentState.shortCode}</span>
           </button>
 
-          {/* Role Toggle Switch */}
-          <div className="flex border border-[#1A1A1A] bg-[#F2F2EB]">
+          {/* Role Switcher Pill */}
+          <div className="flex bg-[#e2e8f0]/60 p-0.5 rounded-full border border-[rgba(0,0,0,0.08)]">
             <button
               id="header-role-chw"
+              type="button"
               onClick={() => {
                 playHapticSound("click");
                 onRoleChange("CHW");
               }}
-              className={`px-2 sm:px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
                 currentRole === "CHW"
-                  ? "bg-[#1A1A1A] text-white font-bold"
-                  : "text-[#1A1A1A] hover:bg-black/5"
+                  ? "bg-[#0c2b64] text-white shadow-xs font-semibold"
+                  : "text-[#475569] hover:text-[#0a192f]"
               }`}
             >
               CHW
             </button>
             <button
               id="header-role-doctor"
+              type="button"
               onClick={() => {
                 playHapticSound("click");
                 onRoleChange("DOCTOR");
               }}
-              className={`px-2 sm:px-3 py-1 text-[11px] font-mono uppercase tracking-wider transition-all cursor-pointer ${
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 cursor-pointer ${
                 currentRole === "DOCTOR"
-                  ? "bg-[#1A1A1A] text-white font-bold"
-                  : "text-[#1A1A1A] hover:bg-black/5"
+                  ? "bg-[#0c2b64] text-white shadow-xs font-semibold"
+                  : "text-[#475569] hover:text-[#0a192f]"
               }`}
             >
               Doctor
             </button>
           </div>
 
-          {/* Language Selector (Variation 12 Space Mono border-bottom style) */}
-          <div className="flex items-center">
+          {/* Language Selector Dropdown (22 Languages) */}
+          <div className="flex items-center relative">
             <select
               id="header-language-select"
               value={language}
@@ -181,36 +253,37 @@ export const Header: React.FC<HeaderProps> = ({
                 playHapticSound("click");
                 onLanguageChange(e.target.value as SupportedLanguage);
               }}
-              className="font-mono text-[11px] font-bold border-none bg-transparent border-b-2 border-[#1A1A1A] text-[#1A1A1A] focus:outline-none cursor-pointer py-1 max-w-[90px] sm:max-w-[120px]"
-              title="Select Language (All 22 Official Indian Languages Supported)"
+              className="appearance-none bg-white px-2.5 py-1.5 pr-6 rounded-full text-xs font-medium text-[#0a192f] border border-[rgba(0,0,0,0.12)] focus:outline-none focus:border-[#1a56db] cursor-pointer max-w-[85px] sm:max-w-[110px]"
+              title="Select Language (22 Official Indian Languages)"
             >
               {ALL_INDIAN_LANGUAGES.map((lang) => (
-                <option key={lang.code} value={lang.code} className="bg-white text-black font-mono">
-                  {lang.code.toUpperCase()} - {lang.nativeName}
+                <option key={lang.code} value={lang.code}>
+                  {lang.nativeName}
                 </option>
               ))}
             </select>
+            <Languages className="w-3 h-3 text-[#475569] absolute right-2 pointer-events-none" />
           </div>
 
-          {/* Sync Button if queue exists */}
+          {/* Sync Button if offline queue exists */}
           {offlineQueue.length > 0 && (
             <button
               id="header-btn-sync"
+              type="button"
               onClick={() => {
                 playHapticSound("step");
                 onSyncOfflineQueue();
               }}
               disabled={isSyncing}
-              className="bg-[#1A1A1A] text-[#E32E10] text-[11px] font-mono font-bold px-2 py-1 border border-[#1A1A1A] flex items-center gap-1 cursor-pointer"
-              title="Sync pending local records"
+              className="bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-semibold px-3 py-1.5 rounded-full border border-amber-300 flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <RefreshCw className={`w-3 h-3 ${isSyncing ? "animate-spin" : ""}`} />
-              <span>SYNC ({offlineQueue.length})</span>
+              <span className="hidden sm:inline">Sync ({offlineQueue.length})</span>
             </button>
           )}
 
-          {/* SOS Dispatch Button (Variation 12 btn-sos) */}
-          {onTriggerEmergencySos && (
+          {/* Right Primary Button (Specification: Primary "Contact Us" / "Emergency SOS" with right arrow icon, background #0c2b64, hover #133a80, fully rounded 9999px) */}
+          {onTriggerEmergencySos ? (
             <button
               id="header-floating-emergency-sos-btn"
               type="button"
@@ -218,11 +291,56 @@ export const Header: React.FC<HeaderProps> = ({
                 playHapticSound("alert");
                 onTriggerEmergencySos();
               }}
-              className="btn-sos flex items-center gap-1.5 shadow-sm hover:brightness-110 active:scale-95"
-              title="RAPID 1-TAP SOS: Alert and dispatch 108 Emergency Ambulance immediately"
+              className="group inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer shadow-xs"
+              style={{
+                backgroundColor: "#0c2b64",
+                color: "#ffffff",
+                padding: "0.6rem 1.25rem",
+                borderRadius: "9999px",
+                fontSize: "0.88rem",
+                gap: "0.45rem",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#133a80";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#0c2b64";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+              title="Alert and dispatch 108 Emergency Ambulance immediately"
             >
-              <Siren className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: "3s" }} />
-              <span>SOS DISPATCH</span>
+              <Siren className="w-3.5 h-3.5 text-red-400" />
+              <span>SOS Dispatch</span>
+              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                playHapticSound("click");
+                onNewAssessment();
+              }}
+              className="group inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer shadow-xs"
+              style={{
+                backgroundColor: "#0c2b64",
+                color: "#ffffff",
+                padding: "0.6rem 1.25rem",
+                borderRadius: "9999px",
+                fontSize: "0.88rem",
+                gap: "0.45rem",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = "#133a80";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = "#0c2b64";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              <span>New Assessment</span>
+              <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
             </button>
           )}
         </div>

@@ -1,5 +1,7 @@
 import express, { Request, Response } from "express";
 import path from "path";
+import http from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
@@ -71,9 +73,23 @@ interface CaseRecord {
     type: string;
     distanceKm: number;
   };
-  status: "PENDING_REVIEW" | "DOCTOR_REVIEWED" | "DISPATCHED" | "IN_TRANSIT" | "RESOLVED";
+  status: "PENDING_REVIEW" | "DOCTOR_REVIEWED" | "DISPATCHED" | "IN_TRANSIT" | "RESOLVED" | "DRAFT" | "SUBMITTED" | "RECEIVED" | "UNDER_REVIEW" | "ACTION_REQUIRED" | "REFERRED" | "COMPLETED" | "CANCELLED";
   doctorNotes?: string;
   doctorAction?: string;
+  version?: number;
+  updatedAt?: string;
+  lastModifiedBy?: string;
+  attachments?: {
+    id: string;
+    caseId: string;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    dataUrl?: string;
+    uploadedBy: string;
+    uploadedAt: string;
+    category?: string;
+  }[];
   triageSignal?: {
     danger: boolean;
     level: "emergency" | "urgent" | "non-urgent";
@@ -329,6 +345,108 @@ const casesDatabase: CaseRecord[] = [
   }
 ];
 
+// Ensure initial cases have version, updatedAt and attachments
+casesDatabase.forEach((c) => {
+  c.version = 1;
+  c.updatedAt = c.syncedAt || new Date().toISOString();
+  c.attachments = c.attachments || [];
+});
+
+interface ConnectedDeviceMeta {
+  id: string;
+  role: "chw" | "doctor" | "ambulance" | "admin" | "guest";
+  deviceName: string;
+  location?: string;
+  connectedAt: string;
+  lastActive: string;
+}
+
+const connectedClients = new Map<WebSocket, ConnectedDeviceMeta>();
+
+interface NotificationRecord {
+  id: string;
+  caseId?: string;
+  patientName?: string;
+  type: "CASE_CREATED" | "DOCTOR_REVIEW" | "CRITICAL_ALERT" | "ATTACHMENT_ADDED" | "SYNC_COMPLETE";
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  level: "info" | "warning" | "urgent" | "success";
+}
+
+const activeNotifications: NotificationRecord[] = [
+  {
+    id: "notif-1",
+    caseId: "CASE-1082",
+    patientName: "Rameshwar Patel",
+    type: "CRITICAL_ALERT",
+    title: "Critical Hypoxemia Detected",
+    message: "Patient in Pipariya Kalan with SpO2 87%. Oxygen supportive care recommended.",
+    timestamp: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
+    read: false,
+    level: "urgent",
+  },
+  {
+    id: "notif-2",
+    caseId: "CASE-1081",
+    patientName: "Pooja Meena",
+    type: "DOCTOR_REVIEW",
+    title: "Obstetric Referral Accepted",
+    message: "Dr. Sharma reserved emergency bed at CHC Rampur for severe preeclampsia.",
+    timestamp: new Date(Date.now() - 110 * 60 * 1000).toISOString(),
+    read: true,
+    level: "success",
+  },
+  {
+    id: "notif-3",
+    caseId: "CASE-1080",
+    patientName: "Aarav Kumar",
+    type: "DOCTOR_REVIEW",
+    title: "Pediatric Plan C Fluid Protocol",
+    message: "Dr. Verma initiated IV Ringer's Lactate line at Bhimnagar PHC.",
+    timestamp: new Date(Date.now() - 230 * 60 * 1000).toISOString(),
+    read: true,
+    level: "info",
+  },
+];
+
+function broadcast(message: any, excludeWs?: WebSocket) {
+  const payloadStr = JSON.stringify(message);
+  for (const [client] of connectedClients.entries()) {
+    if (client !== excludeWs && client.readyState === WebSocket.OPEN) {
+      try {
+        client.send(payloadStr);
+      } catch (err) {
+        console.error("WebSocket broadcast error:", err);
+      }
+    }
+  }
+}
+
+function getConnectedDevicesList() {
+  return Array.from(connectedClients.values());
+}
+
+function getAggregateStats() {
+  const today = new Date().toISOString().slice(0, 10);
+  const totalPatientsToday = casesDatabase.filter((c) => c.createdAt && c.createdAt.startsWith(today)).length || casesDatabase.length;
+  const activeCases = casesDatabase.filter((c) => c.status !== "RESOLVED" && (c.status as any) !== "COMPLETED").length;
+  const criticalCases = casesDatabase.filter((c) => c.riskLevel === "URGENT").length;
+  const pendingReferrals = casesDatabase.filter((c) => c.status === "PENDING_REVIEW" || (c.status as any) === "SUBMITTED" || (c.status as any) === "UNDER_REVIEW").length;
+  const reviewedCases = casesDatabase.filter((c) => c.status === "DOCTOR_REVIEWED" || (c.status as any) === "REFERRED" || c.status === "RESOLVED").length;
+  const connectedDevicesCount = Math.max(1, connectedClients.size);
+
+  return {
+    totalPatientsToday,
+    activeCases,
+    criticalCases,
+    pendingReferrals,
+    reviewedCases,
+    connectedDevicesCount,
+  };
+}
+
 // Helper to initialize Gemini client
 function getGeminiClient(): GoogleGenAI | null {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -409,7 +527,286 @@ async function callGeminiWithFallback(options: {
 
 async function startServer() {
   const app = express();
+  app.disable("x-powered-by");
+  const server = http.createServer(app);
+  const wss = new WebSocketServer({ server, path: "/ws" });
   const PORT = 3000;
+
+  // Real-Time WebSocket Connection Handler
+  wss.on("connection", (ws: WebSocket, req: any) => {
+    const rawKey = req.headers["sec-websocket-key"] || Math.random().toString(36).slice(2, 10);
+    const deviceId = `dev-${rawKey.slice(0, 8)}`;
+
+    connectedClients.set(ws, {
+      id: deviceId,
+      role: "chw",
+      deviceName: "Clinical Workstation",
+      connectedAt: new Date().toISOString(),
+      lastActive: new Date().toISOString(),
+    });
+
+    // Send initial snapshot to newly connected device
+    ws.send(
+      JSON.stringify({
+        type: "INIT_SYNC",
+        payload: {
+          deviceId,
+          cases: casesDatabase,
+          stats: getAggregateStats(),
+          notifications: activeNotifications,
+          devices: getConnectedDevicesList(),
+          timestamp: new Date().toISOString(),
+        },
+      })
+    );
+
+    // Broadcast updated presence to all other devices
+    broadcast({
+      type: "PRESENCE_UPDATE",
+      payload: {
+        devices: getConnectedDevicesList(),
+        count: connectedClients.size,
+      },
+    });
+
+    ws.on("message", (messageData: any) => {
+      try {
+        const parsed = JSON.parse(messageData.toString());
+        const meta = connectedClients.get(ws);
+        if (meta) {
+          meta.lastActive = new Date().toISOString();
+        }
+
+        switch (parsed.type) {
+          case "PING": {
+            ws.send(JSON.stringify({ type: "PONG", timestamp: Date.now() }));
+            break;
+          }
+
+          case "IDENTIFY": {
+            if (meta && parsed.payload) {
+              meta.role = parsed.payload.role || meta.role;
+              meta.deviceName = parsed.payload.deviceName || meta.deviceName;
+              meta.location = parsed.payload.location || meta.location;
+              broadcast({
+                type: "PRESENCE_UPDATE",
+                payload: {
+                  devices: getConnectedDevicesList(),
+                  count: connectedClients.size,
+                },
+              });
+            }
+            break;
+          }
+
+          case "CREATE_CASE": {
+            const rawCase = parsed.payload;
+            if (!rawCase) break;
+            const newCaseId = rawCase.id || `CASE-${Math.floor(1000 + Math.random() * 9000)}`;
+            const fullCase: CaseRecord = {
+              ...rawCase,
+              id: newCaseId,
+              version: 1,
+              createdAt: rawCase.createdAt || new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              syncedAt: new Date().toISOString(),
+              attachments: rawCase.attachments || [],
+            };
+
+            if (!fullCase.triageSignal) {
+              fullCase.triageSignal = ruleBasedTriage({
+                age: fullCase.age,
+                sex: fullCase.gender,
+                symptoms: (fullCase.symptoms || []).join(" "),
+                vitals: {
+                  temp: fullCase.vitals?.temperature,
+                  hr: fullCase.vitals?.heartRate,
+                  bp_systolic: fullCase.vitals?.bpSystolic,
+                  bp_diastolic: fullCase.vitals?.bpDiastolic,
+                  rr: fullCase.vitals?.respiratoryRate,
+                  spo2: fullCase.vitals?.spo2,
+                },
+                comorbidities: fullCase.chronicConditions,
+                onset: fullCase.symptomDuration,
+              });
+            }
+
+            const existingIdx = casesDatabase.findIndex((c) => c.id === fullCase.id);
+            if (existingIdx >= 0) {
+              fullCase.version = (casesDatabase[existingIdx].version || 1) + 1;
+              casesDatabase[existingIdx] = fullCase;
+            } else {
+              casesDatabase.unshift(fullCase);
+            }
+
+            const notif: NotificationRecord = {
+              id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              caseId: fullCase.id,
+              patientName: fullCase.patientName,
+              type: fullCase.riskLevel === "URGENT" ? "CRITICAL_ALERT" : "CASE_CREATED",
+              title: fullCase.riskLevel === "URGENT" ? `🚨 Critical Case: ${fullCase.patientName}` : `New Patient: ${fullCase.patientName}`,
+              message: `${fullCase.village || "Rural Sub-Centre"} • ${fullCase.symptoms.slice(0, 2).join(", ")} • SpO2: ${fullCase.vitals?.spo2 || 98}%`,
+              timestamp: new Date().toISOString(),
+              read: false,
+              level: fullCase.riskLevel === "URGENT" ? "urgent" : "info",
+            };
+            activeNotifications.unshift(notif);
+            if (activeNotifications.length > 50) activeNotifications.pop();
+
+            broadcast({
+              type: existingIdx >= 0 ? "CASE_UPDATED" : "CASE_CREATED",
+              payload: {
+                case: fullCase,
+                notification: notif,
+                stats: getAggregateStats(),
+                senderDeviceId: meta?.id,
+              },
+            });
+            break;
+          }
+
+          case "UPDATE_CASE": {
+            const { id, updates, clientVersion } = parsed.payload || {};
+            const existingIdx = casesDatabase.findIndex((c) => c.id === id);
+            if (existingIdx >= 0) {
+              const current = casesDatabase[existingIdx];
+              if (clientVersion && current.version && clientVersion < current.version) {
+                ws.send(
+                  JSON.stringify({
+                    type: "CONFLICT_DETECTED",
+                    payload: {
+                      message: "This patient record was updated by another clinical station. Latest clinical record loaded.",
+                      latestCase: current,
+                    },
+                  })
+                );
+                break;
+              }
+
+              const updatedCase: CaseRecord = {
+                ...current,
+                ...updates,
+                version: (current.version || 1) + 1,
+                updatedAt: new Date().toISOString(),
+              };
+              casesDatabase[existingIdx] = updatedCase;
+
+              broadcast({
+                type: "CASE_UPDATED",
+                payload: {
+                  case: updatedCase,
+                  stats: getAggregateStats(),
+                  senderDeviceId: meta?.id,
+                },
+              });
+            }
+            break;
+          }
+
+          case "DOCTOR_REVIEW": {
+            const { id, doctorAction, doctorNotes, status } = parsed.payload || {};
+            const caseItem = casesDatabase.find((c) => c.id === id);
+            if (caseItem) {
+              caseItem.doctorAction = doctorAction || caseItem.doctorAction;
+              caseItem.doctorNotes = doctorNotes || caseItem.doctorNotes;
+              caseItem.status = status || "DOCTOR_REVIEWED";
+              caseItem.version = (caseItem.version || 1) + 1;
+              caseItem.updatedAt = new Date().toISOString();
+
+              const notif: NotificationRecord = {
+                id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                caseId: caseItem.id,
+                patientName: caseItem.patientName,
+                type: "DOCTOR_REVIEW",
+                title: `👨‍⚕️ Medical Officer Review: ${caseItem.patientName}`,
+                message: doctorAction ? `${doctorAction}: ${doctorNotes || ""}` : (doctorNotes || "Doctor reviewed this case"),
+                timestamp: new Date().toISOString(),
+                read: false,
+                level: "success",
+              };
+              activeNotifications.unshift(notif);
+
+              broadcast({
+                type: "DOCTOR_RESPONSE",
+                payload: {
+                  case: caseItem,
+                  notification: notif,
+                  stats: getAggregateStats(),
+                  senderDeviceId: meta?.id,
+                },
+              });
+            }
+            break;
+          }
+
+          case "ADD_ATTACHMENT": {
+            const { caseId, attachment } = parsed.payload || {};
+            const caseItem = casesDatabase.find((c) => c.id === caseId);
+            if (caseItem && attachment) {
+              if (!caseItem.attachments) caseItem.attachments = [];
+              const fullAtt = {
+                id: attachment.id || `att-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                caseId,
+                fileName: attachment.fileName || "Clinical Document",
+                fileType: attachment.fileType || "application/pdf",
+                fileSize: attachment.fileSize || 0,
+                dataUrl: attachment.dataUrl || "",
+                uploadedBy: attachment.uploadedBy || meta?.deviceName || "CHW Worker",
+                uploadedAt: new Date().toISOString(),
+                category: attachment.category || "lab_report",
+              };
+              caseItem.attachments.push(fullAtt);
+              caseItem.version = (caseItem.version || 1) + 1;
+              caseItem.updatedAt = new Date().toISOString();
+
+              const notif: NotificationRecord = {
+                id: `notif-${Date.now()}`,
+                caseId: caseItem.id,
+                patientName: caseItem.patientName,
+                type: "ATTACHMENT_ADDED",
+                title: `📎 New File Attached: ${caseItem.patientName}`,
+                message: `${fullAtt.fileName} uploaded by ${fullAtt.uploadedBy}`,
+                timestamp: new Date().toISOString(),
+                read: false,
+                level: "info",
+              };
+              activeNotifications.unshift(notif);
+
+              broadcast({
+                type: "CASE_UPDATED",
+                payload: {
+                  case: caseItem,
+                  attachment: fullAtt,
+                  notification: notif,
+                  stats: getAggregateStats(),
+                  senderDeviceId: meta?.id,
+                },
+              });
+            }
+            break;
+          }
+        }
+      } catch (err) {
+        console.error("WebSocket message processing error:", err);
+      }
+    });
+
+    ws.on("close", () => {
+      connectedClients.delete(ws);
+      broadcast({
+        type: "PRESENCE_UPDATE",
+        payload: {
+          devices: getConnectedDevicesList(),
+          count: connectedClients.size,
+        },
+      });
+    });
+
+    ws.on("error", (err) => {
+      console.warn("WebSocket client error:", err);
+      connectedClients.delete(ws);
+    });
+  });
 
   app.use(cors());
   app.use(express.json({ limit: "10mb" }));
@@ -704,13 +1101,50 @@ Respond with strict JSON:
     }
 
     const existingIdx = casesDatabase.findIndex((c) => c.id === newCase.id);
-    if (existingIdx >= 0) {
-      casesDatabase[existingIdx] = { ...casesDatabase[existingIdx], ...newCase };
-      res.json({ success: true, case: casesDatabase[existingIdx], updated: true });
+    const isUpdate = existingIdx >= 0;
+    let savedCase: CaseRecord;
+
+    if (isUpdate) {
+      casesDatabase[existingIdx] = {
+        ...casesDatabase[existingIdx],
+        ...newCase,
+        version: (casesDatabase[existingIdx].version || 1) + 1,
+        updatedAt: new Date().toISOString(),
+      };
+      savedCase = casesDatabase[existingIdx];
     } else {
+      newCase.version = 1;
+      newCase.createdAt = newCase.createdAt || new Date().toISOString();
+      newCase.updatedAt = new Date().toISOString();
+      if (!newCase.attachments) newCase.attachments = [];
       casesDatabase.unshift(newCase);
-      res.json({ success: true, case: newCase, created: true });
+      savedCase = newCase;
     }
+
+    const notif: NotificationRecord = {
+      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      caseId: savedCase.id,
+      patientName: savedCase.patientName,
+      type: isUpdate ? "DOCTOR_REVIEW" : (savedCase.riskLevel === "URGENT" ? "CRITICAL_ALERT" : "CASE_CREATED"),
+      title: isUpdate ? `Case Updated: ${savedCase.patientName}` : (savedCase.riskLevel === "URGENT" ? `🚨 Critical Case: ${savedCase.patientName}` : `New Patient: ${savedCase.patientName}`),
+      message: `${savedCase.village || "Rural Sub-Centre"} • ${(savedCase.symptoms || []).slice(0, 2).join(", ")} • SpO2: ${savedCase.vitals?.spo2 || 98}%`,
+      timestamp: new Date().toISOString(),
+      read: false,
+      level: savedCase.riskLevel === "URGENT" ? "urgent" : "info",
+    };
+    activeNotifications.unshift(notif);
+    if (activeNotifications.length > 50) activeNotifications.pop();
+
+    broadcast({
+      type: isUpdate ? "CASE_UPDATED" : "CASE_CREATED",
+      payload: {
+        case: savedCase,
+        notification: notif,
+        stats: getAggregateStats(),
+      },
+    });
+
+    res.json({ success: true, case: savedCase, updated: isUpdate, created: !isUpdate });
   });
 
   // API Route: Update case status / doctor notes
@@ -725,8 +1159,98 @@ Respond with strict JSON:
     if (status) caseItem.status = status;
     if (doctorNotes !== undefined) caseItem.doctorNotes = doctorNotes;
     if (doctorAction !== undefined) caseItem.doctorAction = doctorAction;
+    caseItem.version = (caseItem.version || 1) + 1;
+    caseItem.updatedAt = new Date().toISOString();
+
+    const notif: NotificationRecord = {
+      id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      caseId: caseItem.id,
+      patientName: caseItem.patientName,
+      type: "DOCTOR_REVIEW",
+      title: `👨‍⚕️ Medical Officer Review: ${caseItem.patientName}`,
+      message: doctorAction ? `${doctorAction}: ${doctorNotes || ""}` : (doctorNotes || "Doctor reviewed this case"),
+      timestamp: new Date().toISOString(),
+      read: false,
+      level: "success",
+    };
+    activeNotifications.unshift(notif);
+
+    broadcast({
+      type: "DOCTOR_RESPONSE",
+      payload: {
+        case: caseItem,
+        notification: notif,
+        stats: getAggregateStats(),
+      },
+    });
 
     res.json({ success: true, case: caseItem });
+  });
+
+  // API Route: Add attachment to a case
+  app.post("/api/cases/:id/attachments", (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { fileName, fileType, fileSize, dataUrl, uploadedBy, category } = req.body;
+    const caseItem = casesDatabase.find((c) => c.id === id);
+    if (!caseItem) {
+      res.status(404).json({ success: false, error: "Case not found" });
+      return;
+    }
+    if (!caseItem.attachments) caseItem.attachments = [];
+    const fullAtt = {
+      id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      caseId: id,
+      fileName: fileName || "Clinical Attachment",
+      fileType: fileType || "application/pdf",
+      fileSize: fileSize || 0,
+      dataUrl: dataUrl || "",
+      uploadedBy: uploadedBy || "Healthcare Worker",
+      uploadedAt: new Date().toISOString(),
+      category: category || "lab_report",
+    };
+    caseItem.attachments.push(fullAtt);
+    caseItem.version = (caseItem.version || 1) + 1;
+    caseItem.updatedAt = new Date().toISOString();
+
+    const notif: NotificationRecord = {
+      id: `notif-${Date.now()}`,
+      caseId: caseItem.id,
+      patientName: caseItem.patientName,
+      type: "ATTACHMENT_ADDED",
+      title: `📎 New File Attached: ${caseItem.patientName}`,
+      message: `${fullAtt.fileName} uploaded by ${fullAtt.uploadedBy}`,
+      timestamp: new Date().toISOString(),
+      read: false,
+      level: "info",
+    };
+    activeNotifications.unshift(notif);
+
+    broadcast({
+      type: "CASE_UPDATED",
+      payload: {
+        case: caseItem,
+        attachment: fullAtt,
+        notification: notif,
+        stats: getAggregateStats(),
+      },
+    });
+
+    res.json({ success: true, case: caseItem, attachment: fullAtt });
+  });
+
+  // API Route: Real-Time Aggregate Stats
+  app.get("/api/realtime/stats", (_req: Request, res: Response) => {
+    res.json({ success: true, stats: getAggregateStats() });
+  });
+
+  // API Route: Connected Devices Presence
+  app.get("/api/realtime/devices", (_req: Request, res: Response) => {
+    res.json({ success: true, devices: getConnectedDevicesList(), count: connectedClients.size });
+  });
+
+  // API Route: Live Clinical Notifications
+  app.get("/api/notifications", (_req: Request, res: Response) => {
+    res.json({ success: true, notifications: activeNotifications });
   });
 
   // API Route: AI Natural Language & Voice Symptom Extraction
@@ -1647,7 +2171,14 @@ Return only the translated string.`;
       const associatedCase = casesDatabase.find((c) => c.id === caseId);
       if (associatedCase) {
         associatedCase.status = "IN_TRANSIT";
+        associatedCase.version = (associatedCase.version || 1) + 1;
+        associatedCase.updatedAt = new Date().toISOString();
       }
+
+      broadcast({
+        type: "TELEMETRY_UPDATED",
+        payload: { telemetry: telemetryPoint, associatedCase },
+      });
 
       res.json({ success: true, telemetry: telemetryPoint });
     } catch (err: any) {
@@ -1687,8 +2218,8 @@ Return only the translated string.`;
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`ArogyaSeva Clinical Decision Server running on port ${PORT}`);
+  server.listen(PORT, "0.0.0.0", () => {
+    console.log(`ArogyaSeva Real-Time Clinical Decision Server running on port ${PORT}`);
   });
 }
 

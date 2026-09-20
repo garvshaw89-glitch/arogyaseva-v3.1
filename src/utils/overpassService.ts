@@ -159,7 +159,7 @@ export async function fetchNearbyHospitalsOverpass(
     }
   }
 
-  // 2. Fallback to application backend proxy (/api/nearby-hospitals)
+  // 2. Fallback to application service proxy (/api/nearby-hospitals)
   try {
     const proxyRes = await fetch(`/api/nearby-hospitals?lat=${lat}&lon=${lon}&radius=${radiusKm}&osm=true`);
     if (proxyRes.ok) {
@@ -174,7 +174,7 @@ export async function fetchNearbyHospitalsOverpass(
       }
     }
   } catch (err) {
-    console.warn("Backend proxy hospital fetch error:", err);
+    console.warn("Regional proxy hospital fetch error:", err);
   }
 
   // 3. Fallback: Return regional verified facilities recalculated relative to real-time coordinates

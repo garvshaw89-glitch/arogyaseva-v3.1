@@ -107,12 +107,61 @@ export interface PatientCase {
     type: string;
     distanceKm: number;
   };
-  status: "PENDING_REVIEW" | "DOCTOR_REVIEWED" | "DISPATCHED" | "IN_TRANSIT" | "RESOLVED";
+  status: "PENDING_REVIEW" | "DOCTOR_REVIEWED" | "DISPATCHED" | "IN_TRANSIT" | "RESOLVED" | "DRAFT" | "SUBMITTED" | "RECEIVED" | "UNDER_REVIEW" | "ACTION_REQUIRED" | "REFERRED" | "COMPLETED" | "CANCELLED";
   doctorNotes?: string;
   doctorAction?: string;
+  version?: number;
+  updatedAt?: string;
+  lastModifiedBy?: string;
+  attachments?: CaseAttachment[];
   createdAt: string;
   syncedAt?: string;
   isOfflineCreated?: boolean;
+}
+
+export interface CaseAttachment {
+  id: string;
+  caseId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  dataUrl?: string;
+  uploadedBy: string;
+  uploadedAt: string;
+  category?: "lab_report" | "prescription" | "ecg_trace" | "photo" | "referral_slip";
+}
+
+export type ConnectionState = "connected" | "reconnecting" | "offline" | "syncing";
+
+export interface ConnectedDevice {
+  id: string;
+  role: "chw" | "doctor" | "ambulance" | "admin" | "guest";
+  deviceName: string;
+  location?: string;
+  connectedAt: string;
+  lastActive: string;
+  isCurrentDevice?: boolean;
+}
+
+export interface RealtimeNotification {
+  id: string;
+  caseId?: string;
+  patientName?: string;
+  type: "CASE_CREATED" | "DOCTOR_REVIEW" | "CRITICAL_ALERT" | "ATTACHMENT_ADDED" | "SYNC_COMPLETE";
+  title: string;
+  message: string;
+  timestamp: string;
+  read: boolean;
+  level: "info" | "warning" | "urgent" | "success";
+}
+
+export interface RealtimeStats {
+  totalPatientsToday: number;
+  activeCases: number;
+  criticalCases: number;
+  pendingReferrals: number;
+  reviewedCases: number;
+  connectedDevicesCount: number;
 }
 
 export interface LiveLocationData {

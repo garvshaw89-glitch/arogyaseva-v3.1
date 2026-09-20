@@ -1,12 +1,12 @@
 import React, { useState } from "react";
-import { PatientData, SupportedLanguage } from "../../types";
+import { PatientCase, SupportedLanguage } from "../../types";
 import { IndianStateData } from "../../data/indianStates";
 import { playHapticSound } from "../../utils/audioFeedback";
 import { Terminal, Send, Radio, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 interface TacticalRightColumnProps {
-  patientData: PatientData;
-  onChange: (updated: Partial<PatientData>) => void;
+  patientData: Partial<PatientCase>;
+  onChange: (updated: Partial<PatientCase>) => void;
   currentState: IndianStateData;
   language: SupportedLanguage;
   onOpenLiveTracker?: () => void;
