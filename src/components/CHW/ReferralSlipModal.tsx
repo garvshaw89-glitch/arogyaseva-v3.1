@@ -226,10 +226,10 @@ export const ReferralSlipModal: React.FC<ReferralSlipModalProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
               SBAR Clinical Handover Note
             </span>
-            <p><strong>Situation:</strong> {caseData.sbarSummary.situation}</p>
-            <p><strong>Background:</strong> {caseData.sbarSummary.background}</p>
-            <p><strong>Assessment:</strong> {caseData.sbarSummary.assessment}</p>
-            <p><strong>Recommendation:</strong> {caseData.sbarSummary.recommendation}</p>
+            <p><strong>Situation:</strong> {caseData.sbarSummary?.situation || "Clinical field referral for emergency care."}</p>
+            <p><strong>Background:</strong> {caseData.sbarSummary?.background || "Frontline community assessment."}</p>
+            <p><strong>Assessment:</strong> {caseData.sbarSummary?.assessment || caseData.clinicalImpression}</p>
+            <p><strong>Recommendation:</strong> {caseData.sbarSummary?.recommendation || "Immediate physician evaluation and admission."}</p>
           </div>
 
           {/* Signatures */}

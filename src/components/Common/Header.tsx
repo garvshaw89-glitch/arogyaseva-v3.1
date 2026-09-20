@@ -64,34 +64,6 @@ export const Header: React.FC<HeaderProps> = ({
       id="main-app-header"
       className="sticky top-0 z-40 bg-[#f8fafc]/95 backdrop-blur-md border-b border-[rgba(0,0,0,0.08)] transition-all duration-150"
     >
-      {/* Top Offline Alert Banner */}
-      {isOfflineMode && (
-        <div
-          id="offline-alert-strip"
-          className="bg-[#0c2b64] text-white text-xs font-mono px-4 sm:px-16 py-1.5 flex items-center justify-between border-b border-[#1a56db]/40"
-        >
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-            <span className="text-amber-300 font-bold uppercase tracking-wider">
-              OFFLINE PROTOCOL ENGAGED
-            </span>
-            <span className="text-slate-200 hidden sm:inline text-[11px]">
-              | Autonomous WHO IMCI triage in local memory
-              {offlineQueue.length > 0 && ` [QUEUED: ${offlineQueue.length} cases]`}
-            </span>
-          </div>
-          <button
-            onClick={() => {
-              playHapticSound("click");
-              onToggleOffline();
-            }}
-            className="text-cyan-300 hover:text-white underline font-bold text-xs uppercase cursor-pointer"
-          >
-            Reconnect Cloud →
-          </button>
-        </div>
-      )}
-
       {/* Main Navbar Container (Specification: Padding 1.5rem top/bottom, 4rem left/right on desktop) */}
       <div className="w-full px-4 sm:px-8 lg:px-16 py-3 sm:py-4 flex items-center justify-between gap-4">
         {/* Left: Clean minimal icon indicator */}

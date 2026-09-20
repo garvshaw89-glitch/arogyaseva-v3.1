@@ -256,27 +256,6 @@ export const CHWAppView: React.FC<CHWAppViewProps> = ({
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
       {/* -------------------------------------------------------------
-          1. Top Offline Alert Banner (Non-blocking)
-          ------------------------------------------------------------- */}
-      {isOffline && (
-        <div className="w-full bg-amber-500 text-amber-950 px-4 py-2 text-xs font-semibold flex items-center justify-between z-50">
-          <div className="flex items-center gap-2 max-w-4xl mx-auto w-full">
-            <WifiOff className="w-4 h-4 shrink-0" />
-            <span>
-              <strong>You're Offline.</strong> Clinical decisions are functioning 100% locally. {offlineQueue.length} record(s) queued for sync.
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={onToggleOffline}
-            className="text-[11px] underline font-bold hover:text-white shrink-0 cursor-pointer ml-4"
-          >
-            Re-check Online
-          </button>
-        </div>
-      )}
-
-      {/* -------------------------------------------------------------
           2. CHW Dedicated Application Topbar
           ------------------------------------------------------------- */}
       <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between">
