@@ -63,13 +63,12 @@ export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
   const getStatusLabel = () => {
     switch (connectionState) {
       case "connected":
-        return "LIVE SYNC";
+        return "ONLINE";
       case "syncing":
-        return "SYNCING";
       case "reconnecting":
-        return "RECONNECTING";
+        return "SYNCING";
       case "offline":
-        return isSimulatedOffline ? "OFFLINE SIMULATION" : "DISCONNECTED";
+        return isSimulatedOffline ? "OFFLINE SIMULATION" : "STANDBY";
     }
   };
 
@@ -145,7 +144,7 @@ export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
         {/* Offline Simulation Toggle */}
         <button
           onClick={toggleSimulateOffline}
-          title={isSimulatedOffline ? "Turn simulation off and reconnect live" : "Simulate field offline disconnection"}
+          title={isSimulatedOffline ? "Turn simulation off and resume connection" : "Simulate field offline disconnection"}
           className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[11px] font-semibold transition-all ${
             isSimulatedOffline
               ? "bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200"
@@ -288,7 +287,7 @@ export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
                       : "bg-amber-100 text-amber-900 hover:bg-amber-200"
                   }`}
                 >
-                  {isSimulatedOffline ? "Restore Live Sync" : "Simulate Offline"}
+                  {isSimulatedOffline ? "Go Online" : "Simulate Offline"}
                 </button>
 
                 <div className="flex items-center gap-2">

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Activity,
   Menu,
   X,
   Radio,
@@ -57,36 +56,16 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#123B78] via-[#2563EB] via-[#06B6D4] to-[#123B78] animate-gradient-flow" />
 
       <div className="container-constrained relative h-20 sm:h-[84px] flex items-center justify-between">
-        {/* Left Section: Brand Logo & Regional State */}
-        <div className="flex items-center gap-3 sm:gap-4 z-10">
-          <button
-            type="button"
-            onClick={() => onNavigate("landing")}
-            className="flex items-center gap-2.5 sm:gap-3 text-left group cursor-pointer focus:outline-none select-none transition-all duration-200 hover:scale-[1.02]"
-            aria-label="ArogyaSeva Home"
-          >
-            <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-[#0B2545] via-[#123B78] to-[#2563EB] flex items-center justify-center text-white shadow-sm ring-1 ring-blue-100 group-hover:ring-[#06B6D4] transition-all">
-              <Activity className="w-5 h-5 text-[#38BDF8]" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl sm:text-2xl font-black tracking-tight leading-none font-['Outfit',sans-serif] text-[#0F172A]">
-                Arogya<span className="text-[#06B6D4] font-black">Seva</span>
-              </span>
-              <span className="text-[9px] font-bold tracking-wider text-slate-500 uppercase mt-0.5 font-['Plus_Jakarta_Sans',sans-serif]">
-                Clinical Network
-              </span>
-            </div>
-          </button>
-
-          {/* Regional State Badge */}
+        {/* Left Section: Regional State Selector */}
+        <div className="flex items-center gap-2.5 z-10">
           <button
             type="button"
             onClick={onOpenStateModal}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/90 hover:bg-blue-50/90 border border-slate-200 hover:border-blue-300 text-xs font-bold text-[#123B78] shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/90 hover:bg-blue-50/90 border border-slate-200 hover:border-blue-300 text-xs font-bold text-[#123B78] shadow-2xs hover:shadow-xs transition-all cursor-pointer group"
             title="Click to change Indian State / UT"
           >
             <MapPin className="w-3.5 h-3.5 text-[#2563EB] group-hover:scale-110 transition-transform" />
-            <span className="truncate max-w-[95px] xl:max-w-[125px]">{currentState.name}</span>
+            <span className="truncate max-w-[120px] xl:max-w-[150px]">{currentState.name}</span>
           </button>
         </div>
 

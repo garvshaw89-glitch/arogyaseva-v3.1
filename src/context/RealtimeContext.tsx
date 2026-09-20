@@ -385,7 +385,6 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         setConnectionState("offline");
         triggerToast("📡 Simulating Offline Mode", "Device disconnected from live cluster. Changes will queue locally.", "warning");
       } else {
-        triggerToast("🟢 Reconnecting Live Workspace", "Restoring live real-time network synchronization...", "info");
         setTimeout(() => connectWebSocket(), 400);
       }
       return next;
