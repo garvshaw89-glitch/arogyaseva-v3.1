@@ -70,7 +70,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     return (localStorage.getItem("arogyaseva_device_role") as any) || "chw";
   });
   const [deviceName, setDeviceNameState] = useState<string>(() => {
-    return localStorage.getItem("arogyaseva_device_name") || `Station-${Math.floor(100 + Math.random() * 900)}`;
+    return localStorage.getItem("arogyaseva_device_name") || `Device-${Math.floor(100 + Math.random() * 900)}`;
   });
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -469,7 +469,7 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
             payload: preparedCase,
           })
         );
-        triggerToast("⚡ Live Case Broadcast", `${preparedCase.patientName} submitted & synced to all clinical stations.`, "success", preparedCase.id);
+        triggerToast("Case Submitted", `${preparedCase.patientName} saved and registered.`, "success", preparedCase.id);
         return preparedCase;
       }
 

@@ -157,10 +157,9 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <div className="relative bg-white rounded-2xl border border-slate-200/90 shadow-2xl shadow-blue-900/10 overflow-hidden text-left">
             {/* Telemetry Header */}
             <div className="bg-[#123B78] text-white px-5 sm:px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-ping" />
+              <div className="flex items-center gap-2">
                 <span className="text-xs font-bold tracking-wide uppercase font-mono">
-                  Live Point-of-Care Telemetry Showcase
+                  Point-of-Care Clinical Intake
                 </span>
               </div>
               <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-white/15 text-cyan-200 border border-white/10">

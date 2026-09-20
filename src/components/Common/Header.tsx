@@ -94,7 +94,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Main Navbar Container (Specification: Padding 1.5rem top/bottom, 4rem left/right on desktop) */}
       <div className="w-full px-4 sm:px-8 lg:px-16 py-3 sm:py-4 flex items-center justify-between gap-4">
-        {/* Left: Logo container with DNA icon and stacked text (Specification: 1.5rem Bold, Subtext 0.65rem Medium 2px uppercase) */}
+        {/* Left: Clean minimal icon indicator */}
         <div className="flex items-center gap-3 shrink-0">
           <div
             className="w-10 h-10 rounded-xl flex items-center justify-center shadow-xs transition-transform duration-200 hover:scale-105"
@@ -104,27 +104,6 @@ export const Header: React.FC<HeaderProps> = ({
             }}
           >
             <Dna className="w-5 h-5" />
-          </div>
-          <div className="flex flex-col justify-center">
-            <span
-              className="font-bold tracking-tight text-[#0a192f] leading-none"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "1.35rem",
-              }}
-            >
-              ArogyaSeva
-            </span>
-            <span
-              className="font-medium uppercase leading-tight mt-0.5 text-[#475569]"
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: "0.65rem",
-                letterSpacing: "2px",
-              }}
-            >
-              CLINICAL AI &amp; REFERRAL
-            </span>
           </div>
         </div>
 

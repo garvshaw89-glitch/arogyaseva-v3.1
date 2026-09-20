@@ -1,21 +1,13 @@
 import React, { useState } from "react";
 import { useRealtime } from "../../context/RealtimeContext";
 import {
-  Wifi,
-  WifiOff,
-  Radio,
-  Users,
   Bell,
   RefreshCw,
-  Sliders,
-  Laptop,
+  X,
   Smartphone,
-  Shield,
   Stethoscope,
   Ambulance,
-  CheckCircle2,
-  AlertCircle,
-  X,
+  Radio,
 } from "lucide-react";
 
 interface RealtimeStatusBarProps {
@@ -25,13 +17,10 @@ interface RealtimeStatusBarProps {
 }
 
 export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
-  onOpenDevicesDrawer,
   onOpenNotificationsDrawer,
   className = "",
 }) => {
   const {
-    connectionState,
-    connectedDevices,
     unreadNotificationsCount,
     currentRole,
     setCurrentRole,
@@ -41,36 +30,11 @@ export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
     syncOfflineQueue,
     isSimulatedOffline,
     toggleSimulateOffline,
+    connectedDevices,
   } = useRealtime();
 
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [tempDeviceName, setTempDeviceName] = useState(deviceName);
-
-  const getStatusColor = () => {
-    switch (connectionState) {
-      case "connected":
-        return "text-emerald-700 bg-emerald-50 border-emerald-200";
-      case "syncing":
-        return "text-blue-700 bg-blue-50 border-blue-200";
-      case "reconnecting":
-        return "text-amber-700 bg-amber-50 border-amber-200";
-      case "offline":
-      default:
-        return "text-rose-700 bg-rose-50 border-rose-200";
-    }
-  };
-
-  const getStatusLabel = () => {
-    switch (connectionState) {
-      case "connected":
-        return "ONLINE";
-      case "syncing":
-      case "reconnecting":
-        return "SYNCING";
-      case "offline":
-        return isSimulatedOffline ? "OFFLINE SIMULATION" : "STANDBY";
-    }
-  };
 
   const handleSaveDeviceSettings = (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,81 +50,12 @@ export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
         id="realtime-status-bar"
         className={`flex items-center gap-2 text-xs font-medium ${className}`}
       >
-        {/* Connection State Pill */}
-        <button
-          onClick={() => setShowConfigModal(true)}
-          title="Click to configure Device Role & Network Simulation"
-          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border transition-all shadow-xs hover:shadow-sm ${getStatusColor()}`}
-        >
-          {connectionState === "connected" ? (
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-          ) : connectionState === "reconnecting" || connectionState === "syncing" ? (
-            <RefreshCw className="w-3 h-3 animate-spin text-amber-600" />
-          ) : (
-            <WifiOff className="w-3 h-3 text-rose-500" />
-          )}
-
-          <span className="tracking-wide font-bold">{getStatusLabel()}</span>
-
-          {offlineQueueCount > 0 && (
-            <span className="ml-1 px-1.5 py-0.2 rounded-full bg-amber-200 text-amber-900 font-mono text-[10px]">
-              {offlineQueueCount} queued
-            </span>
-          )}
-        </button>
-
-        {/* Connected Devices Count Pill */}
-        <button
-          onClick={onOpenDevicesDrawer}
-          title="View all synchronized clinical devices on ArogyaSeva"
-          className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-colors shadow-xs"
-        >
-          <Radio className="w-3 h-3 text-teal-600" />
-          <span>
-            <strong className="font-semibold">{Math.max(1, connectedDevices.length)}</strong>{" "}
-            {connectedDevices.length === 1 ? "Station" : "Stations"}
-          </span>
-        </button>
-
-        {/* Quick Role Indicator */}
-        <button
-          onClick={() => setShowConfigModal(true)}
-          className="hidden md:flex items-center gap-1 px-2 py-1 rounded-full bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200 transition-colors"
-          title={`Active Device: ${deviceName} (${currentRole.toUpperCase()})`}
-        >
-          {currentRole === "doctor" ? (
-            <Stethoscope className="w-3 h-3 text-indigo-600" />
-          ) : currentRole === "ambulance" ? (
-            <Ambulance className="w-3 h-3 text-rose-600" />
-          ) : (
-            <Laptop className="w-3 h-3 text-teal-600" />
-          )}
-          <span className="capitalize text-[11px] max-w-[110px] truncate">{deviceName}</span>
-        </button>
-
-        {/* Offline Simulation Toggle */}
-        <button
-          onClick={toggleSimulateOffline}
-          title={isSimulatedOffline ? "Turn simulation off and resume connection" : "Simulate field offline disconnection"}
-          className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[11px] font-semibold transition-all ${
-            isSimulatedOffline
-              ? "bg-amber-100 border-amber-300 text-amber-900 hover:bg-amber-200"
-              : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
-          }`}
-        >
-          {isSimulatedOffline ? <WifiOff className="w-3 h-3 text-amber-700" /> : <Wifi className="w-3 h-3 text-emerald-600" />}
-          <span className="hidden lg:inline">{isSimulatedOffline ? "Go Online" : "Simulate Offline"}</span>
-        </button>
-
         {/* Offline Queue Manual Sync Button */}
         {offlineQueueCount > 0 && (
           <button
             onClick={syncOfflineQueue}
-            className="flex items-center gap-1 px-2 py-1 rounded-md bg-teal-600 text-white hover:bg-teal-700 text-[11px] font-bold shadow-xs transition-colors"
-            title="Sync queued local data now"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal-600 text-white hover:bg-teal-700 text-[11px] font-bold shadow-xs transition-colors"
+            title="Upload queued offline records"
           >
             <RefreshCw className="w-3 h-3" />
             <span>Sync ({offlineQueueCount})</span>
@@ -182,14 +77,14 @@ export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
         </button>
       </div>
 
-      {/* Device Configuration & Realtime Simulation Modal */}
+      {/* Device Configuration Modal */}
       {showConfigModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden">
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Radio className="w-5 h-5 text-teal-600" />
-                <h3 className="text-base font-bold text-slate-900">Real-Time Workspace Settings</h3>
+                <h3 className="text-base font-bold text-slate-900">Workspace Settings</h3>
               </div>
               <button
                 onClick={() => setShowConfigModal(false)}
@@ -202,7 +97,7 @@ export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
             <form onSubmit={handleSaveDeviceSettings} className="p-5 space-y-4">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
-                  Clinical Station Role
+                  Clinical Device Role
                 </label>
                 <p className="text-xs text-slate-500 mb-2">
                   Controls how this device identifies itself across the shared ArogyaSeva network.
@@ -257,18 +152,14 @@ export const RealtimeStatusBar: React.FC<RealtimeStatusBarProps> = ({
                   type="text"
                   value={tempDeviceName}
                   onChange={(e) => setTempDeviceName(e.target.value)}
-                  placeholder="e.g. Pipariya Sub-Centre Tablet"
+                  placeholder="e.g. Sub-Centre Tablet"
                   className="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-teal-500"
                 />
               </div>
 
               <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-2">
                 <div className="flex items-center justify-between text-slate-700">
-                  <span className="font-semibold">Network Sync Mode:</span>
-                  <span className="font-mono">{getStatusLabel()}</span>
-                </div>
-                <div className="flex items-center justify-between text-slate-700">
-                  <span className="font-semibold">Active Stations in Cluster:</span>
+                  <span className="font-semibold">Connected Devices:</span>
                   <span className="font-bold text-teal-700">{Math.max(1, connectedDevices.length)} devices</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-700">

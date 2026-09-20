@@ -2,16 +2,13 @@ import React, { useState } from "react";
 import {
   Menu,
   X,
-  Radio,
   MapPin,
-  ShieldCheck,
   Stethoscope,
   ArrowRight,
   PhoneCall,
   UserCheck,
 } from "lucide-react";
 import { IndianStateData } from "../../data/indianStates";
-import { RealtimeStatusBar } from "../Realtime/RealtimeStatusBar";
 
 interface LandingHeaderProps {
   onNavigate: (route: "landing" | "chw" | "doctor" | "emergency") => void;
@@ -85,12 +82,6 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
 
         {/* Desktop Actions (Right Section) */}
         <div className="hidden sm:flex items-center gap-2.5 ml-auto z-10">
-          {/* Live Shared Workspace Status Bar */}
-          <RealtimeStatusBar
-            onOpenDevicesDrawer={onOpenDevicesDrawer}
-            onOpenNotificationsDrawer={onOpenNotificationsDrawer}
-          />
-
           {/* Doctor Portal Action */}
           <button
             type="button"
@@ -160,18 +151,6 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
             >
               <MapPin className="w-3.5 h-3.5 text-[#2563EB]" />
               <span>State: {currentState.name}</span>
-            </button>
-            <button
-              type="button"
-              onClick={onToggleOffline}
-              className="text-xs font-medium text-slate-600 flex items-center gap-1"
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  isOffline ? "bg-amber-500" : "bg-emerald-500"
-                }`}
-              />
-              {isOffline ? "Offline" : "Online"}
             </button>
           </div>
 

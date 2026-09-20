@@ -164,8 +164,8 @@ export const ConnectedDevicesDrawer: React.FC<ConnectedDevicesDrawerProps> = ({
           <div className="flex items-center gap-2">
             <Radio className="w-5 h-5 text-teal-600 animate-pulse" />
             <div>
-              <h3 className="text-sm font-bold text-slate-900">Synchronized Clinical Stations</h3>
-              <p className="text-xs text-slate-500">Live multi-device ArogyaSeva cluster</p>
+              <h3 className="text-sm font-bold text-slate-900">Synchronized Clinical Devices</h3>
+              <p className="text-xs text-slate-500">Multi-device ArogyaSeva network</p>
             </div>
           </div>
           <button
@@ -212,10 +212,10 @@ export const ConnectedDevicesDrawer: React.FC<ConnectedDevicesDrawerProps> = ({
         {/* Device List */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <div className="flex items-center justify-between text-xs text-slate-500 font-medium px-1">
-            <span>ACTIVE CONNECTED STATIONS ({Math.max(1, connectedDevices.length)})</span>
+            <span>ACTIVE CONNECTED DEVICES ({Math.max(1, connectedDevices.length)})</span>
             <span className="flex items-center gap-1 text-emerald-600 font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
-              Live Network Active
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+              Network Connected
             </span>
           </div>
 
@@ -236,7 +236,7 @@ export const ConnectedDevicesDrawer: React.FC<ConnectedDevicesDrawerProps> = ({
                   <div className="flex items-center gap-1.5">
                     <h4 className="text-xs font-bold text-slate-900">{deviceName}</h4>
                     <span className="px-1.5 py-0.2 rounded-full bg-teal-600 text-white text-[9px] font-extrabold uppercase">
-                      This Station
+                      This Device
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 capitalize">Role: {currentRole.toUpperCase()}</p>
@@ -247,7 +247,7 @@ export const ConnectedDevicesDrawer: React.FC<ConnectedDevicesDrawerProps> = ({
                   <CheckCircle2 className="w-3 h-3" />
                   Online
                 </span>
-                <p className="text-[10px] text-slate-400 mt-1 font-mono">{`STN-${currentDeviceId.slice(-6).toUpperCase()}`}</p>
+                <p className="text-[10px] text-slate-400 mt-1 font-mono">{`DEV-${currentDeviceId.slice(-6).toUpperCase()}`}</p>
               </div>
             </div>
           </div>
@@ -272,16 +272,16 @@ export const ConnectedDevicesDrawer: React.FC<ConnectedDevicesDrawerProps> = ({
                       )}
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900">{device.deviceName || "Remote Station"}</h4>
+                      <h4 className="text-xs font-bold text-slate-900">{device.deviceName || "Remote Device"}</h4>
                       <p className="text-[11px] text-slate-500 capitalize">Role: {device.role.toUpperCase()}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      Live Connected
+                      Connected
                     </span>
                     <p className="text-[10px] text-slate-400 mt-1 font-mono">
-                      {device.id ? `STN-${device.id.slice(-6).toUpperCase()}` : "Remote Station"}
+                      {device.id ? `DEV-${device.id.slice(-6).toUpperCase()}` : "Remote Device"}
                     </p>
                   </div>
                 </div>

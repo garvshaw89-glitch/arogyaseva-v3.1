@@ -194,10 +194,6 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           </div>
 
           <div className="p-4 border-t border-slate-100 text-[11px] text-slate-500 space-y-1">
-            <div className="flex justify-between">
-              <span>Sync Protocol:</span>
-              <span className="font-bold text-emerald-600">Active Live</span>
-            </div>
             <div className="text-[10px] text-slate-400">
               ABDM Registry Connected
             </div>
