@@ -1,11 +1,11 @@
 <div align="center">
 
 <!-- 3D Animated Hero Header -->
-<img src="./assets/arogyaseva-3d-animated.svg" alt="ArogyaSeva AI 3D Animated Banner" width="100%" />
+<img src="./assets/arogyaseva-3d-animated.svg" alt="ArogyaSeva-V3.1 3D Animated Banner" width="100%" />
 
 <br/>
 
-# 🏥 ArogyaSeva AI
+# 🏥 ArogyaSeva-v3.1
 ### *Rural Clinical Decision Support, Multilingual Voice Triage & Emergency Referral Network*
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
