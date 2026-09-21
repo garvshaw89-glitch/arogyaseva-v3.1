@@ -15,6 +15,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { IndianStateData } from "../../data/indianStates";
+import { HeroBackgroundVideo } from "./HeroBackgroundVideo";
 
 interface LandingHeroProps {
   onStartIntake: () => void;
@@ -35,22 +36,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 }) => {
   return (
     <section className="relative w-full min-h-[720px] lg:min-h-[820px] bg-gradient-to-b from-[#EDF4FA] via-[#F8FAFC] to-white flex flex-col items-center justify-center py-14 sm:py-18 lg:py-24 overflow-hidden border-b border-slate-200/80">
-      {/* Optimized Background Gradient & Subtle Grid System for Maximum Readability */}
-      <div
-        className="absolute inset-0 opacity-30 pointer-events-none"
-        style={{
-          backgroundImage: `radial-gradient(#94A3B8 1px, transparent 1px), radial-gradient(#94A3B8 1px, #F8FAFC 1px)`,
-          backgroundSize: "36px 36px",
-          backgroundPosition: "0 0, 18px 18px",
-        }}
-      />
-
-      {/* Diffused Soft Ambient Glows Behind Content */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[720px] max-w-full h-80 bg-gradient-to-b from-blue-200/35 via-cyan-100/25 to-transparent rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[900px] max-w-full h-96 bg-gradient-to-t from-blue-100/30 via-slate-100/20 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-      {/* Gentle Luminosity Gradient Mask to Preserve Contrast and Visual Clarity */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/40 to-white/90 pointer-events-none" />
+      {/* Background Video Layer with Graceful Fallback & Readability Protection */}
+      <HeroBackgroundVideo />
 
       {/* Perfectly Centered Hero Container via Flexbox */}
       <div className="container-constrained relative z-10 w-full flex flex-col items-center justify-center text-center">

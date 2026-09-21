@@ -2203,6 +2203,11 @@ Return only the translated string.`;
     res.json({ success: true, count: allTelemetry.length, vehicles: allTelemetry });
   });
 
+  // Serve static assets with range support (critical for MP4 video streaming on Safari & Chrome)
+  app.use("/assets", express.static(path.join(process.cwd(), "public/assets"), { maxAge: "1d", acceptRanges: true }));
+  app.use("/assets", express.static(path.join(process.cwd(), "assets"), { maxAge: "1d", acceptRanges: true }));
+  app.use(express.static(path.join(process.cwd(), "public"), { maxAge: "1d", acceptRanges: true }));
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
