@@ -72,14 +72,19 @@ export const HeroBackgroundVideo: React.FC<HeroBackgroundVideoProps> = ({ classN
     <>
       {/* =====================================================================
           STEP 11 — STATIC FALLBACK SYSTEM
-          white / very light blue gradient + subtle dotted pattern
+          Cool white / soft blue gradient + subtle dotted pattern
           Always present underneath (z-index -1 relative to video)
           ===================================================================== */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#EDF4FA] via-[#F8FAFC] to-white pointer-events-none -z-10" />
-      <div
-        className="absolute inset-0 opacity-25 pointer-events-none -z-10"
+      <div 
+        className="absolute inset-0 pointer-events-none -z-10"
         style={{
-          backgroundImage: `radial-gradient(#94A3B8 1px, transparent 1px), radial-gradient(#94A3B8 1px, #F8FAFC 1px)`,
+          background: "linear-gradient(180deg, #F4FAFC 0%, #E8F6FA 40%, #F4FAFC 100%)",
+        }} 
+      />
+      <div
+        className="absolute inset-0 opacity-20 pointer-events-none -z-10"
+        style={{
+          backgroundImage: `radial-gradient(#78909C 1px, transparent 1px), radial-gradient(#78909C 1px, #F4FAFC 1px)`,
           backgroundSize: "36px 36px",
           backgroundPosition: "0 0, 18px 18px",
         }}

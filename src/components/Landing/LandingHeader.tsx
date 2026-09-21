@@ -55,21 +55,31 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
           {/* Subtle Top Inner Highlight */}
           <div className="absolute top-0 left-6 right-6 h-[1px] bg-gradient-to-r from-transparent via-white/90 to-transparent pointer-events-none" />
 
-          {/* Left Section: Regional State Selector as Premium Glass Pill */}
-          <div className="flex items-center gap-2.5 z-10">
+          {/* Left Section: Logo & Regional State Selector */}
+          <div className="flex items-center gap-2.5 sm:gap-3 z-10">
+            <button
+              type="button"
+              onClick={() => onNavigate("landing")}
+              className="flex items-center gap-1 font-extrabold text-base sm:text-lg tracking-tight cursor-pointer select-none"
+              aria-label="ArogyaSeva Home"
+            >
+              <span className="text-[#0B1F3A]">Arogya</span>
+              <span className="text-[#00C2D7]">Seva</span>
+            </button>
+
             <button
               type="button"
               onClick={onOpenStateModal}
-              className="glass-pill flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold text-[#123B78] cursor-pointer group"
+              className="glass-pill flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-bold text-[#0B1F3A] cursor-pointer group"
               title="Click to change Indian State / UT"
             >
-              <span className="w-6 h-6 rounded-full bg-blue-50/90 border border-blue-200/80 flex items-center justify-center text-[#2563EB] shadow-2xs group-hover:scale-105 group-hover:shadow-[0_0_10px_rgba(37,99,235,0.3)] transition-all">
-                <MapPin className="w-3.5 h-3.5 text-[#2563EB]" />
+              <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#E8F6FA] border border-[rgba(0,194,215,0.25)] flex items-center justify-center text-[#00C2D7] shadow-2xs group-hover:scale-105 group-hover:shadow-[0_0_10px_rgba(0,194,215,0.3)] transition-all">
+                <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#00C2D7]" />
               </span>
-              <span className="truncate max-w-[110px] sm:max-w-[140px] xl:max-w-[170px] text-slate-800 group-hover:text-[#123B78]">
+              <span className="truncate max-w-[90px] sm:max-w-[130px] xl:max-w-[160px] text-[#0A172A] group-hover:text-[#0B1F3A]">
                 {currentState.name}
               </span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-blue-100/70 text-[#2563EB] font-bold hidden sm:inline-block">
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#DDFBF5] text-[#065F53] font-bold hidden sm:inline-block border border-[rgba(25,230,193,0.3)]">
                 ACTIVE
               </span>
             </button>
@@ -77,7 +87,7 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
 
           {/* Center: Desktop Navigation Links (Floating Glass Capsule) */}
           <nav
-            className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-white/50 border border-white/80 backdrop-blur-md shadow-inner z-10"
+            className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-white/70 border border-[rgba(11,31,58,0.08)] backdrop-blur-md shadow-2xs z-10"
             aria-label="Main Navigation"
           >
             {navLinks.map((link) => (
@@ -85,33 +95,34 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
                 key={link.label}
                 type="button"
                 onClick={() => handleLinkClick(link.href)}
-                className="px-3 xl:px-4 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-[#123B78] hover:bg-white/90 hover:shadow-2xs hover:-translate-y-0.5 transition-all duration-200 cursor-pointer whitespace-nowrap"
+                className="relative px-3 xl:px-4 py-1.5 rounded-full text-xs font-bold text-[#527086] hover:text-[#0B1F3A] hover:bg-white/90 hover:shadow-2xs transition-all duration-200 cursor-pointer whitespace-nowrap group"
               >
-                {link.label}
+                <span>{link.label}</span>
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-[#00C2D7] rounded-full group-hover:w-4 transition-all duration-200" />
               </button>
             ))}
           </nav>
 
           {/* Desktop Actions (Right Section: Doctor & CHW Portal) */}
           <div className="hidden sm:flex items-center gap-2.5 ml-auto z-10">
-            {/* Doctor Portal Action - Light Glass Surface, Blue Border, Blue Icon */}
+            {/* Doctor Portal Action - Secondary Glass */}
             <button
               type="button"
               onClick={() => onNavigate("doctor")}
-              className="glass-btn-secondary inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border border-blue-200/90 hover:border-blue-400/80 shadow-xs cursor-pointer group"
+              className="glass-btn-secondary inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs cursor-pointer group"
             >
-              <Stethoscope className="w-4 h-4 text-[#2563EB] group-hover:scale-110 transition-transform" />
+              <Stethoscope className="w-4 h-4 text-[#164E78] group-hover:scale-110 transition-transform" />
               <span className="hidden md:inline">Doctor Portal</span>
               <span className="md:hidden">Doctor</span>
             </button>
 
-            {/* CHW Workstation CTA - Deep Clinical Blue Glass Surface, White Text, Cyan Highlight */}
+            {/* CHW Workstation CTA - Deep Navy / Deep Blue Gradient, Electric Cyan Highlight */}
             <button
               type="button"
               onClick={() => onNavigate("chw")}
               className="glass-btn-primary inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer group"
             >
-              <UserCheck className="w-4 h-4 text-[#06B6D4] group-hover:scale-110 transition-transform" />
+              <UserCheck className="w-4 h-4 text-[#00C2D7] group-hover:scale-110 transition-transform" />
               <span>CHW Workstation</span>
               <ArrowRight className="w-3.5 h-3.5 ml-0.5 group-hover:translate-x-1 transition-transform" />
             </button>

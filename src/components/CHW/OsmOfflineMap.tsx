@@ -181,8 +181,8 @@ export const OsmOfflineMap: React.FC<OsmOfflineMapProps> = ({
 
     // 1. Patient Village Marker
     const villageHtml = `
-      <div class="flex items-center gap-1.5 bg-emerald-600 text-white font-bold text-[11px] px-2.5 py-1 rounded-full shadow-lg border-2 border-white whitespace-nowrap animate-pulse">
-        <span class="w-2 h-2 rounded-full bg-white"></span>
+      <div class="flex items-center gap-1.5 bg-[#0B1F3A] text-white font-bold text-[11px] px-2.5 py-1 rounded-full shadow-lg border-2 border-[#19E6C1] whitespace-nowrap">
+        <span class="w-2 h-2 rounded-full bg-[#19E6C1] animate-ping"></span>
         <span>📍 ${patientVillage}</span>
       </div>
     `;
@@ -202,13 +202,13 @@ export const OsmOfflineMap: React.FC<OsmOfflineMapProps> = ({
       const isTarget = fac.id === selectedFacility.id;
       const isDistrict = fac.type.includes("District");
       const bgColor = isTarget
-        ? "bg-red-600 ring-4 ring-red-400/40 text-white"
+        ? "bg-[#00C2D7] ring-4 ring-[rgba(0,194,215,0.35)] text-[#0B1F3A]"
         : isDistrict
-        ? "bg-purple-700 text-white"
-        : "bg-blue-600 text-white";
+        ? "bg-[#0B1F3A] text-white border border-[#22D3EE]/50"
+        : "bg-[#164E78] text-white";
 
       const markerHtml = `
-        <div class="cursor-pointer transition-transform hover:scale-110 flex items-center gap-1 ${bgColor} text-[10px] font-bold px-2 py-1 rounded-xl shadow-xl border border-white/80 whitespace-nowrap">
+        <div class="cursor-pointer transition-transform hover:scale-110 flex items-center gap-1 ${bgColor} text-[10px] font-bold px-2.5 py-1 rounded-xl shadow-xl border border-white/80 whitespace-nowrap">
           <span>${isDistrict ? "🏥" : "⚕️"}</span>
           <span>${fac.name.split(" ")[0]} (${fac.distanceKm}km)</span>
         </div>
@@ -229,14 +229,14 @@ export const OsmOfflineMap: React.FC<OsmOfflineMapProps> = ({
       });
 
       m.bindPopup(`
-        <div style="font-family: sans-serif; min-width: 180px;">
-          <b style="color: #0f172a; font-size: 13px;">${fac.name}</b><br/>
-          <span style="color: #64748b; font-size: 11px;">${fac.type}</span><br/>
+        <div style="font-family: sans-serif; min-width: 180px; color: #0A172A;">
+          <b style="color: #0B1F3A; font-size: 13px;">${fac.name}</b><br/>
+          <span style="color: #527086; font-size: 11px;">${fac.type}</span><br/>
           <div style="margin-top: 6px; font-size: 11px; line-height: 1.4;">
             <b>Distance:</b> ${fac.distanceKm} km (~${fac.travelTimeMins} mins)<br/>
             <b>Available Beds:</b> ${fac.availableBeds} (ICU: ${fac.icuBedsAvailable})<br/>
             <b>Oxygen Support:</b> ${fac.hasOxygen ? "✅ 24x7 Pipeline" : "❌ No"}<br/>
-            <b>Emergency:</b> ${fac.emergencyHotline}
+            <b>Emergency:</b> <span style="color: #DC2626; font-weight: bold;">${fac.emergencyHotline}</span>
           </div>
         </div>
       `);
@@ -269,9 +269,9 @@ export const OsmOfflineMap: React.FC<OsmOfflineMapProps> = ({
           setTransitCompleted(false);
 
           const polyline = L.polyline(coords, {
-            color: "#ef4444",
+            color: "#00C2D7",
             weight: 5,
-            opacity: 0.85,
+            opacity: 0.9,
             dashArray: "6, 8",
           }).addTo(routeLayer);
 
@@ -284,7 +284,7 @@ export const OsmOfflineMap: React.FC<OsmOfflineMapProps> = ({
           [selectedFacility.latitude, selectedFacility.longitude],
         ];
         setRouteCoordinates(coords);
-        L.polyline(coords, { color: "#f59e0b", weight: 4, dashArray: "5, 5" }).addTo(routeLayer);
+        L.polyline(coords, { color: "#F59E0B", weight: 4, dashArray: "5, 5" }).addTo(routeLayer);
       }
     };
 

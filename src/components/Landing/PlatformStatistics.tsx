@@ -9,8 +9,8 @@ export const PlatformStatistics: React.FC = () => {
       sublabel: "Autonomous WHO IMCI Engine",
       description: "Operates with zero internet connectivity using local on-device rule evaluation and browser IndexedDB.",
       icon: WifiOff,
-      accent: "#2563EB",
-      bgLight: "#EFF6FF",
+      accent: "#00C2D7",
+      bgLight: "#E8F6FA",
     },
     {
       stat: "22",
@@ -18,8 +18,8 @@ export const PlatformStatistics: React.FC = () => {
       sublabel: "Pan-Indian Voice & Anamnesis",
       description: "Frontline ASHA workers can converse naturally via multi-lingual voice transcription and localized terminology.",
       icon: Languages,
-      accent: "#06B6D4",
-      bgLight: "#ECFEFF",
+      accent: "#164E78",
+      bgLight: "#E8F6FA",
     },
     {
       stat: "< 90s",
@@ -27,8 +27,8 @@ export const PlatformStatistics: React.FC = () => {
       sublabel: "Rapid Decision & Risk Scoring",
       description: "Automated danger sign identification, vital sign evaluation, and standardized SBAR handover in under 90 seconds.",
       icon: Timer,
-      accent: "#16A34A",
-      bgLight: "#F0FDF4",
+      accent: "#19E6C1",
+      bgLight: "#DDFBF5",
     },
     {
       stat: "36",
@@ -36,20 +36,20 @@ export const PlatformStatistics: React.FC = () => {
       sublabel: "Geo-mapped Referral Hospitals",
       description: "Over 12,000 rural Sub-Centers, Primary Health Centers (PHCs), CHCs, and District Hospitals cataloged with GPS.",
       icon: MapPin,
-      accent: "#DC2626",
-      bgLight: "#FEF2F2",
+      accent: "#123B63",
+      bgLight: "#E8F6FA",
     },
   ];
 
   return (
-    <section className="w-full py-12 lg:py-16 bg-gradient-to-b from-white/80 via-slate-50/50 to-white/90 border-b border-slate-200/80 relative">
+    <section className="w-full py-12 lg:py-16 bg-[#F4FAFC] border-b border-[rgba(11,31,58,0.08)] relative">
       <div className="container-constrained">
         {/* Section Heading */}
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="glass-badge-blue inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-3 shadow-2xs">
+          <span className="glass-badge-cyan inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold mb-3 shadow-2xs">
             Engineered For Bharat's Rural Frontier
           </span>
-          <p className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
+          <p className="text-2xl sm:text-3xl font-extrabold text-[#0B1F3A] tracking-tight">
             High-Speed Clinical Telemetry Across Low-Bandwidth Realities
           </p>
         </div>
@@ -61,11 +61,11 @@ export const PlatformStatistics: React.FC = () => {
             return (
               <div
                 key={idx}
-                className="glass-card group relative p-6 rounded-2xl border border-white/90 shadow-sm hover:shadow-lg hover:border-blue-200/80 transition-all duration-200 flex flex-col justify-between text-left"
+                className="glass-card group relative p-6 rounded-2xl border border-[rgba(11,31,58,0.08)] shadow-sm hover:shadow-lg transition-all duration-200 flex flex-col justify-between text-left"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-3xl sm:text-4xl font-black text-[#0F172A] tracking-tight font-mono">
+                    <span className="text-3xl sm:text-4xl font-black text-[#0B1F3A] tracking-tight font-mono">
                       {item.stat}
                     </span>
                     <div
@@ -76,15 +76,15 @@ export const PlatformStatistics: React.FC = () => {
                     </div>
                   </div>
 
-                  <h3 className="text-base font-bold text-[#0F172A] leading-snug">
+                  <h3 className="text-base font-bold text-[#0B1F3A] leading-snug">
                     {item.label}
                   </h3>
-                  <div className="text-xs font-semibold text-[#2563EB] mb-2">
+                  <div className="text-xs font-semibold text-[#164E78] mb-2">
                     {item.sublabel}
                   </div>
                 </div>
 
-                <p className="text-xs text-[#64748B] leading-relaxed mt-2 border-t border-slate-200/50 pt-3">
+                <p className="text-xs text-[#527086] leading-relaxed mt-2 border-t border-[rgba(11,31,58,0.06)] pt-3">
                   {item.description}
                 </p>
               </div>
