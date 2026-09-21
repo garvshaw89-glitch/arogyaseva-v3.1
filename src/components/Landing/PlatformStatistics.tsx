@@ -42,13 +42,13 @@ export const PlatformStatistics: React.FC = () => {
   ];
 
   return (
-    <section className="w-full py-12 lg:py-16 bg-white border-b border-slate-200/80">
+    <section className="w-full py-12 lg:py-16 bg-gradient-to-b from-white/80 via-slate-50/50 to-white/90 border-b border-slate-200/80 relative">
       <div className="container-constrained">
         {/* Section Heading */}
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-[#2563EB] mb-2">
+          <span className="glass-badge-blue inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold mb-3 shadow-2xs">
             Engineered For Bharat's Rural Frontier
-          </h2>
+          </span>
           <p className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
             High-Speed Clinical Telemetry Across Low-Bandwidth Realities
           </p>
@@ -61,7 +61,7 @@ export const PlatformStatistics: React.FC = () => {
             return (
               <div
                 key={idx}
-                className="group relative p-6 rounded-2xl bg-white border border-slate-200 shadow-xs hover:shadow-md hover:border-slate-300 transition-all flex flex-col justify-between text-left"
+                className="glass-card group relative p-6 rounded-2xl border border-white/90 shadow-sm hover:shadow-lg hover:border-blue-200/80 transition-all duration-200 flex flex-col justify-between text-left"
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -69,7 +69,7 @@ export const PlatformStatistics: React.FC = () => {
                       {item.stat}
                     </span>
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105"
+                      className="w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110 shadow-2xs border border-white/80"
                       style={{ backgroundColor: item.bgLight, color: item.accent }}
                     >
                       <Icon className="w-5 h-5" />
@@ -84,7 +84,7 @@ export const PlatformStatistics: React.FC = () => {
                   </div>
                 </div>
 
-                <p className="text-xs text-[#64748B] leading-relaxed mt-2 border-t border-slate-100 pt-3">
+                <p className="text-xs text-[#64748B] leading-relaxed mt-2 border-t border-slate-200/50 pt-3">
                   {item.description}
                 </p>
               </div>

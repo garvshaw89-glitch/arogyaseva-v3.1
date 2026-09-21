@@ -51,18 +51,21 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
   return (
     <div
       id="modal-state-selector-overlay"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
         id="modal-state-selector-dialog"
-        className="bg-[#0B1527] border border-slate-700/80 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-100"
+        className="glass-command border border-cyan-500/30 rounded-3xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden text-slate-100 relative"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Subtle Cyan Glow */}
+        <div className="absolute top-0 right-0 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+        <div className="px-6 py-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40 backdrop-blur-md relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 ring-1 ring-white/20">
               <Compass className="w-5 h-5 text-cyan-200 animate-spin" style={{ animationDuration: "12s" }} />
             </div>
             <div>
@@ -70,11 +73,11 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
                 <h2 className="text-lg sm:text-xl font-black tracking-tight text-white font-mono">
                   SELECT INDIAN STATE & REGIONAL SYSTEM
                 </h2>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800/60 font-mono">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 font-mono shadow-xs">
                   36 States & UTs
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-400 mt-0.5">
                 Switches the regional ASHA health worker, referral hospital network, and default triage coordinates.
               </p>
             </div>
@@ -84,7 +87,7 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
               playHapticSound("click");
               onClose();
             }}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
             aria-label="Close"
           >
             <X className="w-5 h-5" />

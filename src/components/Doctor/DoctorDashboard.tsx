@@ -120,18 +120,21 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   return (
     <div id="doctor-dashboard-view" className="space-y-6">
       {/* 1. Futuristic Regional Command Center Status Bar */}
-      <div className="bg-slate-950 text-white rounded-3xl p-5 border border-slate-800 shadow-2xl flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center">
+      <div className="glass-command text-white rounded-3xl p-5 border border-cyan-500/30 shadow-2xl flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+        {/* Subtle Cyan Atmosphere */}
+        <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 flex items-center justify-center shadow-lg shadow-cyan-950/50 backdrop-blur-md">
             <Radio className="w-5 h-5 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-800">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-500/40 backdrop-blur-xs">
                 {selectedState ? `${selectedState.shortCode} • ${selectedState.name.toUpperCase()}` : "DISTRICT CLINICAL COMMAND CENTER"}
               </span>
               <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                 TELEMETRY LIVE
               </span>
             </div>
@@ -139,24 +142,24 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               {selectedState?.hospital || "District Civil Hospital & Trauma Centre (Sector 1)"}
             </h3>
             {selectedState && (
-              <p className="text-xs text-slate-400 font-mono">
-                Attending: <span className="text-slate-200 font-bold">{selectedState.doctor}</span> • Coverage: {selectedState.ashaUnit}
+              <p className="text-xs text-slate-300 font-mono">
+                Attending: <span className="text-cyan-200 font-bold">{selectedState.doctor}</span> • Coverage: {selectedState.ashaUnit}
               </p>
             )}
           </div>
         </div>
 
         {/* Live Resource Indicators */}
-        <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
-          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+        <div className="flex flex-wrap items-center gap-3 font-mono text-xs relative z-10">
+          <div className="bg-slate-900/80 border border-cyan-500/30 px-3.5 py-2 rounded-xl backdrop-blur-sm shadow-inner">
             <span className="text-slate-400 text-[10px] block">ICU BEDS AVAILABLE</span>
             <span className="text-cyan-300 font-bold text-sm">4 / 12 Free</span>
           </div>
-          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+          <div className="bg-slate-900/80 border border-cyan-500/30 px-3.5 py-2 rounded-xl backdrop-blur-sm shadow-inner">
             <span className="text-slate-400 text-[10px] block">OXYGEN PRESSURE</span>
             <span className="text-emerald-400 font-bold text-sm">4.2 bar (Normal)</span>
           </div>
-          <div className="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl">
+          <div className="bg-slate-900/80 border border-cyan-500/30 px-3.5 py-2 rounded-xl backdrop-blur-sm shadow-inner">
             <span className="text-slate-400 text-[10px] block">108 AMBULANCES</span>
             <span className="text-amber-400 font-bold text-sm">
               {activeVehicles.length > 0 ? `${activeVehicles.length} Live En-Route` : "2 Standby"}
@@ -224,54 +227,54 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
       {/* Top District Health Overview Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="glass-card p-5 rounded-2xl border border-white/90 shadow-2xs hover:shadow-md flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase text-slate-400 tracking-wider block">
               Active Triage Queue
             </span>
-            <span className="text-2xl font-bold text-slate-900 mt-1 block">{cases.length}</span>
+            <span className="text-2xl font-bold text-slate-900 mt-1 block font-mono">{cases.length}</span>
             <span className="text-xs text-slate-500 font-medium mt-0.5 block">Across 6 Village Sectors</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-blue-50/80 text-blue-600 flex items-center justify-center font-bold shadow-2xs border border-blue-200/50">
             <Activity className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="glass-card p-5 rounded-2xl border border-red-200/60 shadow-2xs hover:shadow-md bg-red-50/20 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase text-red-600 tracking-wider block">
               Red Alert (Urgent)
             </span>
-            <span className="text-2xl font-bold text-red-600 mt-1 block">{urgentCount}</span>
+            <span className="text-2xl font-bold text-red-600 mt-1 block font-mono">{urgentCount}</span>
             <span className="text-xs text-red-500 font-medium mt-0.5 block">Immediate Bed / Transfer</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-red-100/80 text-red-600 flex items-center justify-center font-bold shadow-2xs border border-red-200/60">
             <ShieldAlert className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="glass-card p-5 rounded-2xl border border-amber-200/60 shadow-2xs hover:shadow-md bg-amber-50/20 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase text-amber-600 tracking-wider block">
               Consultation Queue
             </span>
-            <span className="text-2xl font-bold text-amber-600 mt-1 block">{consultationCount}</span>
+            <span className="text-2xl font-bold text-amber-600 mt-1 block font-mono">{consultationCount}</span>
             <span className="text-xs text-slate-500 font-medium mt-0.5 block">Tele-MO Review Needed</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-amber-100/80 text-amber-600 flex items-center justify-center font-bold shadow-2xs border border-amber-200/60">
             <Clock className="w-5 h-5" />
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="glass-card p-5 rounded-2xl border border-emerald-200/60 shadow-2xs hover:shadow-md bg-emerald-50/20 flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase text-slate-500 tracking-wider block">
               Routine Subcentre Care
             </span>
-            <span className="text-2xl font-bold text-slate-900 mt-1 block">{routineCount}</span>
+            <span className="text-2xl font-bold text-slate-900 mt-1 block font-mono">{routineCount}</span>
             <span className="text-xs text-slate-500 font-medium mt-0.5 block">Managed by ASHA</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100/80 text-emerald-600 flex items-center justify-center font-bold shadow-2xs border border-emerald-200/60">
             <CheckCircle2 className="w-5 h-5" />
           </div>
         </div>
@@ -280,8 +283,8 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       {/* Main Two-Column Triage Console */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Column: Triage Patient List (5 cols) */}
-        <div className="lg:col-span-5 bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-100 space-y-3 bg-slate-50/70">
+        <div className="lg:col-span-5 glass-level-2 border border-white/90 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-200/60 space-y-3 bg-white/60 backdrop-blur-xs">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
                 <Stethoscope className="w-4 h-4 text-blue-600" />
@@ -420,11 +423,11 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         </div>
 
         {/* Right Column: Detailed Clinical Dossier & Action Console (7 cols) */}
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-5">
+        <div className="lg:col-span-7 glass-level-2 border border-white/90 rounded-2xl shadow-md p-6 space-y-5">
           {selectedCase ? (
             <>
               {/* Header */}
-              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 pb-4">
+              <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-200/60 pb-4">
                 <div>
                   <div className="flex items-center gap-2">
                     <h2 className="text-xl font-bold text-slate-900">
@@ -442,12 +445,12 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                 <div className="flex items-start gap-2 text-right">
                   <div>
                     <span
-                      className={`text-[10px] font-bold uppercase px-2.5 py-1 rounded inline-block ${
+                      className={`text-[10px] font-bold uppercase px-3 py-1 rounded-full inline-block shadow-2xs font-mono ${
                         selectedCase.riskLevel === "URGENT"
-                          ? "bg-red-600 text-white"
+                          ? "glass-badge-rose"
                           : selectedCase.riskLevel === "CONSULTATION"
-                          ? "bg-amber-600 text-white"
-                          : "bg-slate-200 text-slate-800"
+                          ? "glass-badge-amber"
+                          : "glass-badge-blue"
                       }`}
                     >
                       {selectedCase.riskLevel} PRIORITY
@@ -463,7 +466,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                           playHapticSound("click");
                           onOpenPdfReport(selectedCase);
                         }}
-                        className="mt-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer ml-auto"
+                        className="mt-1.5 glass-btn-secondary text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer ml-auto shadow-2xs"
                         title="Generate and print standardized PDF referral report"
                       >
                         <Printer className="w-3.5 h-3.5 text-blue-600" />
@@ -490,34 +493,34 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
               {/* Vitals Telemetry Box */}
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                  Frontline Telemetry
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2 font-mono">
+                  Frontline Clinical Telemetry
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">SpO₂ Oxygen</span>
-                    <span className={`text-xl font-bold ${selectedCase.vitals.spo2 < 92 ? "text-red-600" : "text-slate-900"}`}>
+                    <span className={`text-xl font-bold font-mono ${selectedCase.vitals.spo2 < 92 ? "text-red-600" : "text-slate-900"}`}>
                       {selectedCase.vitals.spo2}%
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Blood Pressure</span>
-                    <span className={`text-xl font-bold ${selectedCase.vitals.bpSystolic >= 140 ? "text-red-600" : "text-slate-900"}`}>
+                    <span className={`text-xl font-bold font-mono ${selectedCase.vitals.bpSystolic >= 140 ? "text-red-600" : "text-slate-900"}`}>
                       {selectedCase.vitals.bpSystolic}/{selectedCase.vitals.bpDiastolic}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Temperature</span>
-                    <span className="text-xl font-bold text-slate-900">
+                    <span className="text-xl font-bold font-mono text-slate-900">
                       {selectedCase.vitals.temperature}°F
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Pulse / HR</span>
-                    <span className="text-xl font-bold text-slate-900">
+                    <span className="text-xl font-bold font-mono text-slate-900">
                       {selectedCase.vitals.heartRate} bpm
                     </span>
                   </div>
@@ -619,7 +622,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                     value={doctorNoteInput}
                     onChange={(e) => setDoctorNoteInput(e.target.value)}
                     placeholder="Enter clinical order (e.g. 'Admit to Emergency Ward, start IV Saline and O2 4L/min')..."
-                    className="flex-1 text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800"
+                    className="flex-1 text-xs px-3.5 py-2.5 bg-white/90 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-slate-800 shadow-2xs transition-all"
                   />
                 </div>
 
@@ -628,9 +631,9 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                     id="btn-doc-accept-referral"
                     onClick={() => handleDoctorAction("Referral Accepted & Emergency Bed Reserved")}
                     disabled={isSubmitting}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm shadow-blue-100 transition-all"
+                    className="glass-btn-primary text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
                   >
-                    <BedDouble className="w-3.5 h-3.5" />
+                    <BedDouble className="w-3.5 h-3.5 text-[#06B6D4]" />
                     <span>Accept Referral & Reserve Bed</span>
                   </button>
 
@@ -641,7 +644,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                       handleDoctorAction("108 Emergency Ambulance Dispatched with Oxygen");
                     }}
                     disabled={isSubmitting}
-                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    className="glass-btn-emergency text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
                   >
                     <PhoneCall className="w-3.5 h-3.5" />
                     <span>Dispatch 108 Ambulance</span>
@@ -656,7 +659,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                       setTimeout(() => setTeleconsultStatus("active"), 1200);
                     }}
                     disabled={isSubmitting}
-                    className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+                    className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
                   >
                     <Video className="w-3.5 h-3.5" />
                     <span>Launch Teleconsult to Village</span>
@@ -669,9 +672,9 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                       handleDoctorAction("Routine Home Care Guidance Approved");
                     }}
                     disabled={isSubmitting}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold px-4 py-2 rounded-xl border border-slate-200 flex items-center gap-1.5 transition-all cursor-pointer"
+                    className="glass-btn-secondary text-slate-800 text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
                   >
-                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Approve Local Care</span>
                   </button>
                 </div>

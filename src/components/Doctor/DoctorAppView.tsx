@@ -61,26 +61,29 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
   const pendingCases = cases.filter((c) => c.status === "PENDING_REVIEW");
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
-      {/* Doctor Portal Header */}
-      <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between">
+    <div className="min-h-screen bg-[#F8FAFC] bg-glass-atmosphere flex flex-col font-sans">
+      {/* Doctor Portal Header - Clinical Glass Navbar */}
+      <header className="sticky top-0 z-30 h-16 bg-white/85 backdrop-blur-xl border-b border-white/90 px-4 sm:px-6 flex items-center justify-between shadow-2xs">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100"
+            className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-white/90 border border-transparent hover:border-slate-200/80"
             aria-label="Toggle navigation"
           >
             <Menu className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-[#123B78] flex items-center justify-center text-white">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#0F2347] to-[#2563EB] flex items-center justify-center text-white shadow-md shadow-blue-900/15 ring-1 ring-white/50">
               <Stethoscope className="w-4 h-4 text-[#06B6D4]" />
             </div>
             <div>
-              <div className="text-sm font-extrabold text-[#0F172A] leading-tight">
-                District Hospital Command
+              <div className="text-sm font-extrabold text-[#0F172A] leading-tight flex items-center gap-2">
+                <span>District Hospital Command</span>
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-blue-100/70 text-[#2563EB] font-bold hidden sm:inline-block">
+                  TELE-MED
+                </span>
               </div>
               <div className="text-[10px] font-semibold text-slate-500">
                 Medical Officer Tele-Consultation Bay
@@ -90,7 +93,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           {/* Live Shared Workspace Status Bar */}
           <RealtimeStatusBar
             onOpenDevicesDrawer={onOpenDevicesDrawer}
@@ -100,7 +103,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           <button
             type="button"
             onClick={onOpenStateModal}
-            className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-[#123B78] cursor-pointer"
+            className="glass-pill hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#123B78] cursor-pointer"
           >
             <MapPin className="w-3.5 h-3.5 text-[#2563EB]" />
             <span>{selectedState.name}</span>
@@ -110,16 +113,16 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           <button
             type="button"
             onClick={onNavigateCHW}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-[#123B78] hover:bg-[#0E2C5B] transition-colors"
+            className="glass-btn-primary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs"
           >
-            <span>Switch to CHW Intake</span>
+            <span>Switch to CHW</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
 
           <button
             type="button"
             onClick={onNavigateHome}
-            className="text-xs font-semibold text-slate-500 hover:text-[#0F172A] px-2 py-1"
+            className="text-xs font-semibold text-slate-500 hover:text-[#0F172A] px-2.5 py-1.5 rounded-lg hover:bg-white/60 transition-colors"
           >
             Exit to Home
           </button>
@@ -130,14 +133,14 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar */}
         <aside
-          className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col justify-between transition-transform duration-200 ${
+          className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white/80 backdrop-blur-xl border-r border-slate-200/80 flex flex-col justify-between transition-transform duration-200 shadow-xs ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }`}
         >
-          <div className="p-4 space-y-6">
+          <div className="p-4 space-y-5">
             {/* Doctor Profile Card */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-[#123B78] text-white flex items-center justify-center font-bold text-sm">
+            <div className="p-3 rounded-2xl bg-white/90 border border-slate-200/80 shadow-2xs flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0F2347] to-[#1E40AF] text-white flex items-center justify-center font-bold text-sm shadow-xs">
                 DR
               </div>
               <div className="overflow-hidden">
@@ -168,10 +171,10 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
                       setActiveTab(item.id as any);
                       setSidebarOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                       isActive
-                        ? "bg-[#EFF6FF] text-[#123B78] font-bold"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                        ? "bg-blue-50/90 text-[#123B78] font-bold border border-blue-200/80 shadow-2xs"
+                        : "text-slate-600 hover:bg-white/80 hover:text-slate-900 border border-transparent"
                     }`}
                   >
                     <div className="flex items-center gap-2.5">

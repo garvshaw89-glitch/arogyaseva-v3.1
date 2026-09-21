@@ -51,25 +51,28 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans">
-      {/* Emergency Header */}
-      <header className="sticky top-0 z-30 h-16 bg-[#123B78] text-white px-4 sm:px-6 flex items-center justify-between shadow-md">
+    <div className="min-h-screen bg-[#F8FAFC] bg-glass-atmosphere flex flex-col font-sans">
+      {/* Emergency Header - Clinical Glass Navbar */}
+      <header className="sticky top-0 z-30 h-16 bg-gradient-to-r from-[#0F2347] via-[#123B78] to-[#1E40AF] text-white px-4 sm:px-6 flex items-center justify-between shadow-lg border-b border-white/15 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onNavigateHome}
-            className="p-2 rounded-lg hover:bg-white/10 text-white transition-colors"
+            className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors cursor-pointer"
             title="Back to home"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-red-600 flex items-center justify-center text-white font-bold">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold shadow-md shadow-red-900/30 ring-1 ring-white/30">
               <PhoneCall className="w-4 h-4 animate-pulse" />
             </div>
             <div>
-              <div className="text-sm font-extrabold tracking-tight leading-tight">
-                National 108 Emergency Response Control
+              <div className="text-sm font-extrabold tracking-tight leading-tight flex items-center gap-2">
+                <span>National 108 Emergency Response Control</span>
+                <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-red-500/30 text-white font-bold border border-red-400/40">
+                  LIVE SOS
+                </span>
               </div>
               <div className="text-[10px] text-cyan-200 font-mono">
                 State EMRS • {currentState.name}
@@ -78,18 +81,18 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={onNavigateCHW}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-xs transition-colors cursor-pointer"
           >
             CHW Workstation
           </button>
           <button
             type="button"
             onClick={onNavigateDoctor}
-            className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-xs transition-colors cursor-pointer"
           >
             Doctor Command
           </button>
@@ -98,12 +101,12 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
 
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto w-full text-left space-y-6">
-        {/* Status Alert Banner */}
+        {/* Status Alert Banner - Translucent Emerald Glass */}
         {dispatchStatus === "DISPATCHED" && (
-          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex items-start gap-3 animate-fade-in">
+          <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 backdrop-blur-md text-emerald-950 flex items-start gap-3 shadow-md animate-fade-in">
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
             <div>
-              <div className="font-bold text-sm">
+              <div className="font-bold text-sm text-emerald-900">
                 Ambulance Dispatched • Unit #MH-108-ALS-402
               </div>
               <p className="text-xs text-emerald-800 mt-0.5">
@@ -113,9 +116,12 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
           </div>
         )}
 
-        {/* Emergency Dispatch Form & Review */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-md p-6 sm:p-8 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        {/* Emergency Dispatch Form & Review - Clinical Glass Level 3 */}
+        <div className="glass-level-3 rounded-2xl border border-white/90 shadow-xl p-6 sm:p-8 space-y-6 relative overflow-hidden">
+          {/* Subtle Red Emergency Aura */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/5 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex items-center justify-between border-b border-slate-200/60 pb-4">
             <div>
               <h1 className="text-xl font-black text-[#0F172A] flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-red-600" />
@@ -125,14 +131,14 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
                 Authorized for severe physiological shock, obstetric red flags, and respiratory failure.
               </p>
             </div>
-            <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 font-mono">
+            <span className="glass-badge-rose px-3.5 py-1 rounded-full text-xs font-bold font-mono shadow-2xs">
               PRIORITY-1 RED
             </span>
           </div>
 
           {/* Key Parameters */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="p-4 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs">
               <label className="font-bold text-[#123B78] block mb-1">
                 Calling Frontline Health Worker
               </label>
@@ -140,11 +146,11 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
                 type="text"
                 value={callerName}
                 onChange={(e) => setCallerName(e.target.value)}
-                className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none focus:border-blue-500"
+                className="w-full bg-white/90 border border-slate-300 rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="p-4 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs">
               <label className="font-bold text-[#123B78] block mb-1">
                 Sub-Center Village & Region
               </label>
@@ -153,7 +159,7 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
               </div>
             </div>
 
-            <div className="sm:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="sm:col-span-2 p-4 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs">
               <label className="font-bold text-[#123B78] block mb-1">
                 Critical Clinical Condition / Danger Signs
               </label>
@@ -161,11 +167,11 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
                 value={patientCondition}
                 onChange={(e) => setPatientCondition(e.target.value)}
                 rows={2}
-                className="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs font-medium focus:outline-none focus:border-blue-500"
+                className="w-full bg-white/90 border border-slate-300 rounded-lg p-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
               />
             </div>
 
-            <div className="sm:col-span-2 p-4 rounded-xl bg-slate-50 border border-slate-200">
+            <div className="sm:col-span-2 p-4 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs">
               <label className="font-bold text-[#123B78] block mb-1">
                 Designated Receiving Facility
               </label>
@@ -179,7 +185,7 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
           </div>
 
           {/* Primary Action with Mandatory Confirmation Dialog */}
-          <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="pt-4 border-t border-slate-200/60 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-xs text-slate-500 flex items-center gap-1.5">
               <Clock className="w-4 h-4 text-slate-400" />
               <span>National Dispatch Toll Free: <strong>108 / 102</strong></span>
@@ -189,7 +195,7 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
               type="button"
               onClick={() => setConfirmModalOpen(true)}
               disabled={dispatchStatus === "TRANSMITTING"}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              className="glass-btn-emergency w-full sm:w-auto px-6 py-3 rounded-xl text-white font-bold text-xs shadow-lg flex items-center justify-center gap-2 cursor-pointer"
             >
               <PhoneCall className="w-4 h-4" />
               <span>
@@ -203,15 +209,15 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
           </div>
         </div>
 
-        {/* Confirmation Modal */}
+        {/* Confirmation Modal - Clinical Glass Modal (Level 4) */}
         {confirmModalOpen && (
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in"
             role="dialog"
             aria-modal="true"
           >
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-slate-200 text-left animate-scale-up">
-              <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center">
+            <div className="glass-level-4 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-white/90 text-left animate-scale-up">
+              <div className="w-12 h-12 rounded-xl bg-red-100 text-red-600 flex items-center justify-center shadow-xs">
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-[#0F172A]">
@@ -225,14 +231,14 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setConfirmModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={handleConfirmDispatch}
-                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow-sm cursor-pointer"
+                  className="glass-btn-emergency px-4 py-2 rounded-xl text-white text-xs font-bold shadow-md cursor-pointer"
                 >
                   Confirm & Dispatch
                 </button>

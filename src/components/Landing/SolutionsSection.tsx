@@ -84,13 +84,13 @@ export const SolutionsSection: React.FC<SolutionsSectionProps> = ({
   ];
 
   return (
-    <section id="solutions" className="w-full py-16 lg:py-24 bg-[#F8FAFC] border-b border-slate-200/80">
+    <section id="solutions" className="w-full py-16 lg:py-24 bg-[#F8FAFC]/90 backdrop-blur-sm border-b border-slate-200/80 relative">
       <div className="container-constrained">
         {/* Section Header */}
         <div className="max-w-2xl mx-auto text-center mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-bold text-[#123B78] uppercase tracking-wider mb-3">
+          <span className="glass-badge-blue inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-3 shadow-2xs">
             Integrated Platform
-          </div>
+          </span>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight mb-4">
             Healthcare Intelligence at the Point of Care
           </h2>
@@ -106,14 +106,14 @@ export const SolutionsSection: React.FC<SolutionsSectionProps> = ({
             return (
               <div
                 key={item.id}
-                className="group relative bg-white rounded-2xl p-7 border border-slate-200 shadow-xs hover:shadow-lg hover:border-blue-300 transition-all duration-300 flex flex-col justify-between text-left"
+                className="glass-card group relative rounded-2xl p-7 border border-white/90 shadow-sm hover:shadow-xl hover:border-blue-300/80 transition-all duration-200 flex flex-col justify-between text-left"
               >
                 <div>
                   <div className="flex items-center justify-between mb-5">
-                    <div className="w-12 h-12 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center group-hover:bg-[#123B78] group-hover:text-white transition-colors duration-300">
+                    <div className="w-12 h-12 rounded-xl bg-blue-50/90 text-[#2563EB] border border-blue-100 flex items-center justify-center group-hover:bg-[#123B78] group-hover:text-white transition-all duration-300 shadow-2xs">
                       <Icon className="w-6 h-6 transition-transform group-hover:scale-110" />
                     </div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-mono">
+                    <span className="glass-pill text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full text-slate-700 font-mono shadow-2xs">
                       {item.badge}
                     </span>
                   </div>
@@ -127,7 +127,7 @@ export const SolutionsSection: React.FC<SolutionsSectionProps> = ({
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-slate-100">
+                <div className="mt-6 pt-4 border-t border-slate-200/50">
                   <button
                     type="button"
                     onClick={item.action}

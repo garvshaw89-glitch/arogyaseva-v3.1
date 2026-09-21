@@ -90,9 +90,9 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <button
             type="button"
             onClick={onStartIntake}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-[#123B78] to-[#1E40AF] hover:from-[#0E2C5B] hover:to-[#1D4ED8] shadow-md hover:shadow-xl hover:shadow-blue-900/20 transition-all cursor-pointer group"
+            className="glass-btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-sm font-bold text-white shadow-lg cursor-pointer group"
           >
-            <UserCheck className="w-5 h-5 text-[#06B6D4]" />
+            <UserCheck className="w-5 h-5 text-[#06B6D4] group-hover:scale-110 transition-transform" />
             <span>Launch CHW Intake</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </button>
@@ -100,37 +100,37 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <button
             type="button"
             onClick={onOpenDoctorPortal}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl text-sm font-bold text-[#123B78] bg-white hover:bg-slate-50 border border-slate-300/90 shadow-xs hover:shadow-md transition-all cursor-pointer"
+            className="glass-btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl text-sm font-bold text-[#123B78] border border-blue-200/90 hover:border-blue-400/80 shadow-md cursor-pointer group"
           >
-            <Stethoscope className="w-4 h-4 text-[#2563EB]" />
+            <Stethoscope className="w-4 h-4 text-[#2563EB] group-hover:scale-110 transition-transform" />
             <span>Doctor Command Center</span>
           </button>
 
           <button
             type="button"
             onClick={onTriggerEmergencySos}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-4 rounded-xl text-sm font-extrabold text-white bg-gradient-to-r from-[#DC2626] to-[#EF4444] hover:from-[#B91C1C] hover:to-[#DC2626] shadow-md hover:shadow-lg hover:shadow-red-700/20 transition-all cursor-pointer"
+            className="glass-btn-emergency w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-4 rounded-2xl text-sm font-extrabold text-white shadow-lg cursor-pointer group"
           >
             <PhoneCall className="w-4 h-4 animate-pulse" />
             <span>108 SOS Dispatch</span>
           </button>
         </div>
 
-        {/* Trust & Protocol Badges (Centered) */}
-        <div className="w-full max-w-3xl mx-auto pt-6 pb-2 border-t border-slate-200/80 flex flex-wrap items-center justify-center gap-y-2.5 gap-x-6 sm:gap-x-8 text-xs font-bold text-[#64748B] mb-12">
-          <div className="flex items-center gap-1.5">
+        {/* Trust & Protocol Badges (Centered Glass Capsule Pills) */}
+        <div className="w-full max-w-4xl mx-auto pt-6 pb-2 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-bold text-slate-700 mb-12">
+          <div className="glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-2xs">
             <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
             <span>WHO IMCI Clinical Protocols</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-2xs">
             <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
             <span>100% Offline-First Engine</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-2xs">
             <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
             <span>Pan-Indian Multilingual Voice</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-2xs">
             <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
             <span>State Health System Aligned</span>
           </div>
@@ -139,23 +139,24 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         {/* Centered Hero Visual: Live Clinical Intelligence Telemetry Mockup */}
         <div className="relative w-full max-w-xl sm:max-w-2xl mx-auto">
           {/* Subtle Ambient Backlight Frame */}
-          <div className="absolute -inset-1.5 bg-gradient-to-r from-blue-600/20 via-cyan-500/20 to-blue-600/20 rounded-3xl blur-lg opacity-70" />
+          <div className="absolute -inset-2 bg-gradient-to-r from-blue-600/15 via-cyan-500/20 to-blue-600/15 rounded-3xl blur-xl opacity-80 pointer-events-none" />
 
-          <div className="relative bg-white rounded-2xl border border-slate-200/90 shadow-2xl shadow-blue-900/10 overflow-hidden text-left">
+          <div className="glass-panel relative rounded-2xl border border-white/90 shadow-2xl overflow-hidden text-left">
             {/* Telemetry Header */}
-            <div className="bg-[#123B78] text-white px-5 sm:px-6 py-4 flex items-center justify-between">
+            <div className="bg-gradient-to-r from-[#0F2347] via-[#123B78] to-[#1E40AF] text-white px-5 sm:px-6 py-4 flex items-center justify-between border-b border-white/20">
               <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-[#06B6D4] animate-pulse" />
                 <span className="text-xs font-bold tracking-wide uppercase font-mono">
                   Point-of-Care Clinical Intake
                 </span>
               </div>
-              <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-white/15 text-cyan-200 border border-white/10">
+              <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-white/15 text-cyan-200 border border-white/20 backdrop-blur-xs">
                 {currentState.name} Sub-Center
               </span>
             </div>
 
             {/* Patient Case Snapshot */}
-            <div className="p-5 sm:p-6 space-y-4 text-xs">
+            <div className="p-5 sm:p-6 space-y-4 text-xs bg-white/60 backdrop-blur-md">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="text-sm sm:text-base font-bold text-[#0F172A]">
@@ -165,7 +166,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                     {currentState.defaultVillage} • Frontline ASHA: {currentState.ashaWorker}
                   </div>
                 </div>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                <span className="glass-badge-amber inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-2xs">
                   <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                   <span>CONSULTATION</span>
                 </span>
@@ -173,25 +174,25 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
               {/* Vitals Telemetry Grid */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex flex-col">
+                <div className="p-3 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-[#64748B]">SpO2 Saturation</span>
                   <span className="text-base sm:text-lg font-extrabold text-[#0F172A] font-mono">94%</span>
                   <span className="text-[10px] text-amber-600 font-semibold">Borderline</span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex flex-col">
+                <div className="p-3 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-[#64748B]">Pulse Rate</span>
                   <span className="text-base sm:text-lg font-extrabold text-[#0F172A] font-mono">102 bpm</span>
                   <span className="text-[10px] text-amber-600 font-semibold">Tachycardia</span>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 flex flex-col">
+                <div className="p-3 rounded-xl bg-white/80 border border-slate-200/80 shadow-2xs flex flex-col">
                   <span className="text-[10px] uppercase font-bold text-[#64748B]">BP Diastolic</span>
                   <span className="text-base sm:text-lg font-extrabold text-[#0F172A] font-mono">142/92</span>
                   <span className="text-[10px] text-amber-600 font-semibold">Stage 1 HTN</span>
                 </div>
               </div>
 
-              {/* SBAR Live Assessment Card */}
-              <div className="p-3.5 sm:p-4 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE]">
+              {/* SBAR Live Assessment Card - Clinical Glass */}
+              <div className="p-3.5 sm:p-4 rounded-xl bg-blue-50/70 border border-blue-200/80 backdrop-blur-xs shadow-2xs">
                 <div className="flex items-center gap-1.5 text-[#123B78] font-bold text-xs mb-1">
                   <FileText className="w-4 h-4 text-[#2563EB]" />
                   <span>WHO IMCI Clinical Impression</span>
@@ -202,7 +203,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
               </div>
 
               {/* Recommended Referral Routing */}
-              <div className="pt-3 flex items-center justify-between border-t border-slate-100">
+              <div className="pt-3 flex items-center justify-between border-t border-slate-200/60">
                 <div className="flex items-center gap-1.5 text-xs text-[#475569]">
                   <Activity className="w-4 h-4 text-[#16A34A]" />
                   <span>Nearest: <strong>Sub-District Hospital</strong> (4.2 km • 14 min)</span>
@@ -210,18 +211,18 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
                 <button
                   type="button"
                   onClick={onStartIntake}
-                  className="text-xs font-bold text-[#2563EB] hover:text-[#123B78] flex items-center gap-1 cursor-pointer transition-colors"
+                  className="text-xs font-bold text-[#2563EB] hover:text-[#123B78] flex items-center gap-1 cursor-pointer transition-colors group"
                 >
                   <span>Test Protocol</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Floating Micro-Badge */}
-          <div className="absolute -bottom-4 -left-4 sm:-left-6 bg-white px-4 py-2.5 rounded-xl shadow-lg border border-slate-200/90 hidden sm:flex items-center gap-2.5 z-20">
-            <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+          {/* Floating Micro-Badge - Elevated Glass Surface */}
+          <div className="absolute -bottom-4 -left-4 sm:-left-6 glass-level-3 px-4 py-2.5 rounded-2xl shadow-xl border border-white/90 hidden sm:flex items-center gap-2.5 z-20">
+            <div className="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-700 shadow-2xs">
               <CheckCircle2 className="w-4 h-4" />
             </div>
             <div className="text-left">
