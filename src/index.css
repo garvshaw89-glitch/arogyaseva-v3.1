@@ -237,7 +237,44 @@ body {
   animation: sweepSheen 3.5s ease-in-out infinite;
 }
 
+/* ==========================================================================
+   ArogyaSeva Hero Background Video Architecture
+   ========================================================================== */
+.arogyaseva-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.arogyaseva-hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.arogyaseva-hero-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(248, 251, 255, 0.40) 100%
+  );
+}
+
+.arogyaseva-hero-content {
+  position: relative;
+  z-index: 2;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .arogyaseva-hero-video,
   .hero-video {
     display: none !important;
   }

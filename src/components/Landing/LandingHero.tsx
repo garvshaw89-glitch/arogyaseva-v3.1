@@ -35,12 +35,12 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   currentState,
 }) => {
   return (
-    <section className="relative w-full min-h-[720px] lg:min-h-[820px] bg-gradient-to-b from-[#EDF4FA] via-[#F8FAFC] to-white flex flex-col items-center justify-center py-14 sm:py-18 lg:py-24 overflow-hidden border-b border-slate-200/80">
+    <section className="arogyaseva-hero relative w-full min-h-[720px] lg:min-h-[820px] flex flex-col items-center justify-center py-14 sm:py-18 lg:py-24 overflow-hidden border-b border-slate-200/80">
       {/* Background Video Layer with Graceful Fallback & Readability Protection */}
       <HeroBackgroundVideo />
 
-      {/* Perfectly Centered Hero Container via Flexbox */}
-      <div className="container-constrained relative z-10 w-full flex flex-col items-center justify-center text-center">
+      {/* Perfectly Centered Hero Container via Flexbox (z-index: 2 / z-10) */}
+      <div className="arogyaseva-hero-content container-constrained relative z-10 w-full flex flex-col items-center justify-center text-center">
         
         {/* Arogya Seva Logo Shifted Above Clinical Intelligence */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 select-none animate-float-slow">
