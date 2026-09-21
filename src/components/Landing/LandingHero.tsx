@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   ShieldCheck,
   ArrowRight,
@@ -34,6 +34,16 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   onOpenVideoModal,
   currentState,
 }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    // Initiate subtle staggered entrance transitions
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 40);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <section className="arogyaseva-hero relative w-full min-h-[720px] lg:min-h-[820px] flex flex-col items-center justify-center py-14 sm:py-18 lg:py-24 overflow-hidden border-b border-slate-200/80">
       {/* Background Video Layer with Graceful Fallback & Readability Protection */}
@@ -43,7 +53,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       <div className="arogyaseva-hero-content container-constrained relative z-10 w-full flex flex-col items-center justify-center text-center">
         
         {/* Arogya Seva Logo Shifted Above Clinical Intelligence */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 select-none animate-float-slow">
+        <div
+          className={`flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 select-none animate-float-slow hero-transition-item hero-delay-logo ${
+            isLoaded ? "hero-enter-active" : "hero-enter-initial"
+          }`}
+        >
           {/* Animated Heartbeat Clinical Icon Badge */}
           <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#0B2545] via-[#123B78] to-[#2563EB] flex items-center justify-center text-white shadow-xl shadow-blue-900/25 ring-2 ring-blue-100/90 group-hover:ring-[#06B6D4] transition-all">
             <span className="absolute inset-0 rounded-2xl bg-[#06B6D4] opacity-25 blur-md animate-pulse-subtle" />
@@ -63,8 +77,12 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           </div>
         </div>
 
-        {/* Big Headline (Increased font size for both mobile & desktop) */}
-        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[76px] font-black text-[#0F172A] tracking-tight leading-[1.08] max-w-4xl mx-auto mb-6">
+        {/* Big Headline (Increased font size for both mobile & desktop with high readability over video) */}
+        <h1
+          className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[76px] font-black text-[#0F172A] tracking-tight leading-[1.08] max-w-4xl mx-auto mb-6 hero-headline-contrast hero-transition-item hero-delay-headline ${
+            isLoaded ? "hero-enter-active" : "hero-enter-initial"
+          }`}
+        >
           Clinical Intelligence at the{" "}
           <span className="text-[#2563EB] relative inline-block">
             Point of Care.
@@ -79,18 +97,24 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         </h1>
 
         {/* Sub-headline / Description */}
-        <p className="text-base sm:text-lg md:text-xl text-[#475569] leading-relaxed max-w-3xl mx-auto mb-8 font-normal">
+        <p
+          className={`text-base sm:text-lg md:text-xl text-[#334155] leading-relaxed max-w-3xl mx-auto mb-8 font-normal hero-subheadline-contrast hero-transition-item hero-delay-subheadline ${
+            isLoaded ? "hero-enter-active" : "hero-enter-initial"
+          }`}
+        >
           ArogyaSeva is a production-grade clinical decision support and emergency referral network. 
           Empowering frontline ASHA health workers with autonomous 100% offline WHO IMCI protocols, 
           voice anamnesis across Indian languages, and automated SBAR clinical handover.
         </p>
 
-        {/* Primary & Secondary Action CTAs (Centered Flexbox) */}
+        {/* Primary & Secondary Action CTAs (Centered Flexbox with Individual Staggered Delays) */}
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto mb-9">
           <button
             type="button"
             onClick={onStartIntake}
-            className="glass-btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-sm font-bold text-white shadow-lg cursor-pointer group"
+            className={`glass-btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-sm font-bold text-white shadow-lg cursor-pointer group hero-transition-item hero-delay-cta-1 ${
+              isLoaded ? "hero-enter-active" : "hero-enter-initial"
+            }`}
           >
             <UserCheck className="w-5 h-5 text-[#06B6D4] group-hover:scale-110 transition-transform" />
             <span>Launch CHW Intake</span>
@@ -100,7 +124,9 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <button
             type="button"
             onClick={onOpenDoctorPortal}
-            className="glass-btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl text-sm font-bold text-[#123B78] border border-blue-200/90 hover:border-blue-400/80 shadow-md cursor-pointer group"
+            className={`glass-btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl text-sm font-bold text-[#123B78] border border-blue-200/90 hover:border-blue-400/80 shadow-md cursor-pointer group hero-transition-item hero-delay-cta-2 ${
+              isLoaded ? "hero-enter-active" : "hero-enter-initial"
+            }`}
           >
             <Stethoscope className="w-4 h-4 text-[#2563EB] group-hover:scale-110 transition-transform" />
             <span>Doctor Command Center</span>
@@ -109,7 +135,9 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <button
             type="button"
             onClick={onTriggerEmergencySos}
-            className="glass-btn-emergency w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-4 rounded-2xl text-sm font-extrabold text-white shadow-lg cursor-pointer group"
+            className={`glass-btn-emergency w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-4 rounded-2xl text-sm font-extrabold text-white shadow-lg cursor-pointer group hero-transition-item hero-delay-cta-3 ${
+              isLoaded ? "hero-enter-active" : "hero-enter-initial"
+            }`}
           >
             <PhoneCall className="w-4 h-4 animate-pulse" />
             <span>108 SOS Dispatch</span>
@@ -117,7 +145,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         </div>
 
         {/* Trust & Protocol Badges (Centered Glass Capsule Pills) */}
-        <div className="w-full max-w-4xl mx-auto pt-6 pb-2 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-bold text-slate-700 mb-12">
+        <div
+          className={`w-full max-w-4xl mx-auto pt-6 pb-2 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-bold text-slate-700 mb-12 hero-transition-item hero-delay-badges ${
+            isLoaded ? "hero-enter-active" : "hero-enter-initial"
+          }`}
+        >
           <div className="glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-2xs">
             <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
             <span>WHO IMCI Clinical Protocols</span>
@@ -137,7 +169,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         </div>
 
         {/* Centered Hero Visual: Live Clinical Intelligence Telemetry Mockup */}
-        <div className="relative w-full max-w-xl sm:max-w-2xl mx-auto">
+        <div
+          className={`relative w-full max-w-xl sm:max-w-2xl mx-auto hero-transition-item hero-delay-mockup ${
+            isLoaded ? "hero-enter-active" : "hero-enter-initial"
+          }`}
+        >
           {/* Subtle Ambient Backlight Frame */}
           <div className="absolute -inset-2 bg-gradient-to-r from-blue-600/15 via-cyan-500/20 to-blue-600/15 rounded-3xl blur-xl opacity-80 pointer-events-none" />
 
