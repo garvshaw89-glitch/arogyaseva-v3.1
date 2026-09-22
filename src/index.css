@@ -85,9 +85,23 @@
   --glass-border-hover: rgba(0, 194, 215, 0.35);
   --glass-border-active: rgba(0, 194, 215, 0.55);
 
-  --glass-blur-sm: 14px;
-  --glass-blur-md: 18px;
-  --glass-blur-lg: 28px;
+  /* Dynamic Glass Blur Tokens (Overridden by responsive media queries) */
+  --glass-blur-sm: 10px;
+  --glass-blur-md: 14px;
+  --glass-blur-lg: 20px;
+  --glass-blur-nav: 16px;
+
+  /* Safe Area Inset Tokens */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  /* Fluid Typography Clamps */
+  --fluid-h1: clamp(2.25rem, 5vw + 1rem, 4.75rem);
+  --fluid-h2: clamp(1.75rem, 3.5vw + 0.5rem, 2.75rem);
+  --fluid-h3: clamp(1.25rem, 2vw + 0.5rem, 1.75rem);
+  --fluid-body: clamp(0.875rem, 1vw + 0.5rem, 1.125rem);
 
   --glass-shadow-sm: 0 4px 16px -2px rgba(11, 31, 58, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --glass-shadow-md: 0 10px 30px rgba(11, 31, 58, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.95);
@@ -729,6 +743,110 @@ body {
     radial-gradient(at 85% 15%, rgba(22, 78, 120, 0.05) 0px, transparent 48%),
     radial-gradient(at 50% 88%, rgba(25, 230, 193, 0.04) 0px, transparent 55%),
     linear-gradient(180deg, #F4FAFC 0%, #E8F6FA 40%, #F4FAFC 100%);
+}
+
+/* Responsive Glassmorphism Scaling */
+@media (max-width: 639px) {
+  :root {
+    --glass-blur-sm: 8px;
+    --glass-blur-md: 12px;
+    --glass-blur-lg: 14px;
+    --glass-blur-nav: 12px;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  :root {
+    --glass-blur-sm: 12px;
+    --glass-blur-md: 16px;
+    --glass-blur-lg: 18px;
+    --glass-blur-nav: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --glass-blur-sm: 14px;
+    --glass-blur-md: 20px;
+    --glass-blur-lg: 24px;
+    --glass-blur-nav: 20px;
+  }
+}
+
+/* Fallback for browsers lacking backdrop-filter */
+@supports not (backdrop-filter: blur(10px)) {
+  .glass-card,
+  .glass-panel,
+  .glass-modal,
+  .glass-nav,
+  .glass-level-1,
+  .glass-level-2,
+  .glass-level-3,
+  .glass-level-4,
+  .glass-pill {
+    background-color: rgba(255, 255, 255, 0.96) !important;
+  }
+  .glass-command {
+    background-color: #0B1F3A !important;
+  }
+}
+
+/* Touch Ergonomics & Active States */
+button,
+a,
+input,
+select,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  .glass-btn-primary,
+  .glass-btn-secondary,
+  .glass-btn-accent,
+  .glass-btn-emergency {
+    min-height: 44px;
+  }
+}
+
+button:active,
+[role="button"]:active {
+  transform: scale(0.985);
+}
+
+/* Safe Area Inset Helpers */
+.pt-safe {
+  padding-top: max(16px, env(safe-area-inset-top, 0px));
+}
+
+.pb-safe {
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+}
+
+.pl-safe {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+}
+
+.pr-safe {
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+.bottom-safe {
+  bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Responsive Table Scroll Container */
+.table-responsive-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
 }
 
 @media (prefers-reduced-motion: reduce) {

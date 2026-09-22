@@ -120,29 +120,29 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   return (
     <div id="doctor-dashboard-view" className="space-y-6">
       {/* 1. Futuristic Regional Command Center Status Bar */}
-      <div className="glass-command text-white rounded-3xl p-5 border border-cyan-500/30 shadow-2xl flex flex-wrap items-center justify-between gap-4 relative overflow-hidden">
+      <div className="glass-command text-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 border border-cyan-500/30 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden">
         {/* Subtle Cyan Atmosphere */}
         <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="flex items-center gap-3 relative z-10">
-          <div className="w-11 h-11 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 flex items-center justify-center shadow-lg shadow-cyan-950/50 backdrop-blur-md">
+        <div className="flex items-center gap-3 relative z-10 min-w-0">
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 flex items-center justify-center shadow-lg shadow-cyan-950/50 backdrop-blur-md shrink-0">
             <Radio className="w-5 h-5 animate-pulse" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-500/40 backdrop-blur-xs">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-cyan-300 bg-cyan-950/80 px-2 py-0.5 rounded-full border border-cyan-500/40 backdrop-blur-xs truncate max-w-full">
                 {selectedState ? `${selectedState.shortCode} • ${selectedState.name.toUpperCase()}` : "DISTRICT CLINICAL COMMAND CENTER"}
               </span>
-              <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
+              <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono shrink-0">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
                 TELEMETRY LIVE
               </span>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-white mt-1">
+            <h3 className="text-sm sm:text-base lg:text-lg font-bold text-white mt-1 truncate">
               {selectedState?.hospital || "District Civil Hospital & Trauma Centre (Sector 1)"}
             </h3>
             {selectedState && (
-              <p className="text-xs text-slate-300 font-mono">
+              <p className="text-xs text-slate-300 font-mono truncate">
                 Attending: <span className="text-cyan-200 font-bold">{selectedState.doctor}</span> • Coverage: {selectedState.ashaUnit}
               </p>
             )}
@@ -150,19 +150,19 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         </div>
 
         {/* Live Resource Indicators */}
-        <div className="flex flex-wrap items-center gap-3 font-mono text-xs relative z-10">
-          <div className="bg-slate-900/80 border border-cyan-500/30 px-3.5 py-2 rounded-xl backdrop-blur-sm shadow-inner">
-            <span className="text-slate-400 text-[10px] block">ICU BEDS AVAILABLE</span>
-            <span className="text-cyan-300 font-bold text-sm">4 / 12 Free</span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3 font-mono text-xs relative z-10 w-full md:w-auto">
+          <div className="bg-slate-900/80 border border-cyan-500/30 px-3 py-2 rounded-xl backdrop-blur-sm shadow-inner">
+            <span className="text-slate-400 text-[9px] sm:text-[10px] block">ICU BEDS</span>
+            <span className="text-cyan-300 font-bold text-xs sm:text-sm">4 / 12 Free</span>
           </div>
-          <div className="bg-slate-900/80 border border-cyan-500/30 px-3.5 py-2 rounded-xl backdrop-blur-sm shadow-inner">
-            <span className="text-slate-400 text-[10px] block">OXYGEN PRESSURE</span>
-            <span className="text-emerald-400 font-bold text-sm">4.2 bar (Normal)</span>
+          <div className="bg-slate-900/80 border border-cyan-500/30 px-3 py-2 rounded-xl backdrop-blur-sm shadow-inner">
+            <span className="text-slate-400 text-[9px] sm:text-[10px] block">O2 PRESSURE</span>
+            <span className="text-emerald-400 font-bold text-xs sm:text-sm">4.2 bar</span>
           </div>
-          <div className="bg-slate-900/80 border border-cyan-500/30 px-3.5 py-2 rounded-xl backdrop-blur-sm shadow-inner">
-            <span className="text-slate-400 text-[10px] block">108 AMBULANCES</span>
-            <span className="text-amber-400 font-bold text-sm">
-              {activeVehicles.length > 0 ? `${activeVehicles.length} Live En-Route` : "2 Standby"}
+          <div className="bg-slate-900/80 border border-cyan-500/30 px-3 py-2 rounded-xl backdrop-blur-sm shadow-inner col-span-2 sm:col-span-1">
+            <span className="text-slate-400 text-[9px] sm:text-[10px] block">108 AMBULANCES</span>
+            <span className="text-amber-400 font-bold text-xs sm:text-sm truncate block">
+              {activeVehicles.length > 0 ? `${activeVehicles.length} Live Transit` : "2 Standby"}
             </span>
           </div>
         </div>
@@ -742,20 +742,20 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             </div>
 
             {/* Direct Doctor Instruction Transmission */}
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <button
                 onClick={() => {
                   playHapticSound("success");
                   handleDoctorAction("Clinical Order: Elevate head 45 deg, apply high-flow O2, prepare for transfer");
                   setShowTeleconsultModal(false);
                 }}
-                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 font-bold text-xs py-3 rounded-xl cursor-pointer"
+                className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 font-bold text-xs py-3 px-3 rounded-xl cursor-pointer min-h-[44px] flex items-center justify-center text-center"
               >
                 Transmit Direct Protocol: "Elevate head 45°, Apply O₂, Prepare Transfer"
               </button>
               <button
                 onClick={() => setShowTeleconsultModal(false)}
-                className="px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl cursor-pointer"
+                className="px-5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl cursor-pointer min-h-[44px] flex items-center justify-center"
               >
                 End Call
               </button>

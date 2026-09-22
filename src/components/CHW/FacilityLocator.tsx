@@ -376,7 +376,7 @@ export const FacilityLocator: React.FC<FacilityLocatorProps> = ({
             patientVillage={currentVillageText || patientData.village || "Current Location"}
             patientName={patientData.patientName || "Emergency Patient"}
             className="w-full"
-            heightClass={viewMode === "map" ? "h-[440px] sm:h-[550px] md:h-[620px]" : "h-[320px] sm:h-[420px] md:h-[480px]"}
+            heightClass={viewMode === "map" ? "h-[360px] sm:h-[500px] md:h-[600px]" : "h-[250px] sm:h-[360px] md:h-[440px]"}
             onRefreshGps={handleDetectRealTimeGeolocation}
             isLocating={isLocating}
             overpassSource={overpassInfo.source}

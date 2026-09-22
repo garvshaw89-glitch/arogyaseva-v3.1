@@ -211,8 +211,8 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           />
         )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        {/* Main Content Area with Safe Bottom Padding for Mobile Nav */}
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8">
           {activeTab === "cases" && (
             <div className="max-w-7xl mx-auto">
               <DoctorDashboard
@@ -313,6 +313,50 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           )}
         </main>
       </div>
+
+      {/* =========================================================
+          Section 34: Mobile Bottom Navigation Bar (Doctor Station)
+          ========================================================= */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(11,31,58,0.08)] px-2 py-1.5 safe-area-bottom flex items-center justify-around"
+        aria-label="Doctor Mobile Navigation"
+      >
+        {[
+          { id: "cases", label: "Queue", icon: Users, count: cases.length },
+          { id: "dashboard", label: "Census", icon: LayoutDashboard },
+          { id: "beds", label: "Beds", icon: BedDouble },
+          { id: "emergency", label: "108 SOS", icon: PhoneCall, isEmergency: true },
+        ].map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => setActiveTab(item.id as any)}
+              className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-[10px] font-bold transition-all min-h-[46px] cursor-pointer relative ${
+                item.isEmergency
+                  ? isActive
+                    ? "text-red-700 bg-red-50"
+                    : "text-red-600 hover:bg-red-50/60"
+                  : isActive
+                  ? "text-[#00C2D7] bg-[#E8F6FA]/80 font-black"
+                  : "text-[#527086] hover:text-[#0B1F3A]"
+              }`}
+            >
+              <div className="relative">
+                <Icon className={`w-5 h-5 ${item.isEmergency && "animate-pulse"}`} />
+                {item.count !== undefined && item.count > 0 && (
+                  <span className="absolute -top-1 -right-2 w-4 h-4 rounded-full bg-[#123B63] text-white text-[9px] font-mono font-bold flex items-center justify-center">
+                    {item.count}
+                  </span>
+                )}
+              </div>
+              <span className="mt-0.5 whitespace-nowrap">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 };

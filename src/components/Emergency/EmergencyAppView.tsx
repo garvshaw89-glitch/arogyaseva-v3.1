@@ -53,48 +53,51 @@ export const EmergencyAppView: React.FC<EmergencyAppViewProps> = ({
   return (
     <div className="min-h-screen bg-[#F8FAFC] bg-glass-atmosphere flex flex-col font-sans">
       {/* Emergency Header - Clinical Glass Navbar */}
-      <header className="sticky top-0 z-30 h-16 bg-gradient-to-r from-[#0F2347] via-[#123B78] to-[#1E40AF] text-white px-4 sm:px-6 flex items-center justify-between shadow-lg border-b border-white/15 backdrop-blur-xl">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-30 min-h-16 py-2 bg-gradient-to-r from-[#0F2347] via-[#123B78] to-[#1E40AF] text-white px-3 sm:px-6 flex items-center justify-between shadow-lg border-b border-white/15 backdrop-blur-xl gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             onClick={onNavigateHome}
-            className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors cursor-pointer"
+            className="p-2 rounded-xl hover:bg-white/10 text-white transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
             title="Back to home"
+            aria-label="Back to home"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold shadow-md shadow-red-900/30 ring-1 ring-white/30">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-red-600 flex items-center justify-center text-white font-bold shadow-md shadow-red-900/30 ring-1 ring-white/30 shrink-0">
               <PhoneCall className="w-4 h-4 animate-pulse" />
             </div>
-            <div>
-              <div className="text-sm font-extrabold tracking-tight leading-tight flex items-center gap-2">
-                <span>National 108 Emergency Response Control</span>
-                <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-red-500/30 text-white font-bold border border-red-400/40">
+            <div className="min-w-0">
+              <div className="text-xs sm:text-sm font-extrabold tracking-tight leading-tight flex items-center gap-1.5 sm:gap-2 truncate">
+                <span className="truncate">108 Emergency Response</span>
+                <span className="text-[9px] sm:text-[10px] font-mono px-1.5 sm:px-2 py-0.2 rounded-full bg-red-500/30 text-white font-bold border border-red-400/40 shrink-0">
                   LIVE SOS
                 </span>
               </div>
-              <div className="text-[10px] text-cyan-200 font-mono">
+              <div className="text-[10px] text-cyan-200 font-mono truncate">
                 State EMRS • {currentState.name}
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           <button
             type="button"
             onClick={onNavigateCHW}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-xs transition-colors cursor-pointer"
+            className="text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-xs transition-colors cursor-pointer min-h-[38px] flex items-center"
           >
-            CHW Workstation
+            <span className="hidden sm:inline">CHW Workstation</span>
+            <span className="sm:hidden">CHW</span>
           </button>
           <button
             type="button"
             onClick={onNavigateDoctor}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-xs transition-colors cursor-pointer"
+            className="text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-xs transition-colors cursor-pointer min-h-[38px] flex items-center"
           >
-            Doctor Command
+            <span className="hidden sm:inline">Doctor Command</span>
+            <span className="sm:hidden">Doctor</span>
           </button>
         </div>
       </header>

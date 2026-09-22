@@ -429,28 +429,28 @@ export const CHWAppView: React.FC<CHWAppViewProps> = ({
           />
         )}
 
-        {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 text-left">
+        {/* Main Content Area with Bottom Bar Offset on Mobile */}
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8 text-left pb-24 lg:pb-8">
           {/* =========================================================
               VIEW 1: Dashboard Overview
               ========================================================= */}
           {activeTab === "dashboard" && (
             <div className="max-w-6xl mx-auto space-y-6">
               {/* Welcome Section */}
-              <div className="glass-level-2 rounded-2xl border border-white/90 p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="glass-level-2 rounded-2xl border border-white/90 p-4 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                  <h1 className="text-xl sm:text-2xl font-black text-[#0F172A]">
+                  <h1 className="text-lg sm:text-2xl font-black text-[#0F172A]">
                     Namaste, {currentState.ashaWorker}
                   </h1>
                   <p className="text-xs text-slate-500 mt-1">
                     Frontline Community Health Command • {currentState.name} ({currentState.zone})
                   </p>
                 </div>
-                <div className="flex items-center gap-3 w-full md:w-auto">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full md:w-auto">
                   <button
                     type="button"
                     onClick={handleNewIntake}
-                    className="glass-btn-primary w-full md:w-auto px-4 py-2.5 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                    className="glass-btn-primary w-full sm:w-auto px-4 py-2.5 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer min-h-[44px]"
                   >
                     <UserPlus className="w-4 h-4 text-[#06B6D4]" />
                     <span>Start Patient Intake</span>
@@ -458,7 +458,7 @@ export const CHWAppView: React.FC<CHWAppViewProps> = ({
                   <button
                     type="button"
                     onClick={onTriggerEmergencySos}
-                    className="glass-btn-emergency w-full md:w-auto px-4 py-2.5 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer"
+                    className="glass-btn-emergency w-full sm:w-auto px-4 py-2.5 rounded-xl text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md cursor-pointer min-h-[44px]"
                   >
                     <PhoneCall className="w-4 h-4" />
                     <span>108 SOS</span>
@@ -866,6 +866,55 @@ export const CHWAppView: React.FC<CHWAppViewProps> = ({
           )}
         </main>
       </div>
+
+      {/* =========================================================
+          Section 34: Mobile Bottom Navigation Bar (CHW Workstation)
+          Quick access on mobile/tablets without requiring drawer toggle
+          ========================================================= */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(11,31,58,0.08)] px-2 py-1.5 safe-area-bottom flex items-center justify-around"
+        aria-label="Mobile Bottom Navigation"
+      >
+        {[
+          { id: "dashboard", label: "Overview", icon: LayoutDashboard },
+          { id: "intake", label: "Intake", icon: UserPlus },
+          { id: "triage", label: "Triage", icon: HeartPulse },
+          { id: "patients", label: "Cases", icon: Users, count: cases.length },
+          { id: "emergency", label: "108 SOS", icon: PhoneCall, isEmergency: true },
+        ].map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                playHapticSound("step");
+                setActiveTab(item.id as CHWTab);
+              }}
+              className={`flex flex-col items-center justify-center flex-1 py-1 px-1 rounded-xl text-[10px] font-bold transition-all min-h-[46px] cursor-pointer relative ${
+                item.isEmergency
+                  ? isActive
+                    ? "text-red-700 bg-red-50"
+                    : "text-red-600 hover:bg-red-50/60"
+                  : isActive
+                  ? "text-[#00C2D7] bg-[#E8F6FA]/80 font-black"
+                  : "text-[#527086] hover:text-[#0B1F3A]"
+              }`}
+            >
+              <div className="relative">
+                <Icon className={`w-5 h-5 ${item.isEmergency && "animate-pulse"}`} />
+                {item.count !== undefined && item.count > 0 && (
+                  <span className="absolute -top-1 -right-2 w-4 h-4 rounded-full bg-[#123B63] text-white text-[9px] font-mono font-bold flex items-center justify-center">
+                    {item.count}
+                  </span>
+                )}
+              </div>
+              <span className="mt-0.5 whitespace-nowrap">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 };

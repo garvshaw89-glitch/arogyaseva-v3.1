@@ -79,7 +79,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
         {/* Big Headline (Section 6: Main heading #0B1F3A, highlight words #00AFC4 / #00C2D7) */}
         <h1
-          className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[76px] font-black text-[#0B1F3A] tracking-tight leading-[1.08] max-w-4xl mx-auto mb-6 hero-headline-contrast hero-transition-item hero-delay-headline ${
+          style={{ fontSize: "clamp(2.15rem, 5vw + 0.75rem, 4.75rem)" }}
+          className={`font-black text-[#0B1F3A] tracking-tight leading-[1.08] max-w-4xl mx-auto mb-5 sm:mb-6 hero-headline-contrast hero-transition-item hero-delay-headline px-1 ${
             isLoaded ? "hero-enter-active" : "hero-enter-initial"
           }`}
         >
@@ -87,7 +88,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <span className="text-[#00AFC4] relative inline-block">
             Point of Care.
             <svg
-              className="absolute -bottom-2 left-0 w-full h-3 text-[#00C2D7]/60"
+              className="absolute -bottom-2 left-0 w-full h-2.5 sm:h-3 text-[#00C2D7]/60"
               viewBox="0 0 100 20"
               preserveAspectRatio="none"
             >
@@ -98,7 +99,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
         {/* Sub-headline / Description (Section 6: Body text #527086) */}
         <p
-          className={`text-base sm:text-lg md:text-xl text-[#527086] leading-relaxed max-w-3xl mx-auto mb-8 font-normal hero-subheadline-contrast hero-transition-item hero-delay-subheadline ${
+          className={`text-sm sm:text-base md:text-lg lg:text-xl text-[#527086] leading-relaxed max-w-3xl mx-auto mb-7 sm:mb-8 font-normal hero-subheadline-contrast hero-transition-item hero-delay-subheadline px-2 sm:px-0 ${
             isLoaded ? "hero-enter-active" : "hero-enter-initial"
           }`}
         >
@@ -108,11 +109,11 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
         </p>
 
         {/* Primary & Secondary Action CTAs (Centered Flexbox with Individual Staggered Delays) */}
-        <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto mb-9">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto mb-8 sm:mb-9 px-3 sm:px-0">
           <button
             type="button"
             onClick={onStartIntake}
-            className={`glass-btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-2xl text-sm font-bold text-white shadow-lg cursor-pointer group hero-transition-item hero-delay-cta-1 ${
+            className={`glass-btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 sm:px-7 py-3.5 sm:py-4 rounded-2xl text-sm font-bold text-white shadow-lg cursor-pointer group min-h-[48px] hero-transition-item hero-delay-cta-1 ${
               isLoaded ? "hero-enter-active" : "hero-enter-initial"
             }`}
           >
@@ -124,7 +125,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <button
             type="button"
             onClick={onOpenDoctorPortal}
-            className={`glass-btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-2xl text-sm font-bold text-[#0B1F3A] shadow-md cursor-pointer group hero-transition-item hero-delay-cta-2 ${
+            className={`glass-btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 sm:px-6 py-3.5 sm:py-4 rounded-2xl text-sm font-bold text-[#0B1F3A] shadow-md cursor-pointer group min-h-[48px] hero-transition-item hero-delay-cta-2 ${
               isLoaded ? "hero-enter-active" : "hero-enter-initial"
             }`}
           >
@@ -135,7 +136,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           <button
             type="button"
             onClick={onTriggerEmergencySos}
-            className={`glass-btn-emergency w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 py-4 rounded-2xl text-sm font-extrabold text-white shadow-lg cursor-pointer group hero-transition-item hero-delay-cta-3 ${
+            className={`glass-btn-emergency w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 sm:px-6 py-3.5 sm:py-4 rounded-2xl text-sm font-extrabold text-white shadow-lg cursor-pointer group min-h-[48px] hero-transition-item hero-delay-cta-3 ${
               isLoaded ? "hero-enter-active" : "hero-enter-initial"
             }`}
           >
@@ -146,7 +147,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
         {/* Trust & Protocol Badges (Centered Glass Capsule Pills) */}
         <div
-          className={`w-full max-w-4xl mx-auto pt-6 pb-2 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs font-bold text-[#527086] mb-12 hero-transition-item hero-delay-badges ${
+          className={`w-full max-w-4xl mx-auto pt-4 sm:pt-6 pb-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs font-bold text-[#527086] mb-8 sm:mb-12 hero-transition-item hero-delay-badges px-2 ${
             isLoaded ? "hero-enter-active" : "hero-enter-initial"
           }`}
         >
@@ -170,84 +171,84 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
         {/* Centered Hero Visual: Live Clinical Intelligence Telemetry Mockup */}
         <div
-          className={`relative w-full max-w-xl sm:max-w-2xl mx-auto hero-transition-item hero-delay-mockup ${
+          className={`relative w-full max-w-xl sm:max-w-2xl mx-auto hero-transition-item hero-delay-mockup px-1 sm:px-0 ${
             isLoaded ? "hero-enter-active" : "hero-enter-initial"
           }`}
         >
           {/* Subtle Ambient Backlight Frame */}
           <div className="absolute -inset-2 bg-gradient-to-r from-[#00C2D7]/15 via-[#19E6C1]/15 to-[#164E78]/15 rounded-3xl blur-xl opacity-80 pointer-events-none" />
 
-          <div className="glass-panel relative rounded-2xl border border-white/90 shadow-2xl overflow-hidden text-left">
+          <div className="glass-panel relative rounded-2xl sm:rounded-3xl border border-white/90 shadow-2xl overflow-hidden text-left">
             {/* Telemetry Header */}
-            <div className="bg-gradient-to-r from-[#0B1F3A] via-[#123B63] to-[#164E78] text-white px-5 sm:px-6 py-4 flex items-center justify-between border-b border-white/20">
+            <div className="bg-gradient-to-r from-[#0B1F3A] via-[#123B63] to-[#164E78] text-white px-3.5 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-white/20">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#00C2D7] animate-pulse" />
-                <span className="text-xs font-bold tracking-wide uppercase font-mono">
+                <span className="text-[11px] sm:text-xs font-bold tracking-wide uppercase font-mono">
                   Point-of-Care Clinical Intake
                 </span>
               </div>
-              <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-white/15 text-[#22D3EE] border border-white/20 backdrop-blur-xs">
+              <span className="text-[10px] sm:text-[11px] font-mono px-2 sm:px-2.5 py-0.5 rounded-full bg-white/15 text-[#22D3EE] border border-white/20 backdrop-blur-xs truncate max-w-[120px] sm:max-w-none">
                 {currentState.name} Sub-Center
               </span>
             </div>
 
             {/* Patient Case Snapshot */}
-            <div className="p-5 sm:p-6 space-y-4 text-xs bg-white/78 backdrop-blur-md">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-sm sm:text-base font-bold text-[#0A172A]">
+            <div className="p-3.5 sm:p-5 lg:p-6 space-y-3 sm:space-y-4 text-xs bg-white/78 backdrop-blur-md">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <div className="text-xs sm:text-base font-bold text-[#0A172A] truncate">
                     Sunita Patil, 29Y Female
                   </div>
-                  <div className="text-[#527086] text-xs mt-0.5">
+                  <div className="text-[#527086] text-[11px] sm:text-xs mt-0.5 truncate">
                     {currentState.defaultVillage} • Frontline ASHA: {currentState.ashaWorker}
                   </div>
                 </div>
-                <span className="glass-badge-amber inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold shadow-2xs">
-                  <AlertTriangle className="w-3.5 h-3.5 text-[#F59E0B]" />
+                <span className="glass-badge-amber inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold shadow-2xs shrink-0">
+                  <AlertTriangle className="w-3 sm:w-3.5 h-3 sm:h-3.5 text-[#F59E0B]" />
                   <span>CONSULTATION</span>
                 </span>
               </div>
 
               {/* Vitals Telemetry Grid */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-white/90 border border-[rgba(11,31,58,0.08)] shadow-2xs flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-[#527086]">SpO2 Saturation</span>
-                  <span className="text-base sm:text-lg font-extrabold text-[#0B1F3A] font-mono">94%</span>
-                  <span className="text-[10px] text-[#F59E0B] font-semibold">Borderline</span>
+              <div className="grid grid-cols-3 gap-1.5 xs:gap-2 sm:gap-3">
+                <div className="p-2 sm:p-3 rounded-xl bg-white/90 border border-[rgba(11,31,58,0.08)] shadow-2xs flex flex-col justify-between">
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#527086] truncate">SpO2 Saturation</span>
+                  <span className="text-xs xs:text-sm sm:text-lg font-extrabold text-[#0B1F3A] font-mono my-0.5">94%</span>
+                  <span className="text-[9px] sm:text-[10px] text-[#F59E0B] font-semibold truncate">Borderline</span>
                 </div>
-                <div className="p-3 rounded-xl bg-white/90 border border-[rgba(11,31,58,0.08)] shadow-2xs flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-[#527086]">Pulse Rate</span>
-                  <span className="text-base sm:text-lg font-extrabold text-[#0B1F3A] font-mono">102 bpm</span>
-                  <span className="text-[10px] text-[#F59E0B] font-semibold">Tachycardia</span>
+                <div className="p-2 sm:p-3 rounded-xl bg-white/90 border border-[rgba(11,31,58,0.08)] shadow-2xs flex flex-col justify-between">
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#527086] truncate">Pulse Rate</span>
+                  <span className="text-xs xs:text-sm sm:text-lg font-extrabold text-[#0B1F3A] font-mono my-0.5">102 bpm</span>
+                  <span className="text-[9px] sm:text-[10px] text-[#F59E0B] font-semibold truncate">Tachycardia</span>
                 </div>
-                <div className="p-3 rounded-xl bg-white/90 border border-[rgba(11,31,58,0.08)] shadow-2xs flex flex-col">
-                  <span className="text-[10px] uppercase font-bold text-[#527086]">BP Diastolic</span>
-                  <span className="text-base sm:text-lg font-extrabold text-[#0B1F3A] font-mono">142/92</span>
-                  <span className="text-[10px] text-[#F59E0B] font-semibold">Stage 1 HTN</span>
+                <div className="p-2 sm:p-3 rounded-xl bg-white/90 border border-[rgba(11,31,58,0.08)] shadow-2xs flex flex-col justify-between">
+                  <span className="text-[9px] sm:text-[10px] uppercase font-bold text-[#527086] truncate">BP Diastolic</span>
+                  <span className="text-xs xs:text-sm sm:text-lg font-extrabold text-[#0B1F3A] font-mono my-0.5">142/92</span>
+                  <span className="text-[9px] sm:text-[10px] text-[#F59E0B] font-semibold truncate">Stage 1 HTN</span>
                 </div>
               </div>
 
               {/* SBAR Live Assessment Card - Clinical Glass */}
-              <div className="p-3.5 sm:p-4 rounded-xl bg-[#E8F6FA] border border-[rgba(0,194,215,0.25)] backdrop-blur-xs shadow-2xs">
+              <div className="p-3 sm:p-4 rounded-xl bg-[#E8F6FA] border border-[rgba(0,194,215,0.25)] backdrop-blur-xs shadow-2xs">
                 <div className="flex items-center gap-1.5 text-[#0B1F3A] font-bold text-xs mb-1">
                   <FileText className="w-4 h-4 text-[#00C2D7]" />
                   <span>WHO IMCI Clinical Impression</span>
                 </div>
-                <p className="text-xs text-[#527086] leading-relaxed">
+                <p className="text-[11px] sm:text-xs text-[#527086] leading-relaxed">
                   Persistent maternal fever (3 days) with tachycardia and elevated blood pressure. Recommended priority telemedicine consult or sub-district referral.
                 </p>
               </div>
 
               {/* Recommended Referral Routing */}
-              <div className="pt-3 flex items-center justify-between border-t border-[rgba(11,31,58,0.08)]">
-                <div className="flex items-center gap-1.5 text-xs text-[#527086]">
-                  <Activity className="w-4 h-4 text-[#19E6C1]" />
-                  <span>Nearest: <strong className="text-[#0B1F3A]">Sub-District Hospital</strong> (4.2 km • 14 min)</span>
+              <div className="pt-2.5 sm:pt-3 flex flex-col xs:flex-row xs:items-center justify-between border-t border-[rgba(11,31,58,0.08)] gap-2">
+                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-[#527086] truncate">
+                  <Activity className="w-4 h-4 text-[#19E6C1] shrink-0" />
+                  <span className="truncate">Nearest: <strong className="text-[#0B1F3A]">Sub-District Hospital</strong> (4.2 km • 14 min)</span>
                 </div>
                 <button
                   type="button"
                   onClick={onStartIntake}
-                  className="text-xs font-bold text-[#00C2D7] hover:text-[#0B1F3A] flex items-center gap-1 cursor-pointer transition-colors group"
+                  className="text-xs font-bold text-[#00C2D7] hover:text-[#0B1F3A] flex items-center gap-1 cursor-pointer transition-colors group shrink-0 self-end xs:self-auto"
                 >
                   <span>Test Protocol</span>
                   <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
@@ -257,8 +258,8 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           </div>
 
           {/* Floating Micro-Badge - Elevated Glass Surface */}
-          <div className="absolute -bottom-4 -left-4 sm:-left-6 glass-level-3 px-4 py-2.5 rounded-2xl shadow-xl border border-white/90 hidden sm:flex items-center gap-2.5 z-20">
-            <div className="w-8 h-8 rounded-xl bg-[#DDFBF5] border border-[rgba(25,230,193,0.3)] flex items-center justify-center text-[#065F53] shadow-2xs">
+          <div className="absolute -bottom-3 left-2 sm:-left-4 lg:-left-6 glass-level-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xl border border-white/90 hidden sm:flex items-center gap-2.5 z-20">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#DDFBF5] border border-[rgba(25,230,193,0.3)] flex items-center justify-center text-[#065F53] shadow-2xs shrink-0">
               <CheckCircle2 className="w-4 h-4 text-[#19E6C1]" />
             </div>
             <div className="text-left">

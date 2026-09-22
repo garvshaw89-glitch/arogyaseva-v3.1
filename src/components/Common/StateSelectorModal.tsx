@@ -63,21 +63,21 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
         <div className="absolute top-0 right-0 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40 backdrop-blur-md relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 ring-1 ring-white/20">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40 backdrop-blur-md relative z-10 gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20 ring-1 ring-white/20 shrink-0">
               <Compass className="w-5 h-5 text-cyan-200 animate-spin" style={{ animationDuration: "12s" }} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-black tracking-tight text-white font-mono">
-                  SELECT INDIAN STATE & REGIONAL SYSTEM
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm sm:text-base lg:text-lg font-black tracking-tight text-white font-mono truncate">
+                  INDIAN STATE & REGION
                 </h2>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 font-mono shadow-xs">
+                <span className="text-[9px] sm:text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-cyan-950/90 text-cyan-300 border border-cyan-500/40 font-mono shadow-xs shrink-0">
                   36 States & UTs
                 </span>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 line-clamp-1">
                 Switches the regional ASHA health worker, referral hospital network, and default triage coordinates.
               </p>
             </div>
@@ -87,7 +87,7 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
               playHapticSound("click");
               onClose();
             }}
-            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
@@ -95,7 +95,7 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
         </div>
 
         {/* Search & Zone Filter Bar */}
-        <div className="px-6 py-4 border-b border-slate-800/80 bg-slate-950/40 space-y-3">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-800/80 bg-slate-950/40 space-y-2.5">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
@@ -103,8 +103,8 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
               id="state-search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by state (e.g. Mumbai, Maharashtra, Delhi, Bengaluru, Gujarat, Kolkata)..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
+              placeholder="Search by state (e.g. Mumbai, Delhi, Bengaluru, Gujarat)..."
+              className="w-full pl-10 pr-4 py-2 sm:py-2.5 rounded-xl bg-slate-900/90 border border-slate-700/80 text-xs sm:text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
               autoFocus
             />
             {searchQuery && (
@@ -126,7 +126,7 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
                   playHapticSound("click");
                   setSelectedZone(zone);
                 }}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer min-h-[34px] flex items-center shrink-0 ${
                   selectedZone === zone
                     ? "bg-cyan-600 text-white shadow-xs font-bold"
                     : "bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800 border border-slate-800"
@@ -232,10 +232,10 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
         </div>
 
         {/* Footer info note */}
-        <div className="px-6 py-3.5 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between text-xs text-slate-400">
+        <div className="px-4 sm:px-6 py-3 border-t border-slate-800 bg-slate-900/60 flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs text-slate-400 gap-2.5">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
-            <span>
+            <span className="text-[11px] sm:text-xs">
               Selecting a state dynamically re-assigns the ASHA health circle, referral tertiary hospital, and regional clinical triage profile.
             </span>
           </div>
@@ -244,7 +244,7 @@ export const StateSelectorModal: React.FC<StateSelectorModalProps> = ({
               playHapticSound("click");
               onClose();
             }}
-            className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs cursor-pointer transition-colors"
+            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs cursor-pointer transition-colors min-h-[40px] flex items-center justify-center shrink-0 self-end sm:self-auto"
           >
             Done
           </button>
