@@ -108,40 +108,46 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
           voice anamnesis across Indian languages, and automated SBAR clinical handover.
         </p>
 
-        {/* Primary & Secondary Action CTAs (Centered Flexbox with Individual Staggered Delays) */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto mb-8 sm:mb-9 px-3 sm:px-0">
+        {/* Primary & Secondary Action CTAs (Using outer-cont glowing conic gradient button design) */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mb-8 sm:mb-9 px-3 sm:px-0">
           <button
             type="button"
             onClick={onStartIntake}
-            className={`glass-btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 sm:px-7 py-3.5 sm:py-4 rounded-2xl text-sm font-bold text-white shadow-lg cursor-pointer group min-h-[48px] hero-transition-item hero-delay-cta-1 ${
+            className={`outer-cont hero-transition-item hero-delay-cta-1 ${
               isLoaded ? "hero-enter-active" : "hero-enter-initial"
             }`}
           >
-            <UserCheck className="w-5 h-5 text-[#00C2D7] group-hover:scale-110 transition-transform" />
-            <span>Launch CHW Intake</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            <div className="flex">
+              <UserCheck className="w-5 h-5 text-[#5bfcc4]" />
+              <span className="font-bold">Launch CHW Intake</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
+            </div>
           </button>
 
           <button
             type="button"
             onClick={onOpenDoctorPortal}
-            className={`glass-btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 sm:px-6 py-3.5 sm:py-4 rounded-2xl text-sm font-bold text-[#0B1F3A] shadow-md cursor-pointer group min-h-[48px] hero-transition-item hero-delay-cta-2 ${
+            className={`outer-cont hero-transition-item hero-delay-cta-2 ${
               isLoaded ? "hero-enter-active" : "hero-enter-initial"
             }`}
           >
-            <Stethoscope className="w-4 h-4 text-[#164E78] group-hover:scale-110 transition-transform" />
-            <span>Doctor Command Center</span>
+            <div className="flex">
+              <Stethoscope className="w-5 h-5 text-[#71a4f0]" />
+              <span className="font-bold">Doctor Command Center</span>
+            </div>
           </button>
 
           <button
             type="button"
             onClick={onTriggerEmergencySos}
-            className={`glass-btn-emergency w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 sm:px-6 py-3.5 sm:py-4 rounded-2xl text-sm font-extrabold text-white shadow-lg cursor-pointer group min-h-[48px] hero-transition-item hero-delay-cta-3 ${
+            className={`outer-cont outer-cont-sos hero-transition-item hero-delay-cta-3 ${
               isLoaded ? "hero-enter-active" : "hero-enter-initial"
             }`}
           >
-            <PhoneCall className="w-4 h-4 animate-pulse" />
-            <span>108 SOS Dispatch</span>
+            <div className="flex">
+              <PhoneCall className="w-5 h-5 text-[#ff5e62] animate-pulse" />
+              <span className="font-bold">108 SOS Dispatch</span>
+            </div>
           </button>
         </div>
 

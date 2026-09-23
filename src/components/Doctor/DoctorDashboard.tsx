@@ -31,12 +31,14 @@ import {
   Gauge,
   Zap,
   FileText,
+  TrendingUp,
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
 import { clientRuleBasedTriage } from "../../utils/triageSignal";
 import { CaseAttachmentsManager } from "../Common/CaseAttachmentsManager";
 import { DiagnosticConfidenceIndicator } from "./DiagnosticConfidenceIndicator";
+import { RegionalTriageHistogram } from "./RegionalTriageHistogram";
 
 interface DoctorDashboardProps {
   cases: PatientCase[];
@@ -64,6 +66,7 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [showTeleconsultModal, setShowTeleconsultModal] = useState(false);
   const [teleconsultStatus, setTeleconsultStatus] = useState<"connecting" | "active" | "ended">("connecting");
   const [activeVehicles, setActiveVehicles] = useState<any[]>([]);
+  const [showOutbreakHistogram, setShowOutbreakHistogram] = useState(false);
 
   // Poll live ambulance & fleet telemetry
   useEffect(() => {
@@ -281,6 +284,66 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Outbreak Surveillance & Triage Score Distribution Toggle Bar */}
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-white/95 border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-700 to-indigo-600 text-white flex items-center justify-center shadow-xs">
+            <TrendingUp className="w-4 h-4 text-cyan-300" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-slate-900 tracking-tight">
+                Epidemiological Surveillance & Score Distribution
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.2 rounded-full bg-blue-100 text-blue-800 font-bold border border-blue-200">
+                D3 HISTOGRAM
+              </span>
+              {urgentCount > 0 && (
+                <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-red-100 text-red-700 font-bold border border-red-200 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                  {urgentCount} Critical Alert{urgentCount > 1 ? "s" : ""}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Interactive D3 frequency distribution & probability curve to detect localized fever, respiratory or diarrheal clusters
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => {
+            playHapticSound("click");
+            setShowOutbreakHistogram(!showOutbreakHistogram);
+          }}
+          className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-2xs cursor-pointer ${
+            showOutbreakHistogram
+              ? "bg-slate-800 text-white hover:bg-slate-900"
+              : "bg-blue-600 hover:bg-blue-700 text-white"
+          }`}
+        >
+          <TrendingUp className="w-3.5 h-3.5 text-cyan-300" />
+          <span>{showOutbreakHistogram ? "Collapse Surveillance Chart" : "Analyze Outbreak Histogram (D3)"}</span>
+        </button>
+      </div>
+
+      {/* Collapsible Regional Triage Histogram Component */}
+      {showOutbreakHistogram && (
+        <div className="animate-in fade-in duration-300">
+          <RegionalTriageHistogram
+            cases={cases}
+            onSelectCase={(caseItem) => {
+              setSelectedCaseId(caseItem.id);
+              // Scroll smoothly to case detail view
+              const detailEl = document.getElementById("doctor-case-details-panel");
+              if (detailEl) {
+                detailEl.scrollIntoView({ behavior: "smooth" });
+              }
+            }}
+          />
+        </div>
+      )}
 
       {/* Main Two-Column Triage Console */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">

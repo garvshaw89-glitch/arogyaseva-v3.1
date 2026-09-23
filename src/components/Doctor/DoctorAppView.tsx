@@ -21,8 +21,11 @@ import {
   X,
   FileText,
   Settings,
+  TrendingUp,
+  Activity,
 } from "lucide-react";
 import { RealtimeStatusBar } from "../Realtime/RealtimeStatusBar";
+import { RegionalTriageHistogram } from "./RegionalTriageHistogram";
 
 interface DoctorAppViewProps {
   cases: PatientCase[];
@@ -54,7 +57,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
   onOpenNotificationsDrawer,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"dashboard" | "cases" | "beds" | "emergency">("cases");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "cases" | "outbreak" | "beds" | "emergency">("cases");
 
   const criticalCases = cases.filter((c) => c.riskLevel === "URGENT");
   const consultationCases = cases.filter((c) => c.riskLevel === "CONSULTATION");
@@ -157,6 +160,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
             <nav className="space-y-1 text-left">
               {[
                 { id: "cases", label: "Incoming Case Queue", icon: Users, count: cases.length },
+                { id: "outbreak", label: "Outbreak Surveillance", icon: TrendingUp, alert: criticalCases.length > 0 },
                 { id: "dashboard", label: "Hospital Overview", icon: LayoutDashboard },
                 { id: "beds", label: "Bed Availability", icon: BedDouble },
                 { id: "emergency", label: "108 Ambulance Dispatch", icon: PhoneCall, alert: true },
@@ -226,12 +230,63 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
             </div>
           )}
 
+          {activeTab === "outbreak" && (
+            <div className="max-w-7xl mx-auto space-y-6 text-left">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+                    <span>Regional Epidemiological Outbreak Surveillance</span>
+                    <span className="text-[10px] font-mono font-bold bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full border border-blue-200">
+                      IDSP TELEMETRY
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Integrated Disease Surveillance Programme (IDSP) • District Civil Hospital, {selectedState.name}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setActiveTab("cases")}
+                    className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-2xs cursor-pointer"
+                  >
+                    Back to Case Queue
+                  </button>
+                  <button
+                    onClick={onRefresh}
+                    className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white shadow-2xs cursor-pointer flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Refresh Telemetry</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* D3 Histogram Visualization */}
+              <RegionalTriageHistogram
+                cases={cases}
+                onSelectCase={() => {
+                  setActiveTab("cases");
+                }}
+              />
+            </div>
+          )}
+
           {activeTab === "dashboard" && (
-            <div className="max-w-5xl mx-auto space-y-6 text-left">
+            <div className="max-w-6xl mx-auto space-y-6 text-left">
               <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-xs">
-                <h2 className="text-xl font-bold text-[#0F172A] mb-4">
-                  Hospital Triage Metrics & Bed Census
-                </h2>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                  <h2 className="text-xl font-bold text-[#0F172A]">
+                    Hospital Triage Metrics & Bed Census
+                  </h2>
+                  <button
+                    onClick={() => setActiveTab("outbreak")}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Open Outbreak Analytics</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-4 rounded-xl bg-red-50 border border-red-200">
                     <div className="text-xs text-red-700 font-bold uppercase">Critical Queue</div>
@@ -256,6 +311,14 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
                   </div>
                 </div>
               </div>
+
+              {/* Embedded D3 Regional Triage Histogram */}
+              <RegionalTriageHistogram
+                cases={cases}
+                onSelectCase={() => {
+                  setActiveTab("cases");
+                }}
+              />
             </div>
           )}
 
@@ -323,6 +386,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
       >
         {[
           { id: "cases", label: "Queue", icon: Users, count: cases.length },
+          { id: "outbreak", label: "Surveillance", icon: TrendingUp },
           { id: "dashboard", label: "Census", icon: LayoutDashboard },
           { id: "beds", label: "Beds", icon: BedDouble },
           { id: "emergency", label: "108 SOS", icon: PhoneCall, isEmergency: true },
