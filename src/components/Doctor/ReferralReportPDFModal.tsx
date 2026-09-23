@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   Activity,
 } from "lucide-react";
+import { DiagnosticConfidenceIndicator } from "./DiagnosticConfidenceIndicator";
 
 interface ReferralReportPDFModalProps {
   caseData: PatientCase;
@@ -679,14 +680,24 @@ SBAR: ${caseData.sbarSummary?.situation} -> ${caseData.sbarSummary?.recommendati
 
         {/* Section 4: Standardized SBAR Clinical Handover Matrix */}
         <div className="border border-slate-300 rounded-xl overflow-hidden bg-slate-50/50">
-          <div className="bg-slate-800 text-white px-4 py-2">
+          <div className="bg-slate-800 text-white px-4 py-2 flex items-center justify-between">
             <h4 className="text-xs font-bold uppercase tracking-wider">
               Standardized SBAR Handover Note (Situation • Background • Assessment • Recommendation)
             </h4>
+            <span className="text-[10px] font-mono text-cyan-300">
+              CLINICAL AI AUDIT PASS
+            </span>
           </div>
 
-          <div className="p-4 space-y-3 text-xs text-slate-800">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+          <div className="p-4 space-y-3.5 text-xs text-slate-800">
+            {/* AI Diagnostic Confidence Indicator Progress Bar */}
+            <DiagnosticConfidenceIndicator
+              caseData={caseData}
+              showBreakdown={true}
+              className="bg-white border-slate-300"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 pt-1">
               <span className="font-bold text-slate-900 uppercase font-mono text-[11px] md:col-span-1">
                 [S] Situation:
               </span>

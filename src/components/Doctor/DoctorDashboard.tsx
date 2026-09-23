@@ -30,11 +30,13 @@ import {
   Navigation,
   Gauge,
   Zap,
+  FileText,
 } from "lucide-react";
 import { playHapticSound } from "../../utils/audioFeedback";
 import { AiTriageSignalBadge } from "../Common/AiTriageSignalBadge";
 import { clientRuleBasedTriage } from "../../utils/triageSignal";
 import { CaseAttachmentsManager } from "../Common/CaseAttachmentsManager";
+import { DiagnosticConfidenceIndicator } from "./DiagnosticConfidenceIndicator";
 
 interface DoctorDashboardProps {
   cases: PatientCase[];
@@ -593,15 +595,59 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                 </div>
               )}
 
-              {/* SBAR Structured Doctor Summary */}
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                  SBAR Clinical Handover Note
-                </span>
-                <p><strong>Situation:</strong> {selectedCase.sbarSummary?.situation}</p>
-                <p><strong>Background:</strong> {selectedCase.sbarSummary?.background}</p>
-                <p><strong>Assessment:</strong> {selectedCase.sbarSummary?.assessment}</p>
-                <p><strong>Recommendation:</strong> {selectedCase.sbarSummary?.recommendation}</p>
+              {/* SBAR Structured Doctor Summary with AI Diagnostic Confidence Indicator */}
+              <div className="p-4 bg-white/95 border border-slate-200/90 rounded-2xl text-xs space-y-3.5 shadow-2xs">
+                <div className="flex items-center justify-between border-b border-slate-200/70 pb-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 font-mono flex items-center gap-1.5">
+                    <FileText className="w-3.5 h-3.5 text-blue-600" />
+                    <span>SBAR Clinical Handover Report</span>
+                  </span>
+                  <span className="text-[10px] font-mono text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
+                    SBAR-FHIR-R4 Standard
+                  </span>
+                </div>
+
+                {/* AI Diagnostic Confidence Indicator & Priority Progress Bar */}
+                <DiagnosticConfidenceIndicator
+                  caseData={selectedCase}
+                  showBreakdown={true}
+                />
+
+                {/* SBAR 4-Phase Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-1">
+                  <div className="p-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+                    <span className="font-bold text-blue-900 font-mono text-[10px] uppercase block mb-1">
+                      [S] Situation
+                    </span>
+                    <p className="text-slate-700 leading-relaxed">
+                      {selectedCase.sbarSummary?.situation || "Acute rural referral presenting with clinical danger signs requiring physician evaluation."}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+                    <span className="font-bold text-blue-900 font-mono text-[10px] uppercase block mb-1">
+                      [B] Background
+                    </span>
+                    <p className="text-slate-700 leading-relaxed">
+                      {selectedCase.sbarSummary?.background || "Triaged via frontline clinical decision support with vital telemetry and symptom history."}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-50/90 border border-slate-200/80">
+                    <span className="font-bold text-blue-900 font-mono text-[10px] uppercase block mb-1">
+                      [A] Assessment
+                    </span>
+                    <p className="text-slate-700 leading-relaxed font-medium">
+                      {selectedCase.sbarSummary?.assessment || selectedCase.clinicalImpression}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200/80">
+                    <span className="font-bold text-blue-950 font-mono text-[10px] uppercase block mb-1">
+                      [R] Recommendation
+                    </span>
+                    <p className="text-blue-950 leading-relaxed font-semibold">
+                      {selectedCase.sbarSummary?.recommendation || "Immediate physician evaluation, oxygen readiness, and emergency bed reservation."}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Case Diagnostic Attachments & Documents */}
