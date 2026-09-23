@@ -267,6 +267,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
                 onSelectCase={() => {
                   setActiveTab("cases");
                 }}
+                onOpenPdfReport={onOpenPdfReport}
               />
             </div>
           )}
@@ -318,6 +319,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
                 onSelectCase={() => {
                   setActiveTab("cases");
                 }}
+                onOpenPdfReport={onOpenPdfReport}
               />
             </div>
           )}

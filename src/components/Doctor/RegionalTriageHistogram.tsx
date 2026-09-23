@@ -23,11 +23,13 @@ import {
   ShieldAlert,
   ArrowUpDown,
   RefreshCw,
+  FileText,
 } from "lucide-react";
 
 interface RegionalTriageHistogramProps {
   cases: PatientCase[];
   onSelectCase?: (caseItem: PatientCase) => void;
+  onOpenPdfReport?: (caseItem: PatientCase) => void;
   className?: string;
 }
 
@@ -36,6 +38,7 @@ type TimeframeFilter = "24h" | "7d" | "30d" | "all";
 export const RegionalTriageHistogram: React.FC<RegionalTriageHistogramProps> = ({
   cases,
   onSelectCase,
+  onOpenPdfReport,
   className = "",
 }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
@@ -882,17 +885,36 @@ export const RegionalTriageHistogram: React.FC<RegionalTriageHistogramProps> = (
                         </span>
                       </div>
 
-                      {p.isLiveCase && onSelectCase && (
-                        <button
-                          onClick={() => {
-                            const found = cases.find((c) => c.id === p.id);
-                            if (found) onSelectCase(found);
-                          }}
-                          className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200"
-                          title="Open Case Dossier"
-                        >
-                          <ChevronRight className="w-4 h-4" />
-                        </button>
+                      {p.isLiveCase && (
+                        <div className="flex items-center gap-1.5">
+                          {onOpenPdfReport && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const found = cases.find((c) => c.id === p.id);
+                                if (found) onOpenPdfReport(found);
+                              }}
+                              className="px-2 py-1 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-[11px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                              title="Generate and inspect PDF for this patient"
+                            >
+                              <FileText className="w-3 h-3 text-cyan-700" />
+                              <span>PDF</span>
+                            </button>
+                          )}
+                          {onSelectCase && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const found = cases.find((c) => c.id === p.id);
+                                if (found) onSelectCase(found);
+                              }}
+                              className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 cursor-pointer"
+                              title="Open Case Dossier"
+                            >
+                              <ChevronRight className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

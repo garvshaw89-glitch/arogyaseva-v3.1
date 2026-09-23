@@ -183,6 +183,7 @@ const AppContent: React.FC = () => {
             setShowReferralSlip(true);
           }}
           onSaveCase={handleSaveCase}
+          onOpenPdfReport={(caseData) => setPdfReportCase(caseData)}
           onOpenDevicesDrawer={() => setShowDevicesDrawer(true)}
           onOpenNotificationsDrawer={() => setShowNotificationsDrawer(true)}
         />

@@ -531,11 +531,11 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                           playHapticSound("click");
                           onOpenPdfReport(selectedCase);
                         }}
-                        className="mt-1.5 glass-btn-secondary text-blue-700 text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer ml-auto shadow-2xs"
-                        title="Generate and print standardized PDF referral report"
+                        className="mt-1.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all cursor-pointer ml-auto shadow-sm shadow-cyan-500/25"
+                        title="Generate and inspect official clinical PDF report"
                       >
-                        <Printer className="w-3.5 h-3.5 text-blue-600" />
-                        <span>Print PDF Report</span>
+                        <FileText className="w-3.5 h-3.5 text-cyan-200" />
+                        <span>Generate PDF</span>
                       </button>
                     )}
                   </div>
@@ -786,6 +786,22 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Approve Local Care</span>
                   </button>
+
+                  {onOpenPdfReport && (
+                    <button
+                      id="btn-doc-generate-full-pdf"
+                      type="button"
+                      onClick={() => {
+                        playHapticSound("click");
+                        onOpenPdfReport(selectedCase);
+                      }}
+                      className="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl flex items-center gap-1.5 shadow-md transition-all cursor-pointer"
+                      title="Generate and inspect official Doctor Clinical Dossier PDF"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Generate Doctor Report (PDF)</span>
+                    </button>
+                  )}
                 </div>
               </div>
             </>

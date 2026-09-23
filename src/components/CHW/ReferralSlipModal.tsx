@@ -72,35 +72,49 @@ export const ReferralSlipModal: React.FC<ReferralSlipModalProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              id="btn-download-slip-pdf"
-              type="button"
-              onClick={() => {
-                playHapticSound("success");
-                downloadReferralSlipPDF(caseData);
-              }}
-              className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-              title="Download official PDF referral slip file"
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>Download PDF Slip</span>
-            </button>
-
-            {onGeneratePdfReport && (
+            {onGeneratePdfReport ? (
               <button
-                id="btn-open-pdf-report"
+                id="btn-generate-pdf-slip"
                 type="button"
                 onClick={() => {
                   playHapticSound("click");
                   onGeneratePdfReport(caseData);
                 }}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
-                title="Open full clinical PDF preview"
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                title="Preview and generate official PDF document"
               >
-                <FileText className="w-3.5 h-3.5 text-cyan-400" />
-                <span className="hidden sm:inline">Detailed Report</span>
+                <FileText className="w-3.5 h-3.5" />
+                <span>Generate PDF</span>
+              </button>
+            ) : (
+              <button
+                id="btn-download-slip-pdf"
+                type="button"
+                onClick={() => {
+                  playHapticSound("success");
+                  downloadReferralSlipPDF(caseData);
+                }}
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+                title="Download official PDF referral slip file"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download PDF Slip</span>
               </button>
             )}
+
+            <button
+              id="btn-direct-download-pdf"
+              type="button"
+              onClick={() => {
+                playHapticSound("success");
+                downloadReferralSlipPDF(caseData);
+              }}
+              className="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+              title="Download PDF directly to device"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Direct Save</span>
+            </button>
             <button
               id="btn-print-slip"
               onClick={handlePrint}
