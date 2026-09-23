@@ -855,8 +855,11 @@ button:active,
   .glass-btn-primary:hover,
   .glass-btn-secondary:hover,
   .glass-btn-accent:hover,
-  .glass-btn-emergency:hover {
+  .glass-btn-emergency:hover,
+  .outer-cont:hover,
+  .outer-cont.outer-cont-sos {
     transform: none !important;
+    animation: none !important;
   }
 
   .hero-transition-item,
@@ -934,9 +937,41 @@ button:active,
   gap: 5px;
 }
 
-/* Optional emergency accent gradient */
+/* Emergency SOS Breathing Pulse Keyframe Animations */
+@keyframes sosBreathingPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      inset 0px 0px 5px #ffffffa9,
+      inset 0px 35px 30px #000,
+      0px 5px 12px rgba(239, 68, 68, 0.45);
+  }
+  50% {
+    transform: scale(1.038);
+    box-shadow:
+      inset 0px 0px 9px #ffffffdd,
+      inset 0px 35px 30px #000,
+      0px 8px 24px rgba(239, 68, 68, 0.85),
+      0px 0px 32px rgba(244, 63, 94, 0.55);
+  }
+}
+
+@keyframes sosGlowBreathing {
+  0%, 100% {
+    filter: blur(4px);
+    opacity: 0.75;
+  }
+  50% {
+    filter: blur(14px);
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
+
+/* Optional emergency accent gradient with subtle breathing pulse */
 .outer-cont.outer-cont-sos {
   background: linear-gradient(90deg, #ff5e62, #f97316, #ef4444);
+  animation: sosBreathingPulse 2.4s ease-in-out infinite;
 }
 .outer-cont.outer-cont-sos::before {
   background: conic-gradient(
@@ -946,5 +981,91 @@ button:active,
     #f43f5e,
     #00000000 280deg
   );
+  animation: sosGlowBreathing 2.4s ease-in-out infinite;
+}
+
+.outer-cont.outer-cont-sos:hover {
+  animation-play-state: paused;
+}
+.outer-cont.outer-cont-sos:hover::before {
+  animation-play-state: paused;
+  filter: blur(16px);
+}
+.outer-cont.outer-cont-sos:active {
+  animation: none;
+  transform: translateY(2px) scale(0.98);
+}
+
+/* ==========================================================================
+   Electrocardiogram / Heart-Rate Wave Animation Styles & Keyframes
+   ========================================================================== */
+.container:has(.heart-rate),
+.heart-rate-container {
+  background: #e8e8e8 none repeat scroll 0 0;
+  color: #999;
+  font-size: 100%;
+  line-height: 24px;
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+}
+
+/* Specific styles for .heart-rate container */
+.container .heart-rate,
+.heart-rate {
+  width: 150px;
+  height: 73px;
+  position: relative;
+  margin: 20px auto;
+}
+
+/* Styles for the fade-in animation */
+.container .heart-rate .fade-in,
+.heart-rate .fade-in {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: #e8e8e8;
+  top: 0;
+  right: 0;
+  animation: heartRateIn 2.5s linear infinite;
+}
+
+/* Styles for the fade-out animation */
+.container .heart-rate .fade-out,
+.heart-rate .fade-out {
+  position: absolute;
+  width: 120%; /* Adjusted width to ensure animation space */
+  height: 100%;
+  background-color: #e8e8e8;
+  top: 0;
+  right: -120%;
+  animation: heartRateOut 2.5s linear infinite;
+}
+
+/* Keyframes for the heartRateIn animation */
+@keyframes heartRateIn {
+  0% {
+    width: 100%;
+  }
+  50% {
+    width: 0;
+  }
+  100% {
+    width: 0;
+  }
+}
+
+/* Keyframes for the heartRateOut animation */
+@keyframes heartRateOut {
+  0% {
+    left: -120%;
+  }
+  30% {
+    left: -120%;
+  }
+  100% {
+    left: 0;
+  }
 }
 
