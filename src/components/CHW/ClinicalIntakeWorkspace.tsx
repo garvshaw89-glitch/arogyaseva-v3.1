@@ -55,6 +55,7 @@ import {
   Camera,
   QrCode,
   ShieldCheck,
+  History,
 } from "lucide-react";
 
 interface ClinicalIntakeWorkspaceProps {
@@ -72,6 +73,7 @@ interface ClinicalIntakeWorkspaceProps {
   onTriggerEmergencySos: () => void;
   onNavigateDoctor: () => void;
   initialPatientData?: Partial<PatientCase>;
+  onViewPatientHistory?: (patient: Partial<PatientCase>) => void;
 }
 
 // Available Languages for CHW Intake
@@ -133,6 +135,7 @@ export const ClinicalIntakeWorkspace: React.FC<ClinicalIntakeWorkspaceProps> = (
   onTriggerEmergencySos,
   onNavigateDoctor,
   initialPatientData,
+  onViewPatientHistory,
 }) => {
   // Mobile active column tab ("queue" | "intake" | "summary")
   const [mobileTab, setMobileTab] = useState<"queue" | "intake" | "summary">("intake");
@@ -1339,6 +1342,17 @@ export const ClinicalIntakeWorkspace: React.FC<ClinicalIntakeWorkspaceProps> = (
                     >
                       <QrCode className="w-3.5 h-3.5 text-blue-600" />
                       <span>Digital ID</span>
+                    </button>
+                  )}
+                  {onViewPatientHistory && (
+                    <button
+                      type="button"
+                      onClick={() => onViewPatientHistory(draftPatient)}
+                      className="px-3 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                      title="View past clinical cases from Local Storage Index"
+                    >
+                      <History className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>Past History</span>
                     </button>
                   )}
                 </div>
