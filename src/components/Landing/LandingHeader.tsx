@@ -7,6 +7,10 @@ import {
   ArrowRight,
   PhoneCall,
   UserCheck,
+  Layers,
+  Compass,
+  Sparkles,
+  TrendingUp,
 } from "lucide-react";
 import { IndianStateData } from "../../data/indianStates";
 
@@ -49,12 +53,12 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
     }
   }, [mobileMenuOpen]);
 
-  const navLinks = [
-    { label: "Solutions", href: "#solutions" },
-    { label: "How It Works", href: "#how-it-works" },
-    { label: "Clinical AI", href: "#clinical-ai" },
-    { label: "Emergency 108", href: "#emergency-network" },
-    { label: "Impact", href: "#impact" },
+  const navItems = [
+    { label: "Solutions", href: "#solutions", icon: Layers },
+    { label: "How It Works", href: "#how-it-works", icon: Compass },
+    { label: "Clinical AI", href: "#clinical-ai", icon: Sparkles },
+    { label: "Emergency 108", href: "#emergency-network", icon: PhoneCall },
+    { label: "Impact", href: "#impact", icon: TrendingUp },
   ];
 
   const handleLinkClick = (href: string) => {
@@ -104,22 +108,30 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
               </button>
             </div>
 
-            {/* Center: Desktop Navigation Links (Floating Glass Capsule) */}
+            {/* Center: Custom Animated Button Container Navigation (Uiverse Specification) */}
             <nav
-              className="hidden lg:flex items-center gap-1 p-1 rounded-full bg-white/70 border border-[rgba(11,31,58,0.08)] backdrop-blur-md shadow-2xs z-10"
+              className="button-container hidden md:flex z-10"
               aria-label="Main Navigation"
             >
-              {navLinks.map((link) => (
-                <button
-                  key={link.label}
-                  type="button"
-                  onClick={() => handleLinkClick(link.href)}
-                  className="relative px-3 xl:px-4 py-1.5 rounded-full text-xs font-bold text-[#527086] hover:text-[#0B1F3A] hover:bg-white/90 hover:shadow-2xs transition-all duration-200 cursor-pointer whitespace-nowrap group"
-                >
-                  <span>{link.label}</span>
-                  <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-0 h-[2px] bg-[#00C2D7] rounded-full group-hover:w-4 transition-all duration-200" />
-                </button>
-              ))}
+              {navItems.map((item) => {
+                const IconComponent = item.icon;
+                return (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => handleLinkClick(item.href)}
+                    className="button group relative"
+                    aria-label={item.label}
+                    title={item.label}
+                  >
+                    <IconComponent className="icon" />
+                    {/* Tooltip Label */}
+                    <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-md bg-[#002855] text-white text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-xl border border-cyan-400/40 z-30 scale-95 group-hover:scale-100">
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
             </nav>
 
             {/* Desktop Actions (Right Section: Doctor & CHW Portal) */}
@@ -203,17 +215,23 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
 
               {/* Navigation Links (min 44px touch targets) */}
               <div className="flex flex-col gap-1">
-                {navLinks.map((link) => (
-                  <button
-                    key={link.label}
-                    type="button"
-                    onClick={() => handleLinkClick(link.href)}
-                    className="text-left text-sm font-bold text-[#527086] hover:text-[#0B1F3A] py-3 px-3.5 rounded-xl hover:bg-white/80 active:bg-white transition-all min-h-[44px] flex items-center justify-between cursor-pointer"
-                  >
-                    <span>{link.label}</span>
-                    <ArrowRight className="w-4 h-4 text-slate-400" />
-                  </button>
-                ))}
+                {navItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <button
+                      key={item.label}
+                      type="button"
+                      onClick={() => handleLinkClick(item.href)}
+                      className="text-left text-sm font-bold text-[#527086] hover:text-[#0B1F3A] py-3 px-3.5 rounded-xl hover:bg-white/80 active:bg-white transition-all min-h-[44px] flex items-center justify-between cursor-pointer"
+                    >
+                      <span className="flex items-center gap-2.5">
+                        <IconComponent className="w-4 h-4 text-[#00C2D7]" />
+                        <span>{item.label}</span>
+                      </span>
+                      <ArrowRight className="w-4 h-4 text-slate-400" />
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Portal Actions */}
