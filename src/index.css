@@ -701,7 +701,7 @@ body {
   position: absolute;
   top: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%) translateY(-4px) scale(0.95);
+  transform: translateX(-50%) translateY(8px) scale(0.96);
   padding: 4px 10px;
   border-radius: 8px;
   background: rgba(11, 31, 58, 0.90);
@@ -719,7 +719,10 @@ body {
   white-space: nowrap;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: 
+    opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
   z-index: 40;
   display: flex;
   align-items: center;
@@ -742,6 +745,18 @@ body {
 .button-container .button[data-tooltip]:hover .glass-tooltip {
   opacity: 1;
   transform: translateX(-50%) translateY(0px) scale(1);
+  animation: tooltip-slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes tooltip-slide-up {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0px) scale(1);
+  }
 }
 
 /* ==========================================================================
