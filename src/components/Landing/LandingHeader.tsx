@@ -92,6 +92,58 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
     }, 550);
   };
 
+  // Dynamic tooltip state reading from the button's data-tooltip attribute
+  const [dynamicTooltips, setDynamicTooltips] = useState<Record<string, string>>({
+    Solutions: "Explore Solutions",
+    "How It Works": "How It Works",
+    "Clinical AI": "Clinical AI",
+    "Emergency 108": "Emergency 108",
+    Impact: "Platform Impact",
+  });
+
+  const handleButtonHover = (e: React.MouseEvent<HTMLButtonElement>, key: string) => {
+    // Dynamically read from the data-attribute (data-tooltip) on hover
+    const attrValue = e.currentTarget.getAttribute("data-tooltip");
+    if (attrValue) {
+      setDynamicTooltips((prev) => ({
+        ...prev,
+        [key]: attrValue,
+      }));
+    }
+  };
+
+  // Sync with DOM in case data-tooltip attributes are modified externally
+  useEffect(() => {
+    const container = document.querySelector(".button-container");
+    if (!container) return;
+
+    const readTooltipsFromDom = () => {
+      const buttons = container.querySelectorAll<HTMLButtonElement>(".button[data-tooltip]");
+      const updated: Record<string, string> = {};
+      buttons.forEach((btn) => {
+        const key = btn.getAttribute("data-nav-key");
+        const tooltipVal = btn.getAttribute("data-tooltip");
+        if (key && tooltipVal) {
+          updated[key] = tooltipVal;
+        }
+      });
+      if (Object.keys(updated).length > 0) {
+        setDynamicTooltips((prev) => ({ ...prev, ...updated }));
+      }
+    };
+
+    readTooltipsFromDom();
+
+    const observer = new MutationObserver(readTooltipsFromDom);
+    observer.observe(container, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["data-tooltip"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   const handleLinkClick = (href: string) => {
     playHapticSound("click");
     setMobileMenuOpen(false);
@@ -148,16 +200,20 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
               {navItems.map((item) => {
                 const IconComponent = item.icon;
                 const buttonRipples = ripples[item.label] || [];
+                const currentTooltip = dynamicTooltips[item.label] || item.actionName;
                 return (
                   <button
                     key={item.label}
                     type="button"
+                    data-nav-key={item.label}
+                    data-tooltip={item.actionName}
+                    onMouseEnter={(e) => handleButtonHover(e, item.label)}
                     onClick={(e) => {
                       triggerButtonRipple(e, item.label);
                       handleLinkClick(item.href);
                     }}
                     className="button group relative"
-                    aria-label={item.actionName}
+                    aria-label={currentTooltip}
                   >
                     {/* Subtle Circular Ripple Animation Container */}
                     <span className="ripple-container">
@@ -177,10 +233,14 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
 
                     <IconComponent className="icon" />
 
-                    {/* Small Glass-Styled Tooltip on Hover */}
-                    <span className="glass-tooltip" role="tooltip">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#00C2D7] shadow-[0_0_6px_#00C2D7]" />
-                      <span>{item.actionName}</span>
+                    {/* Small Glass-Styled Tooltip dynamically reading data-tooltip attribute */}
+                    <span
+                      className="glass-tooltip"
+                      role="tooltip"
+                      data-tooltip={currentTooltip}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00C2D7] shadow-[0_0_6px_#00C2D7] shrink-0" />
+                      <span className="tooltip-text">{currentTooltip}</span>
                     </span>
                   </button>
                 );

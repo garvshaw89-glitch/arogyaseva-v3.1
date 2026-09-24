@@ -738,7 +738,8 @@ body {
   border-color: transparent transparent rgba(0, 194, 215, 0.38) transparent;
 }
 
-.button-container .button:hover .glass-tooltip {
+.button-container .button:hover .glass-tooltip,
+.button-container .button[data-tooltip]:hover .glass-tooltip {
   opacity: 1;
   transform: translateX(-50%) translateY(0px) scale(1);
 }
