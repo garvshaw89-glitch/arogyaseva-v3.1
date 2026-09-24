@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { IndianStateData } from "../../data/indianStates";
+import { playHapticSound } from "../../utils/audioFeedback";
 
 interface LandingHeaderProps {
   onNavigate: (route: "landing" | "chw" | "doctor" | "emergency") => void;
@@ -62,6 +63,7 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
   ];
 
   const handleLinkClick = (href: string) => {
+    playHapticSound("click");
     setMobileMenuOpen(false);
     const element = document.querySelector(href);
     if (element) {
@@ -125,9 +127,10 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
                     title={item.label}
                   >
                     <IconComponent className="icon" />
-                    {/* Tooltip Label */}
-                    <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-md bg-[#002855] text-white text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-xl border border-cyan-400/40 z-30 scale-95 group-hover:scale-100">
-                      {item.label}
+                    {/* Glassmorphic Tooltip in App Color */}
+                    <span className="absolute -bottom-9 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-[#0B1F3A]/90 backdrop-blur-md text-white text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-xl border border-[#00C2D7]/40 z-30 scale-95 group-hover:scale-100 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#00C2D7] shadow-[0_0_6px_#00C2D7]" />
+                      <span>{item.label}</span>
                     </span>
                   </button>
                 );
