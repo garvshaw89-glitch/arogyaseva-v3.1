@@ -55,12 +55,42 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
   }, [mobileMenuOpen]);
 
   const navItems = [
-    { label: "Solutions", href: "#solutions", icon: Layers },
-    { label: "How It Works", href: "#how-it-works", icon: Compass },
-    { label: "Clinical AI", href: "#clinical-ai", icon: Sparkles },
-    { label: "Emergency 108", href: "#emergency-network", icon: PhoneCall },
-    { label: "Impact", href: "#impact", icon: TrendingUp },
+    { label: "Solutions", actionName: "Explore Solutions", href: "#solutions", icon: Layers },
+    { label: "How It Works", actionName: "How It Works", href: "#how-it-works", icon: Compass },
+    { label: "Clinical AI", actionName: "Clinical AI", href: "#clinical-ai", icon: Sparkles },
+    { label: "Emergency 108", actionName: "Emergency 108", href: "#emergency-network", icon: PhoneCall },
+    { label: "Impact", actionName: "Platform Impact", href: "#impact", icon: TrendingUp },
   ];
+
+  // Subtle circular click ripple state for .button
+  interface ButtonRipple {
+    id: number;
+    x: number;
+    y: number;
+    size: number;
+  }
+  const [ripples, setRipples] = useState<Record<string, ButtonRipple[]>>({});
+
+  const triggerButtonRipple = (e: React.MouseEvent<HTMLButtonElement>, key: string) => {
+    const button = e.currentTarget;
+    const rect = button.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const newRipple: ButtonRipple = { id: Date.now() + Math.random(), x, y, size };
+
+    setRipples((prev) => ({
+      ...prev,
+      [key]: [...(prev[key] || []), newRipple],
+    }));
+
+    setTimeout(() => {
+      setRipples((prev) => ({
+        ...prev,
+        [key]: (prev[key] || []).filter((r) => r.id !== newRipple.id),
+      }));
+    }, 550);
+  };
 
   const handleLinkClick = (href: string) => {
     playHapticSound("click");
@@ -117,20 +147,40 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
             >
               {navItems.map((item) => {
                 const IconComponent = item.icon;
+                const buttonRipples = ripples[item.label] || [];
                 return (
                   <button
                     key={item.label}
                     type="button"
-                    onClick={() => handleLinkClick(item.href)}
+                    onClick={(e) => {
+                      triggerButtonRipple(e, item.label);
+                      handleLinkClick(item.href);
+                    }}
                     className="button group relative"
-                    aria-label={item.label}
-                    title={item.label}
+                    aria-label={item.actionName}
                   >
+                    {/* Subtle Circular Ripple Animation Container */}
+                    <span className="ripple-container">
+                      {buttonRipples.map((r) => (
+                        <span
+                          key={r.id}
+                          className="ripple-wave"
+                          style={{
+                            left: `${r.x}px`,
+                            top: `${r.y}px`,
+                            width: `${r.size * 2}px`,
+                            height: `${r.size * 2}px`,
+                          }}
+                        />
+                      ))}
+                    </span>
+
                     <IconComponent className="icon" />
-                    {/* Glassmorphic Tooltip in App Color */}
-                    <span className="absolute -bottom-9 left-1/2 -translate-x-1/2 px-2.5 py-1 rounded-lg bg-[#0B1F3A]/90 backdrop-blur-md text-white text-[11px] font-bold opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none whitespace-nowrap shadow-xl border border-[#00C2D7]/40 z-30 scale-95 group-hover:scale-100 flex items-center gap-1.5">
+
+                    {/* Small Glass-Styled Tooltip on Hover */}
+                    <span className="glass-tooltip" role="tooltip">
                       <span className="w-1.5 h-1.5 rounded-full bg-[#00C2D7] shadow-[0_0_6px_#00C2D7]" />
-                      <span>{item.label}</span>
+                      <span>{item.actionName}</span>
                     </span>
                   </button>
                 );

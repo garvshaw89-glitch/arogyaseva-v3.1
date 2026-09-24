@@ -633,10 +633,114 @@ body {
   width: 20px;
   height: 20px;
   transition: all 0.25s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .button:hover .icon {
   filter: drop-shadow(0 0 8px rgba(0, 194, 215, 0.75));
+}
+
+/* ==========================================================================
+   Subtle Circular Ripple Animation & Glass Tooltip for Navigation Buttons
+   ========================================================================== */
+.button-container .button .ripple-container {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.button-container .button .ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(25, 230, 193, 0.7) 0%, rgba(0, 194, 215, 0.45) 50%, rgba(0, 194, 215, 0) 100%);
+  transform: translate(-50%, -50%) scale(0);
+  animation: button-circular-ripple 0.52s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+/* Fallback CSS :active pseudo-ripple */
+.button-container .button::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 194, 215, 0.5) 0%, rgba(25, 230, 193, 0.25) 50%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.button-container .button:active::after {
+  animation: button-circular-ripple 0.45s cubic-bezier(0.1, 0.8, 0.3, 1);
+}
+
+@keyframes button-circular-ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.85;
+  }
+  50% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* Small Glass-Styled Tooltip */
+.button-container .glass-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-4px) scale(0.95);
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: rgba(11, 31, 58, 0.90);
+  backdrop-filter: blur(12px) saturate(180%);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(0, 194, 215, 0.38);
+  box-shadow:
+    0 8px 20px -4px rgba(0, 0, 0, 0.45),
+    0 0 14px -2px rgba(0, 194, 215, 0.30),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 5.5px;
+}
+
+/* Glass tooltip caret/arrowhead */
+.button-container .glass-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 4px;
+  border-style: solid;
+  border-color: transparent transparent rgba(0, 194, 215, 0.38) transparent;
+}
+
+.button-container .button:hover .glass-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0px) scale(1);
 }
 
 /* ==========================================================================
