@@ -83,6 +83,12 @@ export interface PatientCase {
   villageLongitude?: number;
   chwName: string;
   contactNumber?: string;
+  abhaId?: string; // Ayushman Bharat Health Account / National Health ID
+  nationalHealthId?: string;
+  bloodGroup?: string;
+  emergencyContact?: string;
+  allergies?: string[];
+  idCardScannedAt?: string;
   symptoms: string[];
   symptomDuration: string;
   rawVoiceInput?: string;
@@ -247,3 +253,24 @@ export type SupportedLanguage =
   | "brx" // Bodo (बड़ो)
   | "sat" // Santali (संथाली)
   | "sd"; // Sindhi (سنڌي / सिंधी)
+
+export interface ScannedMedicalIdData {
+  patientName: string;
+  age?: number;
+  gender?: "Male" | "Female" | "Other";
+  village?: string;
+  contactNumber?: string;
+  abhaId?: string;
+  nationalHealthId?: string;
+  bloodGroup?: string;
+  emergencyContact?: string;
+  chronicConditions?: string[];
+  currentMedications?: string[];
+  allergies?: string[];
+  isPregnant?: boolean;
+  pregnancyWeeks?: number;
+  matchedCaseId?: string;
+  rawPayload: string;
+  format: "ABHA" | "AROGYASEVA" | "VCARD" | "KEY_VALUE" | "URL" | "PLAIN_TEXT";
+  scannedAt: string;
+}

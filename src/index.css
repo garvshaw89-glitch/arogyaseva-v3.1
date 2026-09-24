@@ -1069,3 +1069,23 @@ button:active,
   }
 }
 
+/* Keyframes for QR Scanner Laser Beam */
+@keyframes bounceLaser {
+  0% {
+    top: 5%;
+    opacity: 0.7;
+  }
+  50% {
+    top: 90%;
+    opacity: 1;
+  }
+  100% {
+    top: 5%;
+    opacity: 0.7;
+  }
+}
+
+.animate-bounce-laser {
+  animation: bounceLaser 2.2s ease-in-out infinite;
+}
+

@@ -6,6 +6,7 @@ import {
   HealthcareFacility,
   ClinicalPreset,
   VitalsData,
+  ScannedMedicalIdData,
 } from "../../types";
 import { IndianStateData } from "../../data/indianStates";
 import { CLINICAL_PRESETS } from "../../data/clinicalPresets";
@@ -13,6 +14,8 @@ import { MOCK_FACILITIES } from "../../data/mockFacilities";
 import { evaluateClinicalRiskLocally, getDefaultFollowUpQuestions } from "../../utils/clinicalRules";
 import { playHapticSound, speakClinicalPrompt, stopClinicalSpeech } from "../../utils/audioFeedback";
 import { CaseAttachmentsManager } from "../Common/CaseAttachmentsManager";
+import { MedicalIdQrScannerModal } from "./MedicalIdQrScannerModal";
+import { MedicalIdCardModal } from "./MedicalIdCardModal";
 import {
   Mic,
   MicOff,
@@ -49,6 +52,9 @@ import {
   Zap,
   Info,
   ExternalLink,
+  Camera,
+  QrCode,
+  ShieldCheck,
 } from "lucide-react";
 
 interface ClinicalIntakeWorkspaceProps {
@@ -65,6 +71,7 @@ interface ClinicalIntakeWorkspaceProps {
   onSelectCaseForSlip: (caseData: PatientCase) => void;
   onTriggerEmergencySos: () => void;
   onNavigateDoctor: () => void;
+  initialPatientData?: Partial<PatientCase>;
 }
 
 // Available Languages for CHW Intake
@@ -125,10 +132,16 @@ export const ClinicalIntakeWorkspace: React.FC<ClinicalIntakeWorkspaceProps> = (
   onSelectCaseForSlip,
   onTriggerEmergencySos,
   onNavigateDoctor,
+  initialPatientData,
 }) => {
   // Mobile active column tab ("queue" | "intake" | "summary")
   const [mobileTab, setMobileTab] = useState<"queue" | "intake" | "summary">("intake");
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // QR Code Scanner and Medical ID Card modal state
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [idCardModalOpen, setIdCardModalOpen] = useState(false);
+  const [selectedCardPatient, setSelectedCardPatient] = useState<Partial<PatientCase> | null>(null);
 
   // Column 1 state: search & filter
   const [searchQuery, setSearchQuery] = useState("");
@@ -208,6 +221,65 @@ export const ClinicalIntakeWorkspace: React.FC<ClinicalIntakeWorkspaceProps> = (
       };
     });
   }, [currentRiskAssessment]);
+
+  // Sync draft if initialPatientData passed from parent
+  useEffect(() => {
+    if (initialPatientData && initialPatientData.patientName) {
+      setDraftPatient((prev) => ({
+        ...prev,
+        ...initialPatientData,
+      }));
+    }
+  }, [initialPatientData]);
+
+  // Medical ID Card QR Scanned Handler
+  const handlePatientIdentified = (data: ScannedMedicalIdData, matchedCase?: PatientCase) => {
+    playHapticSound("success");
+    if (matchedCase) {
+      setDraftPatient({
+        ...matchedCase,
+        id: `case-${Date.now()}`,
+        abhaId: data.abhaId || matchedCase.abhaId,
+        nationalHealthId: data.nationalHealthId || matchedCase.nationalHealthId,
+        bloodGroup: data.bloodGroup || matchedCase.bloodGroup,
+        contactNumber: data.contactNumber || matchedCase.contactNumber,
+        emergencyContact: data.emergencyContact || matchedCase.emergencyContact,
+        chronicConditions: data.chronicConditions || matchedCase.chronicConditions,
+        currentMedications: data.currentMedications || matchedCase.currentMedications,
+        allergies: data.allergies || matchedCase.allergies,
+        idCardScannedAt: data.scannedAt,
+        status: "PENDING_REVIEW",
+        createdAt: new Date().toISOString(),
+      });
+      setExtractBanner(
+        `✓ Medical ID Verified: Loaded previous records for ${matchedCase.patientName} (${data.abhaId || "ABHA"}). Ready for follow-up screening.`
+      );
+    } else {
+      setDraftPatient((prev) => ({
+        ...prev,
+        patientName: data.patientName,
+        age: data.age ?? prev.age,
+        gender: data.gender ?? prev.gender,
+        village: data.village || prev.village || currentState.defaultVillage,
+        contactNumber: data.contactNumber || prev.contactNumber,
+        abhaId: data.abhaId,
+        nationalHealthId: data.nationalHealthId,
+        bloodGroup: data.bloodGroup,
+        emergencyContact: data.emergencyContact,
+        chronicConditions: data.chronicConditions || prev.chronicConditions,
+        currentMedications: data.currentMedications || prev.currentMedications,
+        allergies: data.allergies || prev.allergies,
+        isPregnant: data.isPregnant ?? prev.isPregnant,
+        pregnancyWeeks: data.pregnancyWeeks ?? prev.pregnancyWeeks,
+        idCardScannedAt: data.scannedAt,
+      }));
+      setExtractBanner(
+        `✓ Medical ID Verified: Decoded ${data.patientName} (${data.abhaId || "ABHA Registered"}). Identity records applied.`
+      );
+    }
+    setMobileTab("intake");
+    setTimeout(() => setExtractBanner(null), 5000);
+  };
 
   // Nearest Facility matching required level
   const nearestFacility = useMemo(() => {
@@ -876,15 +948,26 @@ export const ClinicalIntakeWorkspace: React.FC<ClinicalIntakeWorkspaceProps> = (
                 </span>
               </div>
 
-              {/* + New Patient Intake Button */}
-              <button
-                type="button"
-                onClick={handleNewPatientIntake}
-                className="w-full py-2.5 px-3 rounded-xl bg-[#123B78] hover:bg-[#0c2b64] text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
-              >
-                <Plus className="w-4 h-4" />
-                <span>+ New Patient Intake</span>
-              </button>
+              {/* Actions: + New Intake & Scan ID (QR) */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={handleNewPatientIntake}
+                  className="py-2.5 px-2 rounded-xl bg-[#123B78] hover:bg-[#0c2b64] text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4 shrink-0" />
+                  <span>New Intake</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrScannerOpen(true)}
+                  className="py-2.5 px-2 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                  title="Scan patient's medical ID card, ABHA card, or health QR"
+                >
+                  <QrCode className="w-4 h-4 shrink-0" />
+                  <span>Scan ID (QR)</span>
+                </button>
+              </div>
 
               {/* Search Bar */}
               <div className="relative">
@@ -1189,15 +1272,76 @@ export const ClinicalIntakeWorkspace: React.FC<ClinicalIntakeWorkspaceProps> = (
             </div>
 
             {/* ---------------------------------------------------------
-                2.2 PATIENT DEMOGRAPHICS (Manual Entry Fallback)
+                2.2 PATIENT DEMOGRAPHICS & QR IDENTITY
                 --------------------------------------------------------- */}
             <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                 <h4 className="text-xs font-extrabold text-[#0F172A] flex items-center gap-2">
                   <User className="w-4 h-4 text-[#2563EB]" />
-                  <span>1. Patient Demographics</span>
+                  <span>1. Patient Identity & Demographics</span>
                 </h4>
-                <span className="text-[11px] text-slate-400">Structured Data</span>
+                <div className="flex items-center gap-2">
+                  {draftPatient.idCardScannedAt && (
+                    <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                      <span>Verified via QR</span>
+                    </span>
+                  )}
+                  <span className="text-[11px] text-slate-400">Structured Data</span>
+                </div>
+              </div>
+
+              {/* Quick Patient Identification Card Banner */}
+              <div className="p-3 sm:p-3.5 rounded-2xl bg-gradient-to-r from-blue-50/90 via-cyan-50/50 to-white border border-blue-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-600 text-white flex items-center justify-center shadow-xs shrink-0">
+                    <QrCode className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-black text-slate-900">
+                        Scan Medical ID / Ayushman Card
+                      </span>
+                      {draftPatient.abhaId ? (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                          ABHA: {draftPatient.abhaId}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
+                          NHA / ABDM Compatible
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-600">
+                      Auto-fill patient demographic records, medical history, and pre-existing alerts.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setQrScannerOpen(true)}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Scan Card (QR)</span>
+                  </button>
+                  {draftPatient.patientName && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCardPatient(draftPatient);
+                        setIdCardModalOpen(true);
+                      }}
+                      className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                      title="View & Print Official Digital Medical ID Card"
+                    >
+                      <QrCode className="w-3.5 h-3.5 text-blue-600" />
+                      <span>Digital ID</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
@@ -1266,6 +1410,47 @@ export const ClinicalIntakeWorkspace: React.FC<ClinicalIntakeWorkspaceProps> = (
                     placeholder="+91 98XXX XXXXX"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-medium focus:ring-2 focus:ring-[#2563EB] focus:outline-none"
                   />
+                </div>
+
+                {/* ABHA / National Health ID Number */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <label className="text-slate-600 font-semibold block">ABHA / Health ID</label>
+                    <button
+                      type="button"
+                      onClick={() => setQrScannerOpen(true)}
+                      className="text-[10px] text-blue-600 font-bold hover:underline cursor-pointer"
+                    >
+                      Scan QR
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={draftPatient.abhaId || ""}
+                    onChange={(e) => setDraftPatient({ ...draftPatient, abhaId: e.target.value })}
+                    placeholder="91-XXXX-XXXX-XXXX"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-mono text-xs focus:ring-2 focus:ring-[#2563EB] focus:outline-none"
+                  />
+                </div>
+
+                {/* Blood Group */}
+                <div className="space-y-1">
+                  <label className="text-slate-600 font-semibold block">Blood Group</label>
+                  <select
+                    value={draftPatient.bloodGroup || ""}
+                    onChange={(e) => setDraftPatient({ ...draftPatient, bloodGroup: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-slate-800 font-medium focus:ring-2 focus:ring-[#2563EB] focus:outline-none bg-white"
+                  >
+                    <option value="">Select Blood Group</option>
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                  </select>
                 </div>
 
                 {/* Pregnancy Status + Gestational Weeks */}
@@ -1990,6 +2175,27 @@ export const ClinicalIntakeWorkspace: React.FC<ClinicalIntakeWorkspaceProps> = (
           </div>
         </div>
       </div>
+
+      {/* Medical ID Card QR Code Scanner Modal */}
+      <MedicalIdQrScannerModal
+        isOpen={qrScannerOpen}
+        onClose={() => setQrScannerOpen(false)}
+        onPatientIdentified={handlePatientIdentified}
+        existingCases={cases}
+        language={language}
+      />
+
+      {/* Official Medical ID Card View & Print Modal */}
+      {selectedCardPatient && (
+        <MedicalIdCardModal
+          isOpen={idCardModalOpen}
+          onClose={() => {
+            setIdCardModalOpen(false);
+            setSelectedCardPatient(null);
+          }}
+          patient={selectedCardPatient}
+        />
+      )}
     </div>
   );
 };

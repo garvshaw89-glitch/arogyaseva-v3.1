@@ -1,6 +1,6 @@
 {
   "name": "ArogyaSeva - Rural Clinical Decision & Referral Network",
   "description": "ArogyaSeva combines biotechnology-grade clinical decision support, WHO IMCI triage protocols, offline-first voice intake, and 108 emergency referral routing for frontline ASHA health workers and district doctors.",
-  "requestFramePermissions": ["microphone", "geolocation"],
+  "requestFramePermissions": ["microphone", "geolocation", "camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

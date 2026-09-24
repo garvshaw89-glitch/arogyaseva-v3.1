@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { SupportedLanguage, PatientCase, VitalsData } from "../../types";
+import { SupportedLanguage, PatientCase, VitalsData, ScannedMedicalIdData } from "../../types";
 import { TRANSLATIONS } from "../../utils/translations";
 import {
   Mic,
@@ -18,11 +18,16 @@ import {
   HelpCircle,
   ArrowRight,
   Radio,
-  Layers
+  Layers,
+  QrCode,
+  Camera,
+  ShieldCheck,
 } from "lucide-react";
 import { playHapticSound, speakClinicalPrompt } from "../../utils/audioFeedback";
 import { VoiceIntake3D } from "./VoiceIntake3D";
 import { LocationSearchInput } from "../Common/LocationSearchInput";
+import { MedicalIdQrScannerModal } from "./MedicalIdQrScannerModal";
+import { MedicalIdCardModal } from "./MedicalIdCardModal";
 
 interface PatientRegistrationProps {
   formData: Partial<PatientCase>;
@@ -46,6 +51,29 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
   const [speechSupported, setSpeechSupported] = useState(true);
   const [recognitionInstance, setRecognitionInstance] = useState<any>(null);
   const [newSymptomInput, setNewSymptomInput] = useState("");
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [idCardModalOpen, setIdCardModalOpen] = useState(false);
+
+  const handlePatientIdentified = (data: ScannedMedicalIdData) => {
+    playHapticSound("success");
+    onChange({
+      ...formData,
+      patientName: data.patientName || formData.patientName,
+      age: data.age ?? formData.age,
+      gender: data.gender ?? formData.gender,
+      village: data.village || formData.village,
+      contactNumber: data.contactNumber || formData.contactNumber,
+      abhaId: data.abhaId,
+      bloodGroup: data.bloodGroup,
+      emergencyContact: data.emergencyContact,
+      chronicConditions: data.chronicConditions,
+      currentMedications: data.currentMedications,
+      allergies: data.allergies,
+      isPregnant: data.isPregnant ?? formData.isPregnant,
+      pregnancyWeeks: data.pregnancyWeeks ?? formData.pregnancyWeeks,
+      idCardScannedAt: data.scannedAt,
+    });
+  };
 
   const commonSymptoms = [
     "High Fever",
@@ -323,9 +351,63 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
           <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
             Patient Identity & Demographic Records
           </h3>
-          <span className="text-[10px] font-mono text-cyan-700 bg-cyan-50 border border-cyan-200 px-2 py-0.5 rounded-full font-bold">
-            Syncs with Voice Engine
-          </span>
+          <div className="flex items-center gap-2">
+            {formData.idCardScannedAt && (
+              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                <span>QR Verified</span>
+              </span>
+            )}
+            <span className="text-[10px] font-mono text-cyan-700 bg-cyan-50 border border-cyan-200 px-2 py-0.5 rounded-full font-bold">
+              Syncs with Voice Engine
+            </span>
+          </div>
+        </div>
+
+        {/* Quick QR Code Scanner Callout */}
+        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50 via-cyan-50 to-white border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
+              <QrCode className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-black text-slate-900">
+                  Quick Patient Identification via Medical ID Card
+                </span>
+                {formData.abhaId && (
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                    ABHA: {formData.abhaId}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-600">
+                Scan Ayushman Bharat / ABHA QR code to auto-fill demographics, blood group, and alerts.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setQrScannerOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>Scan Card (QR)</span>
+            </button>
+            {formData.patientName && (
+              <button
+                type="button"
+                onClick={() => setIdCardModalOpen(true)}
+                className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-bold flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                title="View & Print Official Digital Medical ID Card"
+              >
+                <QrCode className="w-3.5 h-3.5 text-blue-600" />
+                <span>Digital ID</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -541,6 +623,21 @@ export const PatientRegistration: React.FC<PatientRegistrationProps> = ({
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Medical ID Card QR Code Scanner Modal */}
+      <MedicalIdQrScannerModal
+        isOpen={qrScannerOpen}
+        onClose={() => setQrScannerOpen(false)}
+        onPatientIdentified={handlePatientIdentified}
+        language={language}
+      />
+
+      {/* Official Medical ID Card Modal */}
+      <MedicalIdCardModal
+        isOpen={idCardModalOpen}
+        onClose={() => setIdCardModalOpen(false)}
+        patient={formData}
+      />
     </div>
   );
 };
