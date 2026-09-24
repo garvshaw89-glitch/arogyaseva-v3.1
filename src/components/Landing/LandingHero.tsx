@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   FileText,
   AlertTriangle,
+  Dna,
 } from "lucide-react";
 import { IndianStateData } from "../../data/indianStates";
 import { HeroBackgroundVideo } from "./HeroBackgroundVideo";
@@ -271,6 +272,20 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             <div className="text-left">
               <div className="text-xs font-bold text-[#0B1F3A]">Zero Cloud Dependency</div>
               <div className="text-[10px] text-[#527086]">On-Device Inference & Local IndexedDB</div>
+            </div>
+          </div>
+
+          {/* Dynamic DNA Helix Background Indicator Badge */}
+          <div className="absolute -bottom-3 right-2 sm:-right-4 lg:-right-6 glass-level-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl shadow-xl border border-white/90 hidden sm:flex items-center gap-2.5 z-20">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-cyan-50/90 border border-cyan-300/40 flex items-center justify-center text-[#00C2D7] shadow-2xs shrink-0">
+              <Dna className="w-4 h-4 text-[#00C2D7] animate-pulse" />
+            </div>
+            <div className="text-left">
+              <div className="text-xs font-bold text-[#0B1F3A] flex items-center gap-1.5">
+                <span>Moving DNA Helix</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#19E6C1] animate-ping" />
+              </div>
+              <div className="text-[10px] text-[#527086]">Live Interactive 3D Genome Mesh</div>
             </div>
           </div>
         </div>

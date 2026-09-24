@@ -1,22 +1,33 @@
 import React, { useEffect, useRef, useState } from "react";
+import { MovingDnaCanvas } from "../Common/MovingDnaCanvas";
+import { Dna, Sparkles, Sliders } from "lucide-react";
 
 interface HeroBackgroundVideoProps {
   className?: string;
+  speed?: number;
+  interactive?: boolean;
 }
 
 /**
  * HeroBackgroundVideo
  *
- * Dedicated component for the ArogyaSeva Hero section background video.
- * - Stacks at z-index: 0 with pointer-events: none (strictly behind all content).
- * - Autoplay, muted, loop, playsInline, preload="auto", aria-hidden="true".
- * - Fallback: White/light-blue gradient with subtle dotted pattern if video fails or reduced motion is active.
- * - Subtle overlay (z-index: 1) maintains high clinical contrast while leaving perimeter network animation vivid.
+ * Dedicated component for the ArogyaSeva Hero section background effect.
+ * Incorporates:
+ * 1. Interactive 3D Canvas Moving DNA Double Helix with glowing nucleotides & base-pair rungs.
+ * 2. DNA motion background video with graceful multi-source fallback.
+ * 3. Clinical glassmorphic gradient overlays ensuring optimal text readability.
+ * 4. Ambient molecular particles drifting with physics-based Brownian motion.
  */
-export const HeroBackgroundVideo: React.FC<HeroBackgroundVideoProps> = ({ className = "" }) => {
+export const HeroBackgroundVideo: React.FC<HeroBackgroundVideoProps> = ({
+  className = "",
+  speed = 1,
+  interactive = true,
+}) => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [hasError, setHasError] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [dnaSpeedMultiplier, setDnaSpeedMultiplier] = useState(speed);
+  const [showControls, setShowControls] = useState(false);
 
   useEffect(() => {
     // Accessibility check: prefers-reduced-motion
@@ -71,15 +82,14 @@ export const HeroBackgroundVideo: React.FC<HeroBackgroundVideoProps> = ({ classN
   return (
     <>
       {/* =====================================================================
-          STEP 11 — STATIC FALLBACK SYSTEM
-          Cool white / soft blue gradient + subtle dotted pattern
-          Always present underneath (z-index -1 relative to video)
+          1. STATIC FALLBACK & AMBIENT CLINICAL GRADIENT
+          Always present underneath (z-index -1 relative to canvas/video)
           ===================================================================== */}
-      <div 
+      <div
         className="absolute inset-0 pointer-events-none -z-10"
         style={{
           background: "linear-gradient(180deg, #F4FAFC 0%, #E8F6FA 40%, #F4FAFC 100%)",
-        }} 
+        }}
       />
       <div
         className="absolute inset-0 opacity-20 pointer-events-none -z-10"
@@ -91,13 +101,13 @@ export const HeroBackgroundVideo: React.FC<HeroBackgroundVideoProps> = ({ classN
       />
 
       {/* =====================================================================
-          STEP 5 & 6 — HERO VIDEO ELEMENT (z-index: 0)
-          No display:none, no visibility:hidden, no opacity:0 under normal conditions
+          2. HERO VIDEO ELEMENT (z-index: 0)
+          Plays DNA motion video stream or clinical network loop
           ===================================================================== */}
       {!prefersReducedMotion && !hasError && (
         <video
           ref={videoRef}
-          className={`arogyaseva-hero-video ${className}`}
+          className={`arogyaseva-hero-video opacity-40 mix-blend-multiply ${className}`}
           autoPlay
           muted
           loop
@@ -106,6 +116,10 @@ export const HeroBackgroundVideo: React.FC<HeroBackgroundVideoProps> = ({ classN
           aria-hidden="true"
           poster="/assets/arogyaseva-network-poster.webp"
         >
+          <source
+            src="https://strvid.nyc3.cdn.digitaloceanspaces.com/motionsite/dna_video.mp4"
+            type="video/mp4"
+          />
           <source
             src="/assets/arogyaseva-clinical-network.mp4"
             type="video/mp4"
@@ -122,18 +136,32 @@ export const HeroBackgroundVideo: React.FC<HeroBackgroundVideoProps> = ({ classN
       )}
 
       {/* =====================================================================
-          STEP 10 — SUBTLE OVERLAY (z-index: 1)
-          Maintains pristine text contrast while leaving the network animation
-          vivid along the perimeter.
+          3. REAL-TIME 3D MOVING DNA DOUBLE HELIX CANVAS (z-index: 1)
+          Interactive 60fps moving DNA with base-pair rungs & floating particles
           ===================================================================== */}
-      <div className="arogyaseva-hero-overlay" />
+      <MovingDnaCanvas
+        className="z-[1]"
+        speed={dnaSpeedMultiplier}
+        interactive={interactive}
+        density="normal"
+        colorScheme="clinical"
+        showParticles={true}
+        showSecondaryHelix={true}
+        glowIntensity={1.35}
+        opacity={0.92}
+      />
 
-      {/* Central soft vignette protecting headline & logo */}
+      {/* =====================================================================
+          4. SUBTLE OVERLAY & VIGNETTE (z-index: 2)
+          Maintains pristine clinical text contrast for headline & buttons
+          ===================================================================== */}
+      <div className="arogyaseva-hero-overlay z-[2]" />
+
       <div
-        className="absolute inset-0 pointer-events-none z-[1]"
+        className="absolute inset-0 pointer-events-none z-[2]"
         style={{
           background:
-            "radial-gradient(ellipse 70% 55% at 50% 36%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.40) 50%, transparent 100%)",
+            "radial-gradient(ellipse 70% 55% at 50% 36%, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.38) 50%, transparent 100%)",
         }}
       />
     </>

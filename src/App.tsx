@@ -35,6 +35,7 @@ import { EmergencySosModal } from "./components/Common/EmergencySosModal";
 import { ReferralSlipModal } from "./components/CHW/ReferralSlipModal";
 import { ReferralReportPDFModal } from "./components/Doctor/ReferralReportPDFModal";
 import { LiveLocationTracker } from "./components/CHW/LiveLocationTracker";
+import { MovingDnaCanvas } from "./components/Common/MovingDnaCanvas";
 
 export type AppRoute = "landing" | "chw" | "doctor" | "emergency";
 
@@ -98,9 +99,21 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FAFC] text-[#0F172A] flex flex-col font-sans antialiased">
+    <div className="min-h-screen bg-[#F7FAFC] text-[#0F172A] flex flex-col font-sans antialiased relative selection:bg-cyan-100 selection:text-cyan-900">
       {/* Real-time Toast Notifications for cross-device activity */}
       <RealtimeToast />
+
+      {/* Global Ambient Moving DNA Strand in Background */}
+      <MovingDnaCanvas
+        className="fixed inset-0 pointer-events-none -z-10"
+        opacity={currentRoute === "landing" ? 0.28 : 0.20}
+        speed={0.7}
+        density="compact"
+        colorScheme="clinical"
+        showParticles={true}
+        showSecondaryHelix={false}
+        glowIntensity={0.8}
+      />
 
       {/* =============================================================
           ROUTE 1: Landing / Marketing Homepage
