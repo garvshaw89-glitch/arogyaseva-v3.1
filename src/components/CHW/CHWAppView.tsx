@@ -111,6 +111,17 @@ export const CHWAppView: React.FC<CHWAppViewProps> = ({
   // Step in Intake Workflow (1 to 5)
   const [workflowStep, setWorkflowStep] = useState<1 | 2 | 3 | 4 | 5>(1);
 
+  // Close mobile sidebar on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sidebarOpen]);
+
   // QR Code Scanner and Medical ID Card modal state
   const [qrScannerOpen, setQrScannerOpen] = useState(false);
   const [idCardModalOpen, setIdCardModalOpen] = useState(false);
@@ -354,12 +365,14 @@ export const CHWAppView: React.FC<CHWAppViewProps> = ({
         </div>
 
         {/* Center / Right Control Panel */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* State / Region Pill */}
           <button
             type="button"
             onClick={onOpenStateModal}
-            className="glass-pill hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#123B78] cursor-pointer"
+            className="glass-pill hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#123B78] cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none min-h-[38px]"
+            title="Change Indian State/UT"
+            aria-label={`Current state: ${currentState.name}. Click to change.`}
           >
             <MapPin className="w-3.5 h-3.5 text-[#2563EB]" />
             <span>{currentState.name}</span>
@@ -378,35 +391,39 @@ export const CHWAppView: React.FC<CHWAppViewProps> = ({
               playHapticSound("click");
               setActiveTab("history");
             }}
-            className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer border ${
+            className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer border focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none min-h-[38px] ${
               activeTab === "history"
                 ? "bg-indigo-600 text-white border-indigo-700 shadow-2xs"
                 : "bg-indigo-50/90 text-indigo-900 hover:bg-indigo-100 border-indigo-200 shadow-2xs"
             }`}
             title="View past clinical cases in Local Storage Index"
+            aria-label="View Patient History"
           >
             <History className="w-3.5 h-3.5 text-indigo-600" />
             <span>Patient History</span>
           </button>
 
-          {/* Doctor Portal Switch */}
+          {/* Scan Medical ID */}
           <button
             type="button"
             onClick={() => {
               playHapticSound("click");
               setQrScannerOpen(true);
             }}
-            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50/90 text-[#123B78] hover:bg-blue-100 border border-blue-200 shadow-2xs transition-colors cursor-pointer"
+            className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-50/90 text-[#123B78] hover:bg-blue-100 border border-blue-200 shadow-2xs transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none min-h-[38px]"
             title="Scan Patient Medical ID Card (ABHA / QR)"
+            aria-label="Scan Patient Medical ID Card"
           >
             <QrCode className="w-3.5 h-3.5 text-blue-600" />
             <span>Scan Medical ID</span>
           </button>
 
+          {/* Doctor Portal Switch */}
           <button
             type="button"
             onClick={onNavigateDoctor}
-            className="glass-btn-secondary hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#123B78] border border-blue-200/80"
+            className="glass-btn-secondary hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-[#123B78] border border-blue-200/80 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none min-h-[38px] cursor-pointer"
+            aria-label="Switch to Doctor Command Portal"
           >
             <span>Doctor View</span>
             <ArrowRight className="w-3 h-3" />
@@ -416,7 +433,8 @@ export const CHWAppView: React.FC<CHWAppViewProps> = ({
           <button
             type="button"
             onClick={onNavigateHome}
-            className="text-xs font-semibold text-slate-500 hover:text-[#0F172A] px-2.5 py-1.5 rounded-lg hover:bg-white/60 transition-colors"
+            className="text-xs font-semibold text-slate-600 hover:text-[#0F172A] px-2.5 py-1.5 rounded-lg hover:bg-white/60 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none min-h-[38px] flex items-center cursor-pointer"
+            aria-label="Exit to landing home page"
           >
             Exit to Home
           </button>

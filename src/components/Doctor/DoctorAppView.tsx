@@ -59,6 +59,17 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "cases" | "outbreak" | "beds" | "emergency">("cases");
 
+  // Close mobile sidebar on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && sidebarOpen) {
+        setSidebarOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [sidebarOpen]);
+
   const criticalCases = cases.filter((c) => c.riskLevel === "URGENT");
   const consultationCases = cases.filter((c) => c.riskLevel === "CONSULTATION");
   const pendingCases = cases.filter((c) => c.status === "PENDING_REVIEW");
@@ -71,8 +82,9 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           <button
             type="button"
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-white/90 border border-transparent hover:border-slate-200/80"
-            aria-label="Toggle navigation"
+            className="lg:hidden p-2 rounded-xl text-slate-700 hover:bg-white/90 border border-slate-200/80 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
+            aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={sidebarOpen}
           >
             <Menu className="w-5 h-5" />
           </button>
@@ -88,7 +100,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
                   TELE-MED
                 </span>
               </div>
-              <div className="text-[10px] font-semibold text-slate-500">
+              <div className="text-[10px] font-semibold text-slate-600">
                 Medical Officer Tele-Consultation Bay
               </div>
             </div>
@@ -96,7 +108,7 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           {/* Live Shared Workspace Status Bar */}
           <RealtimeStatusBar
             onOpenDevicesDrawer={onOpenDevicesDrawer}
@@ -106,7 +118,9 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           <button
             type="button"
             onClick={onOpenStateModal}
-            className="glass-pill hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#123B78] cursor-pointer"
+            className="glass-pill hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#123B78] cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none min-h-[38px]"
+            title="Change Indian State/UT"
+            aria-label={`Current state: ${selectedState.name}. Click to change.`}
           >
             <MapPin className="w-3.5 h-3.5 text-[#2563EB]" />
             <span>{selectedState.name}</span>
@@ -116,7 +130,8 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           <button
             type="button"
             onClick={onNavigateCHW}
-            className="glass-btn-primary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs"
+            className="glass-btn-primary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white shadow-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none min-h-[38px] cursor-pointer"
+            aria-label="Switch to Frontline CHW Workstation"
           >
             <span>Switch to CHW</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -125,7 +140,8 @@ export const DoctorAppView: React.FC<DoctorAppViewProps> = ({
           <button
             type="button"
             onClick={onNavigateHome}
-            className="text-xs font-semibold text-slate-500 hover:text-[#0F172A] px-2.5 py-1.5 rounded-lg hover:bg-white/60 transition-colors"
+            className="text-xs font-semibold text-slate-600 hover:text-[#0F172A] px-2.5 py-1.5 rounded-lg hover:bg-white/60 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none min-h-[38px] flex items-center cursor-pointer"
+            aria-label="Exit to landing home page"
           >
             Exit to Home
           </button>

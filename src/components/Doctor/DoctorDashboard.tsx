@@ -67,6 +67,16 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
   const [teleconsultStatus, setTeleconsultStatus] = useState<"connecting" | "active" | "ended">("connecting");
   const [activeVehicles, setActiveVehicles] = useState<any[]>([]);
   const [showOutbreakHistogram, setShowOutbreakHistogram] = useState(false);
+  const [actionFeedback, setActionFeedback] = useState<{ message: string; type: "success" | "emergency" } | null>(null);
+
+  // Clinical order preset templates for rapid physician orders
+  const CLINICAL_ORDER_PRESETS = [
+    { label: "ICU Admission + IV Saline", text: "Admit to Emergency ICU. Initiate IV Normal Saline 100mL/hr and continuous cardiac & pulse ox monitoring." },
+    { label: "O₂ 4L/min + Nebulization", text: "Administer supplemental Oxygen at 4L/min via nasal cannula. Immediate Salbutamol nebulization stat." },
+    { label: "Oral Rehydration + Antipyretic", text: "Administer Oral Rehydration Salts (ORS) solution and Tab Paracetamol 500mg TDS for 3 days." },
+    { label: "108 Urgent Transfer", text: "Immediate 108 Ambulance dispatch with ALS equipment and paramedic escort to District Civil Hospital." },
+    { label: "Stable - Routine Subcentre Care", text: "Stable clinical parameters. Continue subcentre ASHA home visits and routine follow-up in 24-48 hours." },
+  ];
 
   // Poll live ambulance & fleet telemetry
   useEffect(() => {
@@ -100,6 +110,37 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
 
   const selectedCase = cases.find((c) => c.id === selectedCaseId) || cases[0];
 
+  // Keyboard navigation through triage queue (ArrowDown / ArrowUp or J / K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        document.activeElement?.tagName === "INPUT" ||
+        document.activeElement?.tagName === "TEXTAREA"
+      ) {
+        return;
+      }
+
+      if (e.key === "ArrowDown" || e.key === "j") {
+        e.preventDefault();
+        const currentIndex = filteredCases.findIndex((c) => c.id === selectedCaseId);
+        if (currentIndex < filteredCases.length - 1) {
+          setSelectedCaseId(filteredCases[currentIndex + 1].id);
+          playHapticSound("click");
+        }
+      } else if (e.key === "ArrowUp" || e.key === "k") {
+        e.preventDefault();
+        const currentIndex = filteredCases.findIndex((c) => c.id === selectedCaseId);
+        if (currentIndex > 0) {
+          setSelectedCaseId(filteredCases[currentIndex - 1].id);
+          playHapticSound("click");
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [filteredCases, selectedCaseId]);
+
   const handleDoctorAction = (actionName: string) => {
     if (!selectedCase) return;
     setIsSubmitting(true);
@@ -114,8 +155,43 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
       doctorNotes: note,
     });
 
+    setActionFeedback({
+      message: `Action recorded for ${selectedCase.patientName}: "${actionName}"`,
+      type: actionName.includes("Ambulance") || actionName.includes("Emergency") ? "emergency" : "success",
+    });
+
+    setTimeout(() => {
+      setActionFeedback(null);
+    }, 4500);
+
     setDoctorNoteInput("");
     setIsSubmitting(false);
+  };
+
+  // Vitals clinical risk evaluation helpers with accessible text status
+  const getSpo2Status = (val: number) => {
+    if (val < 92) return { label: "CRITICAL HYPOXIA", badge: "bg-red-100 text-red-800 border-red-300" };
+    if (val < 95) return { label: "BORDERLINE LOW", badge: "bg-amber-100 text-amber-800 border-amber-300" };
+    return { label: "NORMAL BASELINE", badge: "bg-emerald-100 text-emerald-800 border-emerald-300" };
+  };
+
+  const getBpStatus = (systolic: number, diastolic: number) => {
+    if (systolic >= 140 || diastolic >= 90) return { label: "HYPERTENSIVE STAGE 2", badge: "bg-red-100 text-red-800 border-red-300" };
+    if (systolic >= 130 || diastolic >= 80) return { label: "ELEVATED PRE-HTN", badge: "bg-amber-100 text-amber-800 border-amber-300" };
+    if (systolic < 90) return { label: "HYPOTENSIVE SHOCK", badge: "bg-red-100 text-red-800 border-red-300" };
+    return { label: "OPTIMAL", badge: "bg-emerald-100 text-emerald-800 border-emerald-300" };
+  };
+
+  const getHrStatus = (hr: number) => {
+    if (hr > 105) return { label: "TACHYCARDIA", badge: "bg-red-100 text-red-800 border-red-300" };
+    if (hr < 55) return { label: "BRADYCARDIA", badge: "bg-amber-100 text-amber-800 border-amber-300" };
+    return { label: "NORMAL BASELINE", badge: "bg-emerald-100 text-emerald-800 border-emerald-300" };
+  };
+
+  const getTempStatus = (temp: number) => {
+    if (temp >= 101) return { label: "HIGH FEVER", badge: "bg-red-100 text-red-800 border-red-300" };
+    if (temp >= 99.5) return { label: "LOW GRADE FEVER", badge: "bg-amber-100 text-amber-800 border-amber-300" };
+    return { label: "NORMAL", badge: "bg-emerald-100 text-emerald-800 border-emerald-300" };
   };
 
   const urgentCount = cases.filter((c) => c.riskLevel === "URGENT").length;
@@ -328,6 +404,32 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         </button>
       </div>
 
+      {/* Action Execution Notification Banner */}
+      {actionFeedback && (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`p-3.5 rounded-xl border flex items-center justify-between gap-3 text-xs font-semibold animate-in fade-in slide-in-from-top-2 shadow-md ${
+            actionFeedback.type === "emergency"
+              ? "bg-red-50 text-red-900 border-red-300"
+              : "bg-emerald-50 text-emerald-900 border-emerald-300"
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className={`w-4 h-4 ${actionFeedback.type === "emergency" ? "text-red-600" : "text-emerald-600"}`} />
+            <span>{actionFeedback.message}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionFeedback(null)}
+            className="text-slate-500 hover:text-slate-900 p-1 rounded-md"
+            aria-label="Dismiss notification"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Collapsible Regional Triage Histogram Component */}
       {showOutbreakHistogram && (
         <div className="animate-in fade-in duration-300">
@@ -335,7 +437,6 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
             cases={cases}
             onSelectCase={(caseItem) => {
               setSelectedCaseId(caseItem.id);
-              // Scroll smoothly to case detail view
               const detailEl = document.getElementById("doctor-case-details-panel");
               if (detailEl) {
                 detailEl.scrollIntoView({ behavior: "smooth" });
@@ -351,54 +452,98 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
         <div className="lg:col-span-5 glass-level-2 border border-white/90 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-slate-200/60 space-y-3 bg-white/60 backdrop-blur-xs">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Stethoscope className="w-4 h-4 text-blue-600" />
-                <span>Emergency Triage Stream</span>
-              </h3>
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <Stethoscope className="w-4 h-4 text-blue-600" />
+                  <span>Emergency Triage Stream</span>
+                </h3>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  Press <kbd className="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">↓</kbd> / <kbd className="px-1 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-mono text-[9px]">↑</kbd> to step through cases
+                </p>
+              </div>
               <button
+                type="button"
                 onClick={onRefresh}
-                className="text-xs text-slate-500 hover:text-blue-600 flex items-center gap-1 font-medium"
+                className="text-xs text-slate-600 hover:text-blue-600 flex items-center gap-1 font-semibold px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
                 title="Refresh Triage Stream"
+                aria-label="Refresh Triage Stream"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Refresh</span>
               </button>
             </div>
 
-            {/* Search Input */}
+            {/* Search Input with Clear Button */}
             <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search patient, village or case ID..."
-                className="w-full text-xs pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-slate-800"
+                aria-label="Search patient by name, village or case ID"
+                className="w-full text-xs pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 shadow-2xs"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                  aria-label="Clear search query"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
-            {/* Risk Filters Tabs */}
-            <div className="flex gap-1.5 pt-1 overflow-x-auto pb-1">
-              {["ALL", "URGENT", "CONSULTATION", "ROUTINE"].map((lvl) => (
-                <button
-                  key={lvl}
-                  onClick={() => setRiskFilter(lvl)}
-                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition-all shrink-0 cursor-pointer ${
-                    riskFilter === lvl
-                      ? "bg-blue-600 text-white shadow-xs"
-                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  {lvl === "ALL" ? "All Cases" : lvl}
-                </button>
-              ))}
+            {/* Accessible Risk Filters Segmented Control Tabs */}
+            <div
+              role="tablist"
+              aria-label="Filter cases by risk severity"
+              className="flex gap-1.5 pt-1 overflow-x-auto pb-1"
+            >
+              {[
+                { id: "ALL", label: "All Cases", count: cases.length },
+                { id: "URGENT", label: "Urgent", count: urgentCount },
+                { id: "CONSULTATION", label: "Consult", count: consultationCount },
+                { id: "ROUTINE", label: "Routine", count: routineCount },
+              ].map((filterTab) => {
+                const isActive = riskFilter === filterTab.id;
+                return (
+                  <button
+                    key={filterTab.id}
+                    role="tab"
+                    id={`tab-risk-${filterTab.id.toLowerCase()}`}
+                    aria-selected={isActive}
+                    type="button"
+                    onClick={() => {
+                      playHapticSound("click");
+                      setRiskFilter(filterTab.id);
+                    }}
+                    className={`text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
+                      isActive
+                        ? "bg-blue-600 text-white shadow-xs"
+                        : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    <span>{filterTab.label}</span>
+                    <span
+                      className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                        isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                      }`}
+                    >
+                      {filterTab.count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Cases Scrollable List */}
           <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">
             {filteredCases.length === 0 ? (
-              <div className="p-8 text-center text-xs text-slate-400">
+              <div className="p-8 text-center text-xs text-slate-500">
                 No cases match the selected filter.
               </div>
             ) : (
@@ -411,22 +556,35 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                   <div
                     key={c.id}
                     id={`doctor-case-item-${c.id}`}
-                    onClick={() => setSelectedCaseId(c.id)}
-                    className={`p-4 cursor-pointer transition-all ${
+                    role="button"
+                    tabIndex={0}
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      playHapticSound("click");
+                      setSelectedCaseId(c.id);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        playHapticSound("click");
+                        setSelectedCaseId(c.id);
+                      }
+                    }}
+                    className={`p-4 cursor-pointer transition-all focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none ${
                       isSelected
-                        ? "bg-blue-50/60 border-l-4 border-blue-600"
+                        ? "bg-blue-50/75 border-l-4 border-blue-600 shadow-2xs"
                         : "hover:bg-slate-50 border-l-4 border-transparent"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded ${
+                          className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded font-mono ${
                             isUrgent
                               ? "bg-red-600 text-white"
                               : isConsultation
                               ? "bg-amber-600 text-white"
-                              : "bg-slate-200 text-slate-700"
+                              : "bg-slate-200 text-slate-800"
                           }`}
                         >
                           {c.riskLevel}
@@ -436,19 +594,22 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                         </span>
                       </div>
 
-                      <span className="text-[10px] text-slate-400 font-mono">
+                      <span className="text-[10px] text-slate-500 font-mono">
                         {c.id}
                       </span>
                     </div>
 
-                    <p className="text-xs font-medium text-slate-700 line-clamp-1">
+                    <p className="text-xs font-medium text-slate-800 line-clamp-1">
                       {c.clinicalImpression}
                     </p>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2">
-                      <span>📍 {c.village}</span>
-                      <span className="font-semibold text-slate-700">
-                        SpO₂: {c.vitals.spo2}% | BP: {c.vitals.bpSystolic}/{c.vitals.bpDiastolic}
+                    <div className="flex items-center justify-between text-[11px] text-slate-600 mt-2">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-slate-400" />
+                        <span>{c.village}</span>
+                      </span>
+                      <span className="font-semibold font-mono text-slate-800">
+                        SpO₂: {c.vitals.spo2}% · BP: {c.vitals.bpSystolic}/{c.vitals.bpDiastolic}
                       </span>
                     </div>
 
@@ -556,37 +717,61 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                 </div>
               </div>
 
-              {/* Vitals Telemetry Box */}
+              {/* Vitals Telemetry Box with Accessible Clinical Status Badges */}
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-2 font-mono">
-                  Frontline Clinical Telemetry
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-2 font-mono">
+                  Frontline Clinical Telemetry & Risk Indicators
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">SpO₂ Oxygen</span>
-                    <span className={`text-xl font-bold font-mono ${selectedCase.vitals.spo2 < 92 ? "text-red-600" : "text-slate-900"}`}>
+                  {/* SpO2 */}
+                  <div className="p-3.5 rounded-xl bg-white/95 border border-slate-200/80 shadow-2xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase">SpO₂ Oxygen</span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border font-mono ${getSpo2Status(selectedCase.vitals.spo2).badge}`}>
+                        {getSpo2Status(selectedCase.vitals.spo2).label}
+                      </span>
+                    </div>
+                    <span className={`text-2xl font-bold font-mono block ${selectedCase.vitals.spo2 < 92 ? "text-red-600" : "text-slate-900"}`}>
                       {selectedCase.vitals.spo2}%
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Blood Pressure</span>
-                    <span className={`text-xl font-bold font-mono ${selectedCase.vitals.bpSystolic >= 140 ? "text-red-600" : "text-slate-900"}`}>
+                  {/* Blood Pressure */}
+                  <div className="p-3.5 rounded-xl bg-white/95 border border-slate-200/80 shadow-2xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase">Blood Pressure</span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border font-mono ${getBpStatus(selectedCase.vitals.bpSystolic, selectedCase.vitals.bpDiastolic).badge}`}>
+                        {getBpStatus(selectedCase.vitals.bpSystolic, selectedCase.vitals.bpDiastolic).label}
+                      </span>
+                    </div>
+                    <span className={`text-2xl font-bold font-mono block ${selectedCase.vitals.bpSystolic >= 140 ? "text-red-600" : "text-slate-900"}`}>
                       {selectedCase.vitals.bpSystolic}/{selectedCase.vitals.bpDiastolic}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Temperature</span>
-                    <span className="text-xl font-bold font-mono text-slate-900">
+                  {/* Temperature */}
+                  <div className="p-3.5 rounded-xl bg-white/95 border border-slate-200/80 shadow-2xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase">Temperature</span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border font-mono ${getTempStatus(selectedCase.vitals.temperature).badge}`}>
+                        {getTempStatus(selectedCase.vitals.temperature).label}
+                      </span>
+                    </div>
+                    <span className="text-2xl font-bold font-mono text-slate-900 block">
                       {selectedCase.vitals.temperature}°F
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-white/90 border border-slate-200/80 shadow-2xs">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Pulse / HR</span>
-                    <span className="text-xl font-bold font-mono text-slate-900">
-                      {selectedCase.vitals.heartRate} bpm
+                  {/* Heart Rate */}
+                  <div className="p-3.5 rounded-xl bg-white/95 border border-slate-200/80 shadow-2xs">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-slate-500 font-bold uppercase">Pulse / HR</span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded border font-mono ${getHrStatus(selectedCase.vitals.heartRate).badge}`}>
+                        {getHrStatus(selectedCase.vitals.heartRate).label}
+                      </span>
+                    </div>
+                    <span className="text-2xl font-bold font-mono text-slate-900 block">
+                      {selectedCase.vitals.heartRate} <span className="text-xs text-slate-500 font-sans">bpm</span>
                     </span>
                   </div>
                 </div>
@@ -720,10 +905,39 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
               />
 
               {/* Doctor Action Panel */}
-              <div className="border-t border-slate-200 pt-4 space-y-3">
-                <span className="text-xs font-bold text-slate-800 block">
-                  District Medical Officer Action Panel
-                </span>
+              <div className="border-t border-slate-200/80 pt-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-900 block flex items-center gap-1.5">
+                    <Stethoscope className="w-3.5 h-3.5 text-blue-600" />
+                    <span>District Medical Officer Action Panel</span>
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-mono">
+                    ABDM Tele-Consultation Node
+                  </span>
+                </div>
+
+                {/* Quick Clinical Order Presets */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block font-mono">
+                    Quick Clinical Order Presets (Click to Auto-fill):
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CLINICAL_ORDER_PRESETS.map((preset, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          playHapticSound("click");
+                          setDoctorNoteInput(preset.text);
+                        }}
+                        className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-50/80 text-blue-900 hover:bg-blue-100 hover:text-blue-950 border border-blue-200/80 transition-all cursor-pointer shadow-2xs hover:shadow-xs focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
+                        title={preset.text}
+                      >
+                        + {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="flex gap-2">
                   <input
@@ -731,8 +945,19 @@ export const DoctorDashboard: React.FC<DoctorDashboardProps> = ({
                     value={doctorNoteInput}
                     onChange={(e) => setDoctorNoteInput(e.target.value)}
                     placeholder="Enter clinical order (e.g. 'Admit to Emergency Ward, start IV Saline and O2 4L/min')..."
-                    className="flex-1 text-xs px-3.5 py-2.5 bg-white/90 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent text-slate-800 shadow-2xs transition-all"
+                    aria-label="Clinical order or prescription note"
+                    className="flex-1 text-xs px-3.5 py-2.5 bg-white/95 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-slate-900 shadow-2xs transition-all placeholder:text-slate-400"
                   />
+                  {doctorNoteInput && (
+                    <button
+                      type="button"
+                      onClick={() => setDoctorNoteInput("")}
+                      className="text-slate-400 hover:text-slate-600 px-2 py-1 text-xs font-semibold"
+                      aria-label="Clear input"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-2 pt-1">
