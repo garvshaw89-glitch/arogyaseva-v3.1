@@ -1,51 +1,133 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0284c7" />
-      <stop offset="50%" stop-color="#0f172a" />
-      <stop offset="100%" stop-color="#090d16" />
+    <!-- Background Gradient: ArogyaSeva Midnight Clinical Navy -->
+    <linearGradient id="arogyaBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F284E" />
+      <stop offset="50%" stop-color="#0B1F3A" />
+      <stop offset="100%" stop-color="#061224" />
     </linearGradient>
-    <linearGradient id="crossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ef4444" />
-      <stop offset="100%" stop-color="#dc2626" />
+
+    <!-- DNA Strand A Gradient: Electric Cyan to Sky Blue -->
+    <linearGradient id="dnaStrandA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="50%" stop-color="#00C2D7" />
+      <stop offset="100%" stop-color="#0284C7" />
     </linearGradient>
-    <linearGradient id="pulseGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#38bdf8" />
-      <stop offset="50%" stop-color="#10b981" />
-      <stop offset="100%" stop-color="#f59e0b" />
+
+    <!-- DNA Strand B Gradient: Medical Mint to Emerald Teal -->
+    <linearGradient id="dnaStrandB" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2DD4BF" />
+      <stop offset="50%" stop-color="#19E6C1" />
+      <stop offset="100%" stop-color="#10B981" />
     </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="2" result="blur" />
+
+    <!-- Pulse Lifeline Gradient -->
+    <linearGradient id="pulseWave" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00C2D7" stop-opacity="0.3" />
+      <stop offset="30%" stop-color="#00C2D7" />
+      <stop offset="50%" stop-color="#FFFFFF" />
+      <stop offset="70%" stop-color="#19E6C1" />
+      <stop offset="100%" stop-color="#19E6C1" stop-opacity="0.3" />
+    </linearGradient>
+
+    <!-- Outer Rim Glow Gradient -->
+    <linearGradient id="rimGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00C2D7" stop-opacity="0.9" />
+      <stop offset="50%" stop-color="#19E6C1" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#00C2D7" stop-opacity="0.2" />
+    </linearGradient>
+
+    <!-- Soft Glow Filter -->
+    <filter id="glowSubtle" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.5" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <!-- Background Shield/Rounded Container -->
-  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bgGrad)" stroke="#38bdf8" stroke-width="1.5" />
+  <!-- Squircle App Container with Premium Cyan Rim -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#arogyaBg)" stroke="url(#rimGlow)" stroke-width="1.75" />
 
-  <!-- Outer Ring with Subtle Glow -->
-  <circle cx="32" cy="32" r="23" fill="none" stroke="#0ea5e9" stroke-width="1" stroke-dasharray="3, 3" opacity="0.6" />
+  <!-- Ambient Internal Medical Aura -->
+  <circle cx="32" cy="32" r="22" fill="#00C2D7" opacity="0.08" />
+  <circle cx="32" cy="22" r="14" fill="#19E6C1" opacity="0.06" />
 
-  <!-- Medical Cross Shape -->
-  <g filter="url(#glow)">
-    <!-- Vertical Cross Bar -->
-    <rect x="26.5" y="14" width="11" height="36" rx="4" fill="url(#crossGrad)" />
-    <!-- Horizontal Cross Bar -->
-    <rect x="14" y="26.5" width="36" height="11" rx="4" fill="url(#crossGrad)" />
-    <!-- Inner Cross Highlight -->
-    <rect x="29" y="16" width="6" height="32" rx="2" fill="#ffffff" opacity="0.3" />
-    <rect x="16" y="29" width="32" height="6" rx="2" fill="#ffffff" opacity="0.3" />
+  <!-- ============================================================
+       DNA DOUBLE HELIX & NUCLEOTIDE BASE PAIR RUNGS
+       ============================================================ -->
+  <!-- Base-Pair Connecting Rungs (Cross-strands) -->
+  <g stroke-linecap="round" opacity="0.75">
+    <!-- Rung 1 -->
+    <line x1="23" y1="15" x2="41" y2="15" stroke="#38BDF8" stroke-width="1.8" />
+    <circle cx="32" cy="15" r="1.2" fill="#FFFFFF" />
+
+    <!-- Rung 2 -->
+    <line x1="26" y1="22" x2="38" y2="22" stroke="#00C2D7" stroke-width="1.8" />
+    <circle cx="32" cy="22" r="1.2" fill="#FFFFFF" />
+
+    <!-- Rung 3 (Center crossover behind ECG) -->
+    <line x1="30" y1="29" x2="34" y2="29" stroke="#19E6C1" stroke-width="2" />
+
+    <!-- Rung 4 -->
+    <line x1="26" y1="36" x2="38" y2="36" stroke="#19E6C1" stroke-width="1.8" />
+    <circle cx="32" cy="36" r="1.2" fill="#FFFFFF" />
+
+    <!-- Rung 5 -->
+    <line x1="23" y1="43" x2="41" y2="43" stroke="#2DD4BF" stroke-width="1.8" />
+    <circle cx="32" cy="43" r="1.2" fill="#FFFFFF" />
+
+    <!-- Rung 6 -->
+    <line x1="26" y1="50" x2="38" y2="50" stroke="#00C2D7" stroke-width="1.8" />
+    <circle cx="32" cy="50" r="1.2" fill="#FFFFFF" />
   </g>
 
-  <!-- Dynamic ECG Heartbeat Waveform -->
-  <path d="M 8 32 L 21 32 L 24 24 L 28 42 L 33 19 L 37 39 L 41 29 L 44 32 L 56 32"
+  <!-- DNA Strand A: S-Curve Left to Right -->
+  <path d="M 23 12 C 18 20, 46 25, 41 33 C 36 41, 18 45, 23 52"
         fill="none"
-        stroke="url(#pulseGrad)"
-        stroke-width="3"
+        stroke="url(#dnaStrandA)"
+        stroke-width="3.2"
+        stroke-linecap="round"
+        filter="url(#glowSubtle)" />
+
+  <!-- DNA Strand B: Inverted S-Curve Right to Left -->
+  <path d="M 41 12 C 46 20, 18 25, 23 33 C 28 41, 46 45, 41 52"
+        fill="none"
+        stroke="url(#dnaStrandB)"
+        stroke-width="3.2"
+        stroke-linecap="round"
+        filter="url(#glowSubtle)" />
+
+  <!-- DNA Strand Spherical Nodes -->
+  <g>
+    <circle cx="23" cy="12" r="2.2" fill="#38BDF8" />
+    <circle cx="41" cy="12" r="2.2" fill="#19E6C1" />
+    <circle cx="41" cy="33" r="2.2" fill="#00C2D7" />
+    <circle cx="23" cy="33" r="2.2" fill="#2DD4BF" />
+    <circle cx="23" cy="52" r="2.2" fill="#38BDF8" />
+    <circle cx="41" cy="52" r="2.2" fill="#19E6C1" />
+  </g>
+
+  <!-- ============================================================
+       CENTRAL CLINICAL HEARTBEAT / ECG LIFELINE WAVEFORM
+       ============================================================ -->
+  <!-- Drop Shadow backing for ECG -->
+  <path d="M 6 33 L 17 33 L 21 33 L 24 24 L 28 43 L 33 17 L 37 40 L 41 27 L 44 33 L 58 33"
+        fill="none"
+        stroke="#061224"
+        stroke-width="4.5"
         stroke-linecap="round"
         stroke-linejoin="round"
-        filter="url(#glow)" />
+        opacity="0.8" />
 
-  <!-- Center Pulse Dot -->
-  <circle cx="33" cy="19" r="2.5" fill="#ffffff" />
+  <!-- Glowing ECG Waveform -->
+  <path d="M 6 33 L 17 33 L 21 33 L 24 24 L 28 43 L 33 17 L 37 40 L 41 27 L 44 33 L 58 33"
+        fill="none"
+        stroke="url(#pulseWave)"
+        stroke-width="2.6"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        filter="url(#glowSubtle)" />
+
+  <!-- Vital Peak Glowing Node -->
+  <circle cx="33" cy="17" r="2.4" fill="#FFFFFF" filter="url(#glowSubtle)" />
+  <circle cx="33" cy="17" r="1.2" fill="#00C2D7" />
 </svg>
