@@ -188,9 +188,6 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
                 <span className="truncate max-w-[70px] xs:max-w-[100px] sm:max-w-[130px] xl:max-w-[160px] text-[#0A172A] group-hover:text-[#0B1F3A]">
                   {currentState.name}
                 </span>
-                <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-[#DDFBF5] text-[#065F53] font-bold hidden md:inline-block border border-[rgba(25,230,193,0.3)]">
-                  ACTIVE
-                </span>
               </button>
             </div>
 
