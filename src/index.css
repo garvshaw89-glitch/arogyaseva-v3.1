@@ -1230,10 +1230,11 @@ button:active,
   position: absolute;
   width: 100%;
   height: 100%;
-  background-color: #e8e8e8;
+  background-color: var(--heart-rate-bg, #e8e8e8);
   top: 0;
   right: 0;
   animation: heartRateIn 2.5s linear infinite;
+  pointer-events: none;
 }
 
 /* Styles for the fade-out animation */
@@ -1242,10 +1243,11 @@ button:active,
   position: absolute;
   width: 120%; /* Adjusted width to ensure animation space */
   height: 100%;
-  background-color: #e8e8e8;
+  background-color: var(--heart-rate-bg, #e8e8e8);
   top: 0;
   right: -120%;
   animation: heartRateOut 2.5s linear infinite;
+  pointer-events: none;
 }
 
 /* Keyframes for the heartRateIn animation */

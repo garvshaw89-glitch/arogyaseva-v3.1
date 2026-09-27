@@ -55,27 +55,82 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
       {/* Perfectly Centered Hero Container via Flexbox (z-index: 2 / z-10) */}
       <div className="arogyaseva-hero-content container-constrained relative z-10 w-full flex flex-col items-center justify-center text-center">
         
-        {/* Arogya Seva Logo Shifted Above Clinical Intelligence */}
+        {/* Arogya Seva Logo & Clinical Readiness Heart-Rate Telemetry */}
         <div
-          className={`flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6 select-none animate-float-slow hero-transition-item hero-delay-logo ${
+          className={`flex flex-col md:flex-row items-center justify-center gap-3.5 sm:gap-6 mb-6 select-none animate-float-slow hero-transition-item hero-delay-logo ${
             isLoaded ? "hero-enter-active" : "hero-enter-initial"
           }`}
         >
-          {/* Animated Heartbeat Clinical Icon Badge */}
-          <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#0B1F3A] via-[#123B63] to-[#164E78] flex items-center justify-center text-white shadow-xl shadow-[#0B1F3A]/20 ring-2 ring-white/90 transition-all">
-            <span className="absolute inset-0 rounded-2xl bg-[#00C2D7] opacity-25 blur-md animate-pulse-subtle" />
-            <Activity className="w-6 h-6 sm:w-7 sm:h-7 text-[#00C2D7] animate-heartbeat relative z-10 drop-shadow-md" />
+          {/* Logo & Brand Typography */}
+          <div className="flex items-center justify-center gap-3 sm:gap-4">
+            {/* Animated Heartbeat Clinical Icon Badge */}
+            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-[#0B1F3A] via-[#123B63] to-[#164E78] flex items-center justify-center text-white shadow-xl shadow-[#0B1F3A]/20 ring-2 ring-white/90 transition-all shrink-0">
+              <span className="absolute inset-0 rounded-2xl bg-[#00C2D7] opacity-25 blur-md animate-pulse-subtle" />
+              <Activity className="w-6 h-6 sm:w-7 sm:h-7 text-[#00C2D7] animate-heartbeat relative z-10 drop-shadow-md" />
+            </div>
+
+            {/* Typography: Big Font & High Animation Shimmer */}
+            <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-none font-['Outfit',sans-serif] drop-shadow-xs">
+                <span className="text-[#0B1F3A]">Arogya</span><span className="text-[#00C2D7] font-black drop-shadow-sm">Seva</span>
+              </div>
+              <div className="text-[10px] sm:text-xs font-extrabold tracking-[0.22em] text-[#527086] uppercase mt-1 flex items-center gap-2 font-['Plus_Jakarta_Sans',sans-serif]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#164E78] animate-ping" />
+                <span>Clinical Intelligence Network</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#00C2D7] animate-pulse" />
+              </div>
+            </div>
           </div>
 
-          {/* Typography: Big Font & High Animation Shimmer */}
-          <div className="flex flex-col items-center sm:items-start text-center sm:text-left">
-            <div className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-none font-['Outfit',sans-serif] drop-shadow-xs">
-              <span className="text-[#0B1F3A]">Arogya</span><span className="text-[#00C2D7] font-black drop-shadow-sm">Seva</span>
+          {/* Integrated Clinical Readiness Visualizer (using .heart-rate animation system from index.css) */}
+          <div
+            className="flex items-center gap-3 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-2xl bg-white/80 backdrop-blur-md border border-white/90 shadow-md shadow-[#0B1F3A]/5 transition-all hover:shadow-lg"
+            title="ArogyaSeva Clinical Grid Readiness: 72 BPM Normal Sinus Rhythm"
+            role="status"
+            aria-label="Clinical Readiness: Active 72 BPM Telemetry Waveform"
+          >
+            <div className="flex flex-col text-left">
+              <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider text-[#065F53] font-mono">
+                <span className="w-2 h-2 rounded-full bg-[#19E6C1] animate-ping" />
+                <span>Clinical Readiness</span>
+              </div>
+              <div className="text-xs sm:text-sm font-black text-[#0B1F3A] font-mono flex items-center gap-1.5 mt-0.5">
+                <span className="text-[#00C2D7]">72</span>
+                <span className="text-[10px] font-semibold text-[#527086]">BPM</span>
+                <span className="text-[9px] text-[#059669] font-bold px-1.5 py-0.2 rounded-full bg-[#DDFBF5] border border-[#19E6C1]/30">
+                  READY
+                </span>
+              </div>
             </div>
-            <div className="text-[10px] sm:text-xs font-extrabold tracking-[0.22em] text-[#527086] uppercase mt-1 flex items-center gap-2 font-['Plus_Jakarta_Sans',sans-serif]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#164E78] animate-ping" />
-              <span>Clinical Intelligence Network</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00C2D7] animate-pulse" />
+
+            {/* .heart-rate container with .fade-in and .fade-out from index.css */}
+            <div
+              className="heart-rate overflow-hidden !m-0 !w-[110px] sm:!w-[130px] !h-[38px] sm:!h-[42px] relative rounded-lg bg-white/90 border border-slate-200/60 shadow-inner"
+              style={{ "--heart-rate-bg": "#ffffff" } as React.CSSProperties}
+            >
+              <svg
+                version="1.0"
+                xmlns="http://www.w3.org/2000/svg"
+                x="0px"
+                y="0px"
+                width="100%"
+                height="100%"
+                viewBox="0 0 150 73"
+                preserveAspectRatio="none"
+                className="w-full h-full block"
+              >
+                <polyline
+                  fill="none"
+                  stroke="#00C2D7"
+                  strokeWidth="3.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeMiterlimit="10"
+                  points="0,45 35,45 40,41 45,45 49,45 52,50 56,12 60,62 63,45 68,45 74,38 80,45 150,45"
+                />
+              </svg>
+              <div className="fade-in" />
+              <div className="fade-out" />
             </div>
           </div>
         </div>
