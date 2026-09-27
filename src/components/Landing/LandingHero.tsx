@@ -105,28 +105,58 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
 
             {/* .heart-rate container with .fade-in and .fade-out from index.css */}
             <div
-              className="heart-rate overflow-hidden !m-0 !w-[110px] sm:!w-[130px] !h-[38px] sm:!h-[42px] relative rounded-lg bg-white/90 border border-slate-200/60 shadow-inner"
+              className="heart-rate overflow-hidden !m-0 !w-[110px] sm:!w-[130px] !h-[38px] sm:!h-[42px] relative rounded-lg bg-white border border-slate-200/80 shadow-inner"
               style={{ "--heart-rate-bg": "#ffffff" } as React.CSSProperties}
             >
               <svg
                 version="1.0"
                 xmlns="http://www.w3.org/2000/svg"
-                x="0px"
-                y="0px"
                 width="100%"
                 height="100%"
                 viewBox="0 0 150 73"
                 preserveAspectRatio="none"
                 className="w-full h-full block"
               >
-                <polyline
+                <defs>
+                  {/* High-Definition Clinical Cyan to Emerald Gradient */}
+                  <linearGradient id="heroEkgGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#00A7BD" />
+                    <stop offset="35%" stopColor="#00C2D7" />
+                    <stop offset="70%" stopColor="#10B981" />
+                    <stop offset="100%" stopColor="#00C2D7" />
+                  </linearGradient>
+                  {/* Subtle EKG Grid Pattern */}
+                  <pattern id="ekgGridPattern" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="#00C2D7" strokeWidth="0.5" strokeOpacity="0.08" />
+                  </pattern>
+                </defs>
+
+                {/* Telemetry Grid Background */}
+                <rect width="100%" height="100%" fill="url(#ekgGridPattern)" />
+
+                {/* Isoelectric Baseline Guide (faint) */}
+                <line x1="0" y1="45" x2="150" y2="45" stroke="#00C2D7" strokeWidth="0.8" strokeDasharray="3,3" strokeOpacity="0.18" />
+
+                {/* Soft Ambient Phosphor Glow Layer behind EKG stroke */}
+                <path
+                  d="M 0,45 L 18,45 Q 22,45 24,42 Q 27,39 30,45 L 35,45 L 38,49 L 45,9 L 51,64 L 55,45 L 60,45 Q 64,45 67,37 Q 71,37 75,45 L 92,45 Q 96,45 98,42 Q 101,39 104,45 L 109,45 L 112,49 L 119,10 L 125,63 L 129,45 L 134,45 Q 138,45 141,37 Q 145,37 148,45 L 150,45"
                   fill="none"
                   stroke="#00C2D7"
-                  strokeWidth="3.2"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeOpacity="0.22"
+                />
+
+                {/* Primary Crisp High-Contrast EKG Waveform Path */}
+                <path
+                  d="M 0,45 L 18,45 Q 22,45 24,42 Q 27,39 30,45 L 35,45 L 38,49 L 45,9 L 51,64 L 55,45 L 60,45 Q 64,45 67,37 Q 71,37 75,45 L 92,45 Q 96,45 98,42 Q 101,39 104,45 L 109,45 L 112,49 L 119,10 L 125,63 L 129,45 L 134,45 Q 138,45 141,37 Q 145,37 148,45 L 150,45"
+                  fill="none"
+                  stroke="url(#heroEkgGradient)"
+                  strokeWidth="2.4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeMiterlimit="10"
-                  points="0,45 35,45 40,41 45,45 49,45 52,50 56,12 60,62 63,45 68,45 74,38 80,45 150,45"
                 />
               </svg>
               <div className="fade-in" />
