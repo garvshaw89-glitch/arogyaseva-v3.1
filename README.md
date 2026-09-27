@@ -360,7 +360,7 @@ Developed with dedication to India's frontline healthcare champions, ASHA worker
 
 - **Author**: Garv Shaw
 - **Email**: [garvshaw89@gmail.com](mailto:garvshaw89@gmail.com) • [garvshawinfo@gmail.com](mailto:garvshawinfo@gmail.com)
-- **Repository**: [github.com/garvshaw89-glitch/ArogyaSeva](https://github.com/garvshaw89-glitch/ArogyaSeva)
+- **Repository**: [https://github.com/garvshaw89-glitch/arogyaseva-v3.1](https://github.com/garvshaw89-glitch/arogyaseva-v3.1)
 - **License**: Licensed under the **MIT License** — see the [LICENSE](./LICENSE) file for details.
 
 <div align="center">
