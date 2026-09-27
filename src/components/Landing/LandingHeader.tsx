@@ -23,6 +23,7 @@ interface LandingHeaderProps {
   onToggleOffline: () => void;
   onOpenDevicesDrawer?: () => void;
   onOpenNotificationsDrawer?: () => void;
+  onReplayIntro?: () => void;
 }
 
 export const LandingHeader: React.FC<LandingHeaderProps> = ({
@@ -33,6 +34,7 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
   onToggleOffline,
   onOpenDevicesDrawer,
   onOpenNotificationsDrawer,
+  onReplayIntro,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -249,6 +251,20 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
 
             {/* Desktop Actions (Right Section: Doctor & CHW Portal) */}
             <div className="hidden sm:flex items-center gap-2 sm:gap-2.5 ml-auto z-10">
+              {/* Optional Replay Cinematic Sequence Action */}
+              {onReplayIntro && (
+                <button
+                  type="button"
+                  onClick={onReplayIntro}
+                  className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-semibold text-[#0055C7] hover:text-[#091C35] hover:bg-white/80 border border-[#B0C6FF]/40 transition-all cursor-pointer min-h-[38px] shadow-2xs"
+                  title="Watch cinematic intro opening sequence"
+                  aria-label="Replay Cinematic Intro"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#0055C7]" />
+                  <span>Cinematic Intro</span>
+                </button>
+              )}
+
               {/* Doctor Portal Action - Secondary Glass */}
               <button
                 type="button"
@@ -384,6 +400,20 @@ export const LandingHeader: React.FC<LandingHeaderProps> = ({
                   <PhoneCall className="w-4 h-4 animate-pulse" />
                   <span>108 Emergency Response</span>
                 </button>
+
+                {onReplayIntro && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      onReplayIntro();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-xs font-bold text-[#0055C7] bg-[#EFF4FF] hover:bg-white border border-[#B0C6FF]/60 min-h-[48px] cursor-pointer transition-colors shadow-2xs"
+                  >
+                    <Sparkles className="w-4 h-4 text-[#0055C7]" />
+                    <span>Watch Cinematic Intro</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

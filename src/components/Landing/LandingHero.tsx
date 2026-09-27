@@ -25,6 +25,7 @@ interface LandingHeroProps {
   onScrollToSolutions: () => void;
   onOpenVideoModal: () => void;
   currentState: IndianStateData;
+  onReplayIntro?: () => void;
 }
 
 export const LandingHero: React.FC<LandingHeroProps> = ({
@@ -34,6 +35,7 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
   onScrollToSolutions,
   onOpenVideoModal,
   currentState,
+  onReplayIntro,
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -174,6 +176,19 @@ export const LandingHero: React.FC<LandingHeroProps> = ({
             <CheckCircle2 className="w-4 h-4 text-[#19E6C1]" />
             <span>State Health System Aligned</span>
           </div>
+
+          {onReplayIntro && (
+            <button
+              type="button"
+              onClick={onReplayIntro}
+              className="glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-2xs text-[#0055C7] hover:text-[#091C35] hover:bg-white transition-all cursor-pointer font-bold active:scale-95 border border-[#49B9FF]/40 bg-white/70"
+              title="Watch full cinematic grid sequence"
+              aria-label="Replay Cinematic Grid Intro Sequence"
+            >
+              <Play className="w-3.5 h-3.5 text-[#0055C7] fill-[#0055C7]" />
+              <span>Replay Cinematic Intro</span>
+            </button>
+          )}
         </div>
 
         {/* Centered Hero Visual: Live Clinical Intelligence Telemetry Mockup */}

@@ -36,6 +36,7 @@ import { ReferralSlipModal } from "./components/CHW/ReferralSlipModal";
 import { ReferralReportPDFModal } from "./components/Doctor/ReferralReportPDFModal";
 import { LiveLocationTracker } from "./components/CHW/LiveLocationTracker";
 import { MovingDnaCanvas } from "./components/Common/MovingDnaCanvas";
+import { CinematicIntroSequence } from "./components/Landing/CinematicIntroSequence";
 
 export type AppRoute = "landing" | "chw" | "doctor" | "emergency";
 
@@ -72,6 +73,30 @@ const AppContent: React.FC = () => {
   const [showLiveTracker, setShowLiveTracker] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
 
+  // Cinematic Opening Sequence State (from user specification)
+  const [showCinematicIntro, setShowCinematicIntro] = useState(() => {
+    try {
+      const hasSeen = sessionStorage.getItem("arogya_intro_seen");
+      return !hasSeen;
+    } catch {
+      return true;
+    }
+  });
+
+  const handleCloseIntro = () => {
+    setShowCinematicIntro(false);
+    try {
+      sessionStorage.setItem("arogya_intro_seen", "true");
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleReplayIntro = () => {
+    playHapticSound("click");
+    setShowCinematicIntro(true);
+  };
+
   // State Selection
   const handleSelectState = (state: IndianStateData, autoSwitchLanguage = true) => {
     setSelectedState(state);
@@ -103,6 +128,12 @@ const AppContent: React.FC = () => {
       {/* Real-time Toast Notifications for cross-device activity */}
       <RealtimeToast />
 
+      {/* Cinematic Opening Sequence (Orchestrated SVG Bio-Telemetry Grid) */}
+      <CinematicIntroSequence
+        isOpen={showCinematicIntro}
+        onClose={handleCloseIntro}
+      />
+
       {/* Global Ambient Moving DNA Strand in Background */}
       <MovingDnaCanvas
         className="fixed inset-0 pointer-events-none -z-10"
@@ -128,6 +159,7 @@ const AppContent: React.FC = () => {
             onToggleOffline={() => {}}
             onOpenDevicesDrawer={() => setShowDevicesDrawer(true)}
             onOpenNotificationsDrawer={() => setShowNotificationsDrawer(true)}
+            onReplayIntro={handleReplayIntro}
           />
 
           <main className="flex-1">
@@ -141,6 +173,7 @@ const AppContent: React.FC = () => {
               }}
               onOpenVideoModal={() => setVideoModalOpen(true)}
               currentState={selectedState}
+              onReplayIntro={handleReplayIntro}
             />
 
             <PlatformStatistics />
